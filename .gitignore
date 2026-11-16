@@ -1,0 +1,11 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local research downloads (large; re-fetchable)
+scratch/dl/
+
+# OS / editor
+.DS_Store
+.idea/
