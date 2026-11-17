@@ -22,6 +22,7 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["scratch"]  # throwaway research scripts, like pyright's include list
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
