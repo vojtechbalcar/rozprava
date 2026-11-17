@@ -6,6 +6,7 @@
 - [[design-direction]] — the replacement DESIGN.md: museum collection, paper/ink, serif quotations and dot-matrix data; supersedes the earlier teal direction.
 - [[stack-decision]] — FastAPI + Jinja2 + HTMX + Postgres/pgvector, and the alternatives considered.
 - [[design-preview]] — static preview of all screens from the real templates and real psp.cz excerpts; layout and typesetting decisions made while building it.
+- [[functional-app-design]] — confirmed scope: both terms from 2021, database search before AI, local PostgreSQL; proposed backend design awaiting review.
 
 ## Research
 

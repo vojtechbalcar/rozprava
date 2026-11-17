@@ -65,11 +65,17 @@ and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
 
 ## Open decisions
 
-- Interface language: Czech, English, or both.
-- Embedding model: hosted multilingual model vs. a local one (e.g. bge-m3).
-- How far back to load: current term only, or every term with digital
-  transcripts.
-- Hosting.
+Confirmed by the user on 17 November 2026:
+
+- Load the current and previous terms, beginning in 2021 (9th and 10th terms).
+- Build database-backed search first; add AI afterward. No paid APIs, embeddings
+  or generated summaries in the first functional version.
+- Run locally on this Mac, with PostgreSQL set up here.
+
+Keep the existing Czech interface. The detailed implementation proposal is in
+[[functional-app-design]] and is awaiting review. The stack above describes the
+longer-term direction; pgvector and the Claude API are deferred for this phase.
+Embedding model, AI provider and eventual public hosting remain open.
 
 ## Memory
 
