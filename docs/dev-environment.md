@@ -23,3 +23,30 @@ ln -s "$HOME/.local/share/venvs/rozprava" .venv
 ```
 
 Also on this machine: `uv` came from Homebrew (`brew install uv`) on 17 Nov 2026.
+
+## Functional application checkout and PostgreSQL
+
+The functional build lives outside iCloud at
+`~/.local/share/rozprava-worktrees/functional-app`, on
+`feature/functional-local-app`. Its ordinary `.venv` works without the Desktop
+symlink workaround. The original Desktop checkout still contains the design preview.
+
+PostgreSQL 18 is installed through Homebrew. Rozprava uses its own cluster at
+`~/.local/share/rozprava/postgres` and loopback port 55432; it does not use the
+Homebrew default cluster or a login service. Local configuration and generated
+credentials are private and ignored by Git.
+
+```sh
+uv run python scripts/local_db.py init
+uv run python scripts/local_db.py status
+uv run python scripts/local_db.py start
+uv run python scripts/local_db.py stop
+uv run python scripts/local_db.py backup
+```
+
+Repeated initialization retains credentials and data. Backups go to the private
+`~/.local/share/rozprava/backups` directory. `test-db` creates the dedicated
+`rozprava_test` database; integration tests refuse to reset a database whose name
+does not end in `_test`.
+
+The app runtime and import commands are being implemented in [[functional-app-plan]].

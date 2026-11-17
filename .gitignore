@@ -13,3 +13,8 @@ scratch/dl/
 
 # Rendered design preview (rebuild with scripts/render_preview.py)
 preview/site/
+
+# Local credentials and private runtime data
+.env
+.env.*
+!.env.example
