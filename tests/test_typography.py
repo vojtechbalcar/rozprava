@@ -1,9 +1,12 @@
 from rozprava.typography import (
     NBSP,
+    THIN_NBSP,
+    clip,
     count,
     cz_date,
     cz_date_long,
     cz_number,
+    cz_percent,
     czech_initial,
     czech_sort_key,
     highlight,
@@ -44,7 +47,9 @@ def test_dates():
 
 
 def test_numbers():
-    assert cz_number(45813) == f"45{NBSP}813"
+    assert cz_number(45813) == f"45{THIN_NBSP}813"
+    assert cz_percent(92.4) == f"92{NBSP}%"
+    assert cz_percent(3.5, 1) == f"3,5{NBSP}%"
     assert cz_number(1.57, 2) == "1,57"
     assert cz_number(999) == "999"
 
@@ -58,7 +63,7 @@ def test_plural_and_count():
         "projevů",
         "projevů",
     ]
-    assert count(45813, "projev", "projevy", "projevů") == f"45{NBSP}813{NBSP}projevů"
+    assert count(45813, "projev", "projevy", "projevů") == f"45{THIN_NBSP}813{NBSP}projevů"
 
 
 def test_highlight_marks_terms_without_changing_the_text():
@@ -98,3 +103,10 @@ def test_czech_initials():
         "A",
         "Š",
     ]
+
+
+def test_clip_cuts_at_word_boundaries_only():
+    text = "Já bych jenom chtěla podpořit argumentaci, pana kolegy Papajanovského"
+    assert clip(text, 200) == text
+    assert clip(text, 45) == "Já bych jenom chtěla podpořit argumentaci"
+    assert text.startswith(clip(text, 30))

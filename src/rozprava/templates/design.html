@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}/_design · Rozprava{% endblock %}
+
+{% macro both() -%}
+<div class="panes">
+  <div class="pane" data-theme="light"><p class="label pane__label">Světlý</p>{{ caller() }}</div>
+  <div class="pane" data-theme="dark"><p class="label pane__label">Tmavý</p>{{ caller() }}</div>
+</div>
+{%- endmacro %}
+
+{% block content %}
+{% set r1 = search.results[0] %}
+<header class="wrap page-head">
+  <p class="label">Jen pro vývoj · /_design</p>
+  <h1 class="h1">Komponenty a&nbsp;stavy</h1>
+  <p class="page-head__lede">Každá komponenta ze specifikace v&nbsp;DESIGN.md ve světlém i&nbsp;tmavém motivu. Čísla oddílů odkazují na DESIGN.md.</p>
+</header>
+
+<div class="wrap design">
+  <section class="design__section">
+    <h2 class="h2">Test diakritiky <span class="meta">§4.5</span></h2>
+    {% set test = ['Příliš žluťoučký kůň úpěl ďábelské ódy.', 'PŘÍLIŠ ŽLUŤOUČKÝ KŮŇ ÚPĚL ĎÁBELSKÉ ÓDY.', 'Sněmovně · přepisu · schůze · neautorizováno · Jiří Havránek · Činčila', '„Doslovná citace“ – 6. 11. 2026 – 43 897 slov'] %}
+    <div class="diacritics">
+      <p class="label">Cooper Hewitt, display 600</p><p class="diacritics__display">{{ test[0] }}<br>{{ test[1] }}</p>
+      <p class="label">Cooper Hewitt 400 / 600</p>{% for line in test %}<p class="diacritics__sans">{{ line }}</p>{% endfor %}<p class="diacritics__sans diacritics__sans--bold">{{ test[1] }}</p>
+      <p class="label">Source Serif 4</p>{% for line in test %}<p class="diacritics__serif">{{ line }}</p>{% endfor %}<p class="diacritics__serif"><em>(Potlesk.) (Hluk v sále.)</em></p>
+      <p class="label">IBM Plex Mono</p>{% for line in test %}<p class="diacritics__mono">{{ line }}</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Barvy <span class="meta">§3</span></h2>
+    {% call both() %}
+    <ul class="tokens">
+      {% for t in ['paper', 'paper-2', 'paper-3', 'ink', 'ink-2', 'ink-3', 'ink-4', 'rule', 'rule-strong', 'highlight', 'highlight-strong', 'danger'] %}
+      <li><span class="tokens__chip" style="background: var(--{{ t }})"></span><span class="meta">--{{ t }}</span></li>
+      {% endfor %}
+    </ul>
+    {% endcall %}
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Písmo <span class="meta">§4.2</span></h2>
+    <div class="scale">
+      <p class="t-display-xl">Co ve Sněmovně</p>
+      <p class="t-display-l">Jan Papajanovský</p>
+      <p class="h1">Nadpis stránky h1</p>
+      <p class="h2">Nadpis oddílu h2</p>
+      <p class="h3">Jméno řečníka h3</p>
+      <p class="t-quote-l">„Nejde o&nbsp;nucené spoření.“ <span class="meta">quote-l</span></p>
+      <p class="t-quote">„Nejde o&nbsp;nucené spoření.“ <span class="meta">quote</span></p>
+      <p class="t-body-read">Text přepisu v&nbsp;sazbě body-read, nejvýše 68 znaků na řádek.</p>
+      <p>Text rozhraní a&nbsp;shrnutí v&nbsp;sazbě body.</p>
+      <p class="t-ui">Tlačítka, filtry a&nbsp;navigace v&nbsp;sazbě ui</p>
+      <p class="meta">6. 11. 2026 · 34. schůze · s.&nbsp;644 · meta</p>
+      <p class="label">Štítek label</p>
+    </div>
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Tlačítka, filtry, přepínače <span class="meta">§7.3, §7.15</span></h2>
+    {% call both() %}
+    <div class="row">
+      <button class="btn btn--primary" type="button">Hledat</button>
+      <button class="btn btn--secondary" type="button">{{ ui.icon('share') }} Sdílet</button>
+      <button class="btn btn--ghost" type="button">Zobrazit vše</button>
+      <button class="icon-btn" type="button" aria-label="Menu">{{ ui.icon('menu', 20) }}</button>
+      <button class="btn btn--primary" type="button" disabled>Nedostupné</button>
+    </div>
+    {{ ui.filter_chips({'Volební období': '10. (2025–)'}) }}
+    <div class="row"><div class="segmented" role="radiogroup" aria-label="Ukázka"><button type="button" role="radio" aria-checked="true">10. období</button><button type="button" role="radio" aria-checked="false">2026</button><button type="button" role="radio" aria-checked="false">2025</button></div></div>
+    {% endcall %}
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Identita stran <span class="meta">§3.4</span></h2>
+    {% call both() %}
+    <div class="row">{% for party in party_list %}{{ ui.party_pill(party) }}{% endfor %}</div>
+    {% endcall %}
+    <p class="design__note">Barvy stran zatím nejsou ověřené z&nbsp;oficiálních manuálů, takže všechny strany mají stejný neutrální čtvereček. Normalizace na ukázkových barvách (ne barvách stran):</p>
+    <ul class="normalise">
+      {% for d in normalise_demo %}
+      <li><span class="normalise__from" style="background: {{ d.hex }}"></span><span aria-hidden="true">→</span><span class="swatch swatch--colour{% if d.swatch.hatched %} swatch--hatched{% endif %}" style="--swatch: {{ d.swatch.css }}"></span><span class="meta">{{ d.hex }} → {{ d.swatch.css }}{% if d.swatch.hatched %}, šrafováno (odstín do 20° od předchozího){% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Výsledek, citace, shrnutí <span class="meta">§7.5–7.8</span></h2>
+    {% call both() %}
+    {{ ui.result_object(r1, terms=search.highlights) }}
+    <div class="obj obj--flash">{{ ui.catalog_number(r1.catalog) }}<p class="meta">Stav po kliknutí na citaci [1]: horní linka bliká žlutě.</p></div>
+    <p class="row">{{ ui.auth_status('Neautorizováno!') }} <span class="label label--gap">Bod neuveden</span> <a class="cite" href="#">[3]</a> <mark>zvýraznění</mark></p>
+    <div class="cite-pop cite-pop--static">
+      <p class="cite-pop__who">{{ ui.party_pill(r1.speaker.party) }}<span>{{ r1.speaker.name }}</span></p>
+      <p class="cite-pop__quote">„{{ r1.text|clip(160)|highlight(search.highlights) }}&nbsp;…“</p>
+      <p class="cite-pop__foot"><span class="meta">{{ r1.catalog|catalog }}</span><a href="#">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a></p>
+    </div>
+    <section class="summary summary--loading" aria-label="Načítání shrnutí">
+      <header class="summary__head"><p class="label">Shrnutí · jazykový model</p></header>
+      <div class="shimmer" aria-hidden="true">{% for _ in range(3) %}<svg width="100%" height="8">{% for i in range(60) %}<circle cx="{{ 4 + i * 12 }}" cy="4" r="3" style="--i: {{ i }}"/>{% endfor %}</svg>{% endfor %}</div>
+      <p class="label">Generuji shrnutí</p>
+    </section>
+    {% endcall %}
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Čísla a&nbsp;aktivita <span class="meta">§7.10, §7.11, §8</span></h2>
+    {% call both() %}
+    <div class="row row--baseline">
+      {% for size in ['s', 'm', 'l', 'xl'] %}<span class="dm-sample">{{ '43 897'|dot(size) }}<span class="meta">dm-{{ size }}</span></span>{% endfor %}
+    </div>
+    <div class="tiles tiles--design">
+      {{ ui.stat_tile('Projevy', '72', comparison='medián poslanců: 29,5') }}
+      {{ ui.stat_tile('Nejčastější bod', text='Novela zákona – stavební zákon', comparison='tisk 67 · 6 projevů') }}
+    </div>
+    <p class="meta legend">
+      <svg width="8" height="8" aria-hidden="true"><circle class="ac ac--none" cx="4" cy="4" r="1"/></svg> nejednalo se
+      <svg width="8" height="8" aria-hidden="true"><circle class="ac ac--absent" cx="4" cy="4" r="3.5"/></svg> nepřítomen
+      <svg width="8" height="8" aria-hidden="true"><circle class="ac ac--present" cx="4" cy="4" r="4"/></svg> přítomen, bez projevu
+      {% for l in range(1, 5) %}<svg width="8" height="8" aria-hidden="true"><circle class="ac ac--l{{ l }}" cx="4" cy="4" r="4"/></svg> úroveň {{ l }} {% endfor %}
+    </p>
+    {% endcall %}
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Stavy <span class="meta">§7.19</span></h2>
+    {% call both() %}
+    <div class="state-empty">
+      <h3 class="h2">Nic jsme nenašli.</h3>
+      <p>Zkuste obecnější dotaz nebo odeberte filtr.</p>
+      <div class="chips">{{ ui.chip('Datum', '6. 11. 2026') }}{{ ui.chip('Strana', 'ODS') }}</div>
+      <p class="examples"><span>Zkuste:</span><a href="#">penzijní spoření</a><a href="#">lékařská fakulta</a><a href="#">daň z&nbsp;příjmů</a></p>
+    </div>
+    <div class="skeleton" aria-hidden="true">{% for _ in range(2) %}<div class="skeleton__obj"><span></span><span></span><span></span><span class="short"></span></div>{% endfor %}</div>
+    <div class="state-error"><p>Hledání se nepodařilo. Zkuste to znovu.</p><button class="btn btn--secondary" type="button">Zkusit znovu</button></div>
+    <p class="row"><span class="toast toast--static">Odkaz zkopírován</span><span class="tip tip--static">Stenografický záznam zatím neprošel autorizací řečníkem.</span></p>
+    {% endcall %}
+  </section>
+
+  <section class="design__section">
+    <h2 class="h2">Rychlé hledání ⌘K <span class="meta">§7.4</span></h2>
+    {% call both() %}
+    <div class="palette__box palette__box--static">
+      <div class="palette__input">{{ ui.icon('search', 20) }}<span class="palette__typed">jurecka</span><kbd class="kbd">Esc</kbd></div>
+      <div class="palette__list">
+        <p class="palette__group label">Poslanci</p>
+        <div class="palette__item is-selected">{{ ui.monogram(demo_mp.initials, 24) }}<span><mark>{{ demo_mp.surname }}</mark> {{ demo_mp.forename }}</span>{{ ui.party_pill(demo_mp.party) }}<span class="meta">{{ demo_mp.region }}</span></div>
+        <p class="palette__group label">Hledat v projevech</p>
+        <div class="palette__item"><span>Hledat „jurecka“ v&nbsp;projevech <span aria-hidden="true">→</span></span></div>
+      </div>
+      <p class="palette__foot label">↑↓ vybrat · ↵ otevřít · esc zavřít</p>
+    </div>
+    {% endcall %}
+  </section>
+</div>
+{% endblock %}

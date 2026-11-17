@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Schůze · Rozprava{% endblock %}
+
+{% block content %}
+<header class="wrap page-head">
+  <h1 class="h1">Schůze</h1>
+  <p class="page-head__lede">{{ sessions|length|count('schůze', 'schůze', 'schůzí') }} 10.&nbsp;volebního období, od nejnovější. Schůze může trvat několik týdnů a&nbsp;jednat se může souběžně o&nbsp;více schůzích.</p>
+</header>
+
+<div class="wrap">
+  <div class="sessions__cols meta" aria-hidden="true"><span>Schůze</span><span>Termín</span><span>Nejvíc projevů k&nbsp;bodům</span><span class="num">Dny</span><span class="num">Projevy</span></div>
+  <ol class="sessions">
+    {% for s in sessions %}
+    <li>
+      <details class="session">
+        <summary>
+          <span class="session__number">{{ s.number }}</span>
+          <span class="session__dates meta">{% if s.from == s.to %}{{ s.from|cz_date }}{% else %}{{ s.from|cz_date }} – {{ s.to|cz_date }}{% endif %}</span>
+          <span class="session__top">
+            {%- for b in s.top %}<span>{% if b.tisk %}<span class="meta">tisk&nbsp;{{ b.tisk }}</span> {% endif %}{{ b.short|nbsp }} <span class="meta">({{ b.speeches }})</span></span>
+            {%- else %}<span class="label label--gap">Body zatím neuvedeny</span>{% endfor %}
+          </span>
+          <span class="session__days num meta">{{ s.days }}</span>
+          <span class="session__speeches num meta">{{ s.speeches|cz_number }}</span>
+          {{ ui.icon('chevron') }}
+        </summary>
+        <div class="session__body">
+          <p class="label">Jednací dny</p>
+          <ul class="session__strip">
+            {% for d in s.day_levels %}
+            <li><a href="{{ link('transcript') }}" data-tip="{{ d.date|cz_date_long(weekday=True) }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}">{{ ui.dot_strip([d], label=d.date|cz_date) }}<span class="meta">{{ d.date|cz_date }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </details>
+    </li>
+    {% endfor %}
+  </ol>
+  <p class="meta sessions__note">Počty slov přibudou po prvním plném načtení přepisů; zatím ukazujeme počty projevů. U&nbsp;36.&nbsp;schůze ještě chybí rozpis podle bodů, Sněmovna ho do otevřených dat zatím nedoplnila.</p>
+</div>
+{% endblock %}

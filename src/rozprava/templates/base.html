@@ -4,21 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Rozprava{% endblock %}</title>
-  <meta name="description" content="Hledejte, co poslanci opravdu řekli ve Sněmovně. Doslovné citace s&nbsp;odkazem na stenozáznam.">
-  <meta name="theme-color" content="#f6f7f4">
-  <link rel="preload" href="{{ static('fonts/newsreader-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="{{ static('fonts/inter-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <meta name="description" content="Prohledávatelný záznam projevů v&nbsp;Poslanecké sněmovně. Doslovné citace s&nbsp;odkazem na stenozáznam.">
+  <script>
+    /* Theme before first paint (§3.2): cookie theme=light|dark|system */
+    (function () {
+      var m = document.cookie.match(/(?:^|; )theme=(light|dark|system)/);
+      if (m && m[1] !== "system") document.documentElement.dataset.theme = m[1];
+    })();
+  </script>
+  <link rel="preload" href="{{ static('fonts/cooper-hewitt-600.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ static('fonts/source-serif-4-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ static('css/fonts.css') }}">
   <link rel="stylesheet" href="{{ static('css/tokens.css') }}">
   <link rel="stylesheet" href="{{ static('css/app.css') }}">
+  <script src="{{ static('js/app.js') }}" defer></script>
+  <script src="{{ static('js/search.js') }}" defer></script>
+  <script src="{{ static('js/composer.js') }}" defer></script>
 </head>
 <body class="page-{{ page }}">
+  {% import "_macros.html" as ui %}
   <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
 
   {% if preview %}
   <div class="preview-strip" role="note">
     <div class="wrap preview-strip__inner">
-      <p><strong>Náhled návrhu.</strong> Skutečné úryvky z&nbsp;psp.cz, stav k&nbsp;{{ preview.retrieved|cz_date }}.<span class="preview-strip__more"> Odkazy na poslance a&nbsp;přepisy vedou na ukázkové stránky.</span></p>
+      <p><span class="label">Náhled návrhu</span> Skutečná data z&nbsp;psp.cz, stav k&nbsp;{{ preview.retrieved|cz_date }}.<span class="preview-strip__more"> Odkazy na poslance a&nbsp;přepisy vedou na ukázkové stránky.</span></p>
       <nav aria-label="Stránky náhledu">
         {% for name, (file, label) in preview_pages.items() %}
         <a href="{{ file }}"{% if name == page %} aria-current="page"{% endif %}>{{ label }}</a>
@@ -28,42 +38,42 @@
   </div>
   {% endif %}
 
-  {% import "_macros.html" as ui %}
   <header class="site-header">
     <div class="wrap site-header__inner">
-      <a class="wordmark" href="{{ link('home') }}" aria-label="Rozprava, úvod">Rozprava<span class="wordmark__stop">.</span></a>
+      <a class="wordmark" href="{{ link('home') }}" aria-label="Rozprava, úvod">Rozprava<span class="wordmark__mark" aria-hidden="true"></span></a>
 
       {% block header_search %}
-      <form class="nav-search" action="{{ link('search') }}" role="search">
-        <label class="visually-hidden" for="nav-q">Hledat v&nbsp;projevech</label>
-        {{ ui.icon('search') }}
-        <input id="nav-q" name="q" type="search" placeholder="Hledat v&nbsp;projevech" autocomplete="off">
-        <kbd class="nav-search__key" aria-hidden="true">/</kbd>
-      </form>
+      <button class="search-trigger" type="button" data-palette-open aria-label="Hledat v projevech (⌘K)">
+        {{ ui.icon('search') }}<span class="search-trigger__text">Hledat v&nbsp;projevech</span><kbd class="kbd" data-kbd>⌘K</kbd>
+      </button>
       {% endblock %}
 
       <nav class="site-nav" aria-label="Hlavní">
-        <a href="{{ link('search') }}"{% if page in ('search', 'states') %} aria-current="page"{% endif %}>Hledat</a>
+        <a href="{{ link('search') }}"{% if page == 'search' %} aria-current="page"{% endif %}>Hledat</a>
         <a href="{{ link('mps') }}"{% if page in ('mps', 'mp') %} aria-current="page"{% endif %}>Poslanci</a>
-        <a href="{{ link('methodology') }}">Jak to funguje</a>
+        <a href="{{ link('sessions') }}"{% if page in ('sessions', 'transcript') %} aria-current="page"{% endif %}>Schůze</a>
+        <a href="{{ link('how') }}"{% if page == 'how' %} aria-current="page"{% endif %}>Jak to funguje</a>
       </nav>
 
-      <details class="menu">
-        <summary class="menu__toggle"><span class="menu__open">Menu</span><span class="menu__close">Zavřít</span></summary>
-        <div class="menu__sheet">
-          <form class="search-field search-field--sheet" action="{{ link('search') }}" role="search">
-            <label class="visually-hidden" for="sheet-q">Hledat v&nbsp;projevech</label>
-            <input id="sheet-q" name="q" type="search" placeholder="Co zaznělo k&nbsp;…?" autocomplete="off">
-          </form>
-          <nav aria-label="Hlavní">
-            <a href="{{ link('search') }}">Hledat</a>
-            <a href="{{ link('mps') }}">Poslanci</a>
-            <a href="{{ link('methodology') }}">Jak to funguje</a>
-          </nav>
-        </div>
-      </details>
+      <div class="site-header__mobile">
+        <button class="icon-btn" type="button" data-palette-open aria-label="Hledat">{{ ui.icon('search', 20) }}</button>
+        <button class="icon-btn" type="button" data-menu-open aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">{{ ui.icon('menu', 20) }}</button>
+      </div>
     </div>
   </header>
+
+  <div class="menu-sheet" id="menu-sheet" role="dialog" aria-modal="true" aria-label="Navigace" hidden>
+    <div class="wrap menu-sheet__head">
+      <span class="wordmark">Rozprava<span class="wordmark__mark" aria-hidden="true"></span></span>
+      <button class="icon-btn" type="button" data-menu-close aria-label="Zavřít menu">{{ ui.icon('x', 20) }}</button>
+    </div>
+    <nav class="wrap menu-sheet__nav" aria-label="Hlavní">
+      <a href="{{ link('search') }}">Hledat</a>
+      <a href="{{ link('mps') }}">Poslanci</a>
+      <a href="{{ link('sessions') }}">Schůze</a>
+      <a href="{{ link('how') }}">Jak to funguje</a>
+    </nav>
+  </div>
 
   <main id="obsah">
     {% block content %}{% endblock %}
@@ -72,31 +82,49 @@
   <footer class="site-footer">
     <div class="wrap">
       <div class="site-footer__grid">
-        <div class="site-footer__brand">
-          <a class="wordmark wordmark--on-dark" href="{{ link('home') }}">Rozprava<span class="wordmark__stop">.</span></a>
-          <p>Co poslanci opravdu řekli. Doslovně, s&nbsp;odkazem na stenozáznam.</p>
-        </div>
         <div>
-          <h2 class="site-footer__heading">Zdroj</h2>
-          <p>Stenozáznamy a&nbsp;otevřená data Poslanecké sněmovny Parlamentu ČR, <a href="https://www.psp.cz/">psp.cz</a>. Sněmovna přepisy jazykově upravuje; my je citujeme beze změn a&nbsp;neautorizované označujeme.</p>
+          <a class="wordmark" href="{{ link('home') }}">Rozprava<span class="wordmark__mark" aria-hidden="true"></span></a>
+          <p class="site-footer__about">Prohledávatelný záznam toho, co zaznělo v&nbsp;Poslanecké sněmovně. Doslovné citace s&nbsp;odkazem na stenozáznam.</p>
         </div>
-        <div>
-          <h2 class="site-footer__heading">Nestrannost</h2>
-          <p>Strany u&nbsp;nás nemají barvy. Řadíme podle relevance nebo data, nikdy podle názoru. Rozprava není spojená s&nbsp;žádnou stranou ani se Sněmovnou.</p>
-        </div>
-        <div>
-          <h2 class="site-footer__heading">Projekt</h2>
+        <nav aria-label="Patička">
           <ul class="site-footer__links">
-            <li><a href="{{ link('methodology') }}">Jak to funguje</a></li>
-            <li><a href="{{ link('methodology') }}">Jak vznikají shrnutí</a></li>
-            <li><a href="https://github.com/vojtechbalcar/rozprava">Zdrojový kód</a></li>
+            <li><a href="{{ link('search') }}">Hledat</a></li>
+            <li><a href="{{ link('mps') }}">Poslanci</a></li>
+            <li><a href="{{ link('sessions') }}">Schůze</a></li>
+            <li><a href="{{ link('how') }}">Jak to funguje</a></li>
+            <li><a href="https://github.com/vojtechbalcar/rozprava">API a&nbsp;data</a></li>
           </ul>
-        </div>
+        </nav>
+        <p class="meta site-footer__data">Data: Poslanecká sněmovna PČR (<a href="https://www.psp.cz/">psp.cz</a>). Aktualizováno {{ updated|cz_date }} {{ updated[11:16] }}.</p>
       </div>
-      {% if preview %}
-      <p class="site-footer__note">{{ preview.source }}. Ukázková data pro náhled návrhu, nejde o&nbsp;živý index.</p>
-      {% endif %}
+      <div class="site-footer__bottom">
+        <div class="segmented" role="radiogroup" aria-label="Motiv">
+          <button type="button" role="radio" data-theme-set="light" aria-checked="false">Světlý</button>
+          <button type="button" role="radio" data-theme-set="dark" aria-checked="false">Tmavý</button>
+          <button type="button" role="radio" data-theme-set="system" aria-checked="true">Systém</button>
+        </div>
+        {% if preview %}<p class="meta">Ukázková data pro náhled návrhu, nejde o&nbsp;živý index.</p>{% endif %}
+      </div>
     </div>
   </footer>
+
+  {# ⌘K command palette (§7.4) #}
+  <div class="palette" data-palette hidden>
+    <div class="palette__backdrop" data-palette-close></div>
+    <div class="palette__box" role="dialog" aria-modal="true" aria-label="Hledat a přejít">
+      <div class="palette__input">
+        {{ ui.icon('search', 20) }}
+        <input type="text" placeholder="Poslanec, tisk, schůze nebo dotaz" autocomplete="off" spellcheck="false" aria-label="Hledat" aria-controls="palette-list" aria-autocomplete="list" role="combobox" aria-expanded="true">
+        <kbd class="kbd">Esc</kbd>
+      </div>
+      <div class="palette__list" id="palette-list" role="listbox"></div>
+      <p class="palette__foot label">↑↓ vybrat · ↵ otevřít · esc zavřít</p>
+    </div>
+  </div>
+  <script type="application/json" id="palette-data">{{ palette|tojson }}</script>
+  <script type="application/json" id="filter-data">{{ filters|tojson }}</script>
+
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+  <div class="tip" role="tooltip" hidden></div>
 </body>
 </html>

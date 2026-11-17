@@ -1,70 +1,67 @@
 {% extends "base.html" %}
 {% import "_macros.html" as ui %}
-{% block title %}Rozprava: co poslanci opravdu řekli{% endblock %}
+{% block title %}Rozprava: co ve Sněmovně opravdu zaznělo{% endblock %}
 {% block header_search %}{% endblock %}
 
 {% block content %}
-<section class="hero wrap">
-  <p class="kicker">Stenozáznamy Poslanecké sněmovny, {{ archive.from[:4] }}–{{ archive.to[:4] }}</p>
-  <h1 class="hero__title">Co ve Sněmovně opravdu zaznělo</h1>
-  <p class="hero__lead">Hledejte v&nbsp;projevech poslanců podle smyslu, ne jen podle slov. Každý výsledek je doslovná citace s&nbsp;odkazem na přepis.</p>
-
-  <div class="hero__search">
-    {{ ui.search_field(placeholder='Co zaznělo k automatické účasti v penzijním spoření?', id='home-q') }}
-    {{ ui.filter_chips() }}
+{% set day = home.last_day %}
+{% set f = home.featured %}
+<section class="hero wrap grid">
+  <div class="hero__main">
+    <p class="label">Stenozáznamy Poslanecké sněmovny · {{ archive.from[:4] }}–{{ archive.to[:4] }}</p>
+    <h1 class="hero__title">Co ve Sněmovně opravdu zaznělo</h1>
+    <p class="hero__lede">Hledejte v&nbsp;projevech poslanců podle smyslu, ne jen podle slov. Každý výsledek je doslovná citace s&nbsp;odkazem na stenozáznam.</p>
+    <div class="hero__search">
+      {{ ui.search_bar(placeholder='Co zaznělo k automatické účasti v penzijním spoření?', id='home-q') }}
+      {{ ui.filter_chips() }}
+      <p class="examples"><span>Zkuste:</span>
+        <a href="{{ link('search', q='automatická účast v penzijním spoření') }}">automatická účast v&nbsp;penzijním spoření</a>
+        <a href="{{ link('search', q='lékařská fakulta') }}">lékařská fakulta v&nbsp;Ústí nad Labem</a>
+        <a href="{{ link('search', q='daň') }}">mimořádná daň pro rafinérie</a>
+      </p>
+    </div>
   </div>
 
-  <p class="hero__try">
-    <span class="hero__try-label">Zkuste:</span>
-    <a href="{{ link('search') }}">automatická účast v&nbsp;penzijním spoření</a>
-    <a href="{{ link('search') }}">lékařská fakulta v&nbsp;Ústí nad Labem</a>
-    <a href="{{ link('search') }}">mimořádná daň pro rafinérie</a>
-  </p>
+  <aside class="last-day" aria-labelledby="last-day-title">
+    <h2 class="label" id="last-day-title">Poslední jednací den</h2>
+    <p class="last-day__date"><time datetime="{{ day.date }}">{{ day.date|cz_date_long(weekday=True) }}</time></p>
+    <p class="meta">{{ day.sitting }}.&nbsp;schůze · {{ day.pages }}&nbsp;stran přepisu</p>
+    <div class="last-day__figure">
+      {{ (day.speeches|string)|dot('l', label=day.speeches|count('projev', 'projevy', 'projevů'), animate=True) }}
+      <p class="label">{{ day.speeches|plural('projev', 'projevy', 'projevů') }}</p>
+    </div>
+    <div class="last-day__figure">
+      {{ day.words|cz_number|dot('m', label=day.words|cz_number ~ ' slov', animate=True) }}
+      <p class="label">slov</p>
+    </div>
+    <div class="last-day__strip">
+      <p class="label">Posledních 20 jednacích dnů</p>
+      {{ ui.dot_strip(day.strip, label='Počet projevů v posledních 20 jednacích dnech') }}
+      <p class="meta last-day__range">{{ day.strip[0].date|cz_date }} – {{ day.strip[-1].date|cz_date }}</p>
+    </div>
+  </aside>
 </section>
 
-<section class="band wrap" aria-labelledby="latest-title">
-  <div class="band__aside">
-    <h2 class="band__title" id="latest-title">Z&nbsp;posledního jednání</h2>
-    {% set first = cards[0] %}
-    <p class="band__meta"><time datetime="{{ first.date }}">{{ first.date|cz_date_long(weekday=True) }}</time><br>{{ first.sitting }}.&nbsp;schůze, bod {{ first.agenda.number }}</p>
-    <p class="band__text">{{ first.agenda.short|nbsp }}, {{ first.agenda.reading }}.</p>
-    <a class="text-link" href="{{ link('transcript', term=first.term, sitting=first.sitting, page=first.page) }}">Celý den v&nbsp;přepisu <span aria-hidden="true">→</span></a>
+<section class="section wrap grid" aria-labelledby="latest-title">
+  <div class="latest__aside">
+    <h2 class="h2" id="latest-title">Z&nbsp;posledního jednání</h2>
+    <p class="meta"><time datetime="{{ f.date }}">{{ f.date|cz_date_long(weekday=True) }}</time><br>{{ f.sitting }}.&nbsp;schůze{% if f.agenda %} · bod&nbsp;{{ f.agenda.number }}{% endif %}</p>
+    {% if f.agenda %}<p class="latest__title">{{ f.agenda.short|nbsp }}{% if f.agenda.tisk %} <span class="meta">tisk&nbsp;{{ f.agenda.tisk }}</span>{% endif %}</p>{% endif %}
+    <a href="{{ link('transcript', page=f.page) }}">Celý den v&nbsp;přepisu <span aria-hidden="true">→</span></a>
   </div>
-  <div class="band__main stack">
-    {% for c in cards %}{{ ui.quote_card(c, show_agenda=False) }}{% endfor %}
+  <div class="latest__main">
+    {{ ui.result_object(f, size='quote-l', limit=None, eyebrow='Náhodný výběr z posledního jednacího dne') }}
+    <p class="meta latest__note">Vybráno náhodně z&nbsp;{{ f.pool }} projevů toho dne s&nbsp;alespoň 60 slovy.{% if preview %} V&nbsp;náhledu je výběr uložen při sestavení.{% else %} Výběr se mění každou hodinu.{% endif %}</p>
   </div>
 </section>
 
-<section class="band wrap" aria-labelledby="archive-title">
-  <div class="band__aside">
-    <h2 class="band__title" id="archive-title">V&nbsp;archivu</h2>
-    <p class="band__meta">9. a&nbsp;10. volební období<br>{{ archive.from|cz_date }} – {{ archive.to|cz_date }}</p>
-  </div>
-  <dl class="ledger band__main">
-    <div><dt>projevů</dt><dd>{{ archive.speeches|cz_number }}</dd></div>
-    <div><dt>řečníků</dt><dd>{{ archive.speakers|cz_number }}</dd></div>
-    <div><dt>jednacích dnů</dt><dd>{{ archive.days|cz_number }}</dd></div>
-    <div><dt>schůzí</dt><dd>{{ archive.sittings|cz_number }}</dd></div>
-  </dl>
-</section>
-
-<section class="wrap" id="jak-to-funguje" aria-labelledby="how-title">
-  <div class="how">
-    <h2 class="how__title" id="how-title">Citace, ne dojmy.</h2>
-    <ol class="how__steps">
-      <li>
-        <h3>Přepisy ze Sněmovny</h3>
-        <p>Každý den načteme nové stenozáznamy z&nbsp;psp.cz a&nbsp;projevy přiřadíme poslancům podle oficiálních dat Sněmovny. Citujeme je doslovně, tak jak je Sněmovna zveřejnila. Sama v&nbsp;nich opravuje gramatiku a&nbsp;vypouští zaváhání.</p>
-      </li>
-      <li>
-        <h3>Hledání podle smyslu</h3>
-        <p>Najdeme i&nbsp;projevy, které stejnou věc říkají jinými slovy. Řadíme podle relevance nebo data, nikdy podle toho, kdo má pravdu.</p>
-      </li>
-      <li>
-        <h3>Shrnutí jen s&nbsp;citacemi</h3>
-        <p>Každá věta shrnutí odkazuje na konkrétní projev. Co nejde doložit citací, ve shrnutí není.</p>
-      </li>
-    </ol>
-  </div>
+<section class="section wrap" aria-labelledby="browse-title">
+  <h2 class="label section__eyebrow" id="browse-title">Procházet</h2>
+  <ul class="browse">
+    <li><a href="{{ link('mps') }}"><span>Podle poslance</span><span class="meta">{{ home.browse.mps }}</span></a></li>
+    <li><a href="{{ link('mps') }}"><span>Podle strany</span><span class="meta">{{ home.browse.parties }}</span></a></li>
+    <li><a href="{{ link('sessions') }}"><span>Podle tisku</span><span class="meta">{{ home.browse.tisky }}</span></a></li>
+    <li><a href="{{ link('sessions') }}"><span>Podle schůze</span><span class="meta">{{ home.browse.sittings }}</span></a></li>
+  </ul>
 </section>
 {% endblock %}

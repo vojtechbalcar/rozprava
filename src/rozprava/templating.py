@@ -11,7 +11,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
-from rozprava import typography
+from rozprava import dotmatrix, parties, titles, typography
 
 PACKAGE = Path(__file__).resolve().parent
 TEMPLATES = PACKAGE / "templates"
@@ -36,6 +36,12 @@ def make_env(
         cz_number=typography.cz_number,
         plural=typography.plural,
         count=typography.count,
+        cz_percent=typography.cz_percent,
+        clip=typography.clip,
+        dot=dotmatrix.render,
+        party_label=parties.label,
+        catalog=lambda c: titles.catalog_number(c["term"], c["sitting"], c["page"], c["order"]),
+        catalog_slug=lambda c: titles.catalog_slug(c["term"], c["sitting"], c["page"], c["order"]),
     )
-    env.globals.update(link=link, static=static, **globals)
+    env.globals.update(link=link, static=static, swatches=parties.swatches(), **globals)
     return env

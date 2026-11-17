@@ -2,62 +2,115 @@
 {% import "_macros.html" as ui %}
 {% block title %}{{ mp.name }} · Rozprava{% endblock %}
 
+{% macro graph_svg(cal, verb) -%}
+<svg class="graph" width="{{ cal.width }}" height="{{ cal.height }}" viewBox="0 0 {{ cal.width }} {{ cal.height }}" role="img"
+  aria-label="{{ mp.title }} vystoupil{{ 'a' if mp.title == 'Poslankyně' else '' }} v {{ mp.stats.days_spoke }} z {{ mp.stats.sitting_days }} jednacích dnů 10. volebního období.">
+  {%- for x, label in cal.months %}<text class="graph__month" x="{{ x }}" y="10">{{ label }}</text>{% endfor %}
+  {%- for y, label in cal.weekdays %}<text class="graph__weekday" x="0" y="{{ y + 3 }}">{{ label }}</text>{% endfor %}
+  {%- for c in cal.cells %}
+  {%- if c.info %}{% set i = c.info %}
+  <circle class="ac {{ 'ac--absent' if i.state == 'absent' else 'ac--present' if i.state == 'present' else 'ac--l' ~ i.level }}" cx="{{ c.x }}" cy="{{ c.y }}" r="{{ 3.5 if i.state == 'absent' else 4 }}"
+    data-day="{{ i.date }}"
+    data-tip="{{ i.date|cz_date_long(weekday=True) }} · {% for s in i.sittings %}{{ s }}. schůze{% if not loop.last %}, {% endif %}{% endfor %}&#10;{% if i.speeches %}{{ i.speeches|count('projev', 'projevy', 'projevů') }}{% if i.words %} · {{ i.words|count('slovo', 'slova', 'slov') }}{% endif %}{% elif i.state == 'absent' %}nepřítom{{ 'na' if mp.title == 'Poslankyně' else 'en' }}{% else %}bez projevu{% endif %}{% if i.votes_total %}&#10;{{ verb }}: {{ i.votes_cast }} z {{ i.votes_total }}{% endif %}"/>
+  {%- else %}
+  <circle class="ac ac--none" cx="{{ c.x }}" cy="{{ c.y }}" r="1"/>
+  {%- endif %}
+  {%- endfor %}
+</svg>
+{%- endmacro %}
+
 {% block content %}
-<header class="mp-header wrap">
-  <a class="back-link" href="{{ link('mps') }}"><span aria-hidden="true">←</span> Všichni poslanci</a>
-  <div class="mp-header__body">
-    <span class="monogram" aria-hidden="true">{{ mp.initials }}</span>
-    <div>
-      <h1 class="mp-header__name">{{ mp.name }}</h1>
-      <p class="mp-header__facts">
-        {{ ui.party_badge(mp.party) }}
-        <span>{{ mp.title }} za {{ mp.region }} kraj</span>
-        {% for term in mp.terms %}<span class="mono">{{ term.number }}.&nbsp;volební období, od {{ term.from }}</span>{% endfor %}
-      </p>
+{% set s = mp.stats %}
+{% set verb = 'Hlasovala' if mp.title == 'Poslankyně' else 'Hlasoval' %}
+<header class="wrap mp-head">
+  <a class="back" href="{{ link('mps') }}"><span aria-hidden="true">←</span> Všichni poslanci</a>
+  <div class="mp-head__row">
+    {{ ui.monogram(mp.initials, 96) }}
+    <div class="mp-head__id">
+      <h1 class="mp-head__name">{{ mp.name }}</h1>
+      <p class="mp-head__facts">{{ ui.party_pill(mp.party) }}<span>{{ mp.title }} za {{ mp.region }} kraj</span><span class="meta">{{ mp.terms[0].number }}.&nbsp;volební období, od {{ mp.terms[0].from }}</span></p>
+    </div>
+    <div class="mp-head__actions">
+      <a href="{{ mp.psp_url }}">Originál na psp.cz <span aria-hidden="true">↗</span></a>
+      <button class="btn btn--secondary" type="button" data-copy="{{ link('mp') }}">{{ ui.icon('share') }} Sdílet</button>
     </div>
   </div>
 </header>
 
-<section class="wrap" aria-labelledby="stats-title">
-  <h2 class="visually-hidden" id="stats-title">V&nbsp;číslech</h2>
-  <dl class="stat-tiles">
-    <div class="stat-tile"><dt>Projevy</dt><dd>{{ mp.stats.speeches|cz_number }}</dd></div>
-    <div class="stat-tile"><dt>Vysloveno slov</dt><dd>{{ mp.stats.words|cz_number }}</dd></div>
-    <div class="stat-tile"><dt>Jednací dny s&nbsp;projevem</dt><dd>{{ mp.stats.days|cz_number }}</dd></div>
-    <div class="stat-tile"><dt>Nejdelší projev</dt><dd>{{ mp.stats.longest_words|cz_number }}<span class="stat-tile__unit">&nbsp;{{ mp.stats.longest_words|plural('slovo', 'slova', 'slov') }}</span></dd></div>
-  </dl>
-  <p class="stat-note">Od prvního projevu {{ mp.first_speech|cz_date }} do {{ mp.last_speech|cz_date }}. Počítáno ze stenozáznamů, včetně krátkých vystoupení a&nbsp;faktických poznámek.</p>
+<section class="wrap tiles" aria-label="V číslech">
+  {{ ui.stat_tile('Projevy', s.speeches|string, comparison='medián poslanců: ' ~ s.median_speeches|cz_number(1 if s.median_speeches % 1 else 0)) }}
+  {{ ui.stat_tile('Jednací dny s projevem', s.days_spoke|string, unit='z ' ~ s.sitting_days, comparison='medián poslanců: ' ~ s.median_days_spoke|cz_number(1 if s.median_days_spoke % 1 else 0), aria=s.days_spoke ~ ' z ' ~ s.sitting_days) }}
+  {{ ui.stat_tile('Účast na hlasování', s.attendance|cz_percent(1), comparison='medián poslanců: ' ~ s.median_attendance|cz_percent(1)) }}
+  {% set top = mp.topics[0] %}
+  {{ ui.stat_tile('Nejčastější bod', text=top.short, comparison='tisk ' ~ top.tisk ~ ' · ' ~ top.speeches|count('projev', 'projevy', 'projevů')) }}
 </section>
 
-<div class="profile-layout wrap">
-  <aside class="profile-aside">
-    <section aria-labelledby="topics-title">
-      <h2 class="facets__heading" id="topics-title">Nejčastější body jednání</h2>
-      <ol class="topics">
-        {% for topic in mp.topics %}
-        <li><a href="{{ link('search') }}"><span class="topics__title">{{ topic.title|nbsp }}</span><span class="topics__count">{{ topic.speeches|count('projev', 'projevy', 'projevů') }}</span></a></li>
-        {% endfor %}
-      </ol>
-    </section>
-  </aside>
+{# Session-day activity graph (§7.11) #}
+<section class="wrap activity" aria-labelledby="activity-title" data-activity>
+  <div class="activity__head">
+    <h2 class="h3" id="activity-title">Aktivita v&nbsp;jednacích dnech</h2>
+    <div class="segmented" role="radiogroup" aria-label="Období">
+      <button type="button" role="radio" aria-checked="true" data-period="term">10. období</button>
+      <button type="button" role="radio" aria-checked="false" data-period="2026">2026</button>
+      <button type="button" role="radio" aria-checked="false" data-period="2025">2025</button>
+    </div>
+  </div>
+  <div class="activity__calendar">
+    {% for key, cal in graphs.items() %}
+    <div class="activity__period" data-period-panel="{{ key }}"{% if key != 'term' %} hidden{% endif %}>{{ graph_svg(cal, verb) }}</div>
+    {% endfor %}
+  </div>
+  <div class="activity__compact">
+    {% for month, days in compact %}
+    <div class="activity__month" data-year="{{ days[0].date[:4] }}">
+      <p class="label">{{ month }}</p>
+      {% for row in days|batch(20) %}
+      <svg class="strip" width="{{ row|length * 12 }}" height="8" role="img" aria-label="{{ month }}">
+        {% for d in row %}<circle class="ac {{ 'ac--absent' if d.state == 'absent' else 'ac--present' if d.state == 'present' else 'ac--l' ~ d.level }}" cx="{{ 4 + loop.index0 * 12 }}" cy="4" r="{{ 3.5 if d.state == 'absent' else 4 }}" data-day="{{ d.date }}" data-tip="{{ d.date|cz_date }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}"/>{% endfor %}
+      </svg>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="activity__foot">
+    <p class="meta legend">Méně <svg width="56" height="8" aria-hidden="true">{% for l in range(1, 5) %}<circle class="ac ac--l{{ l }}" cx="{{ 4 + (l - 1) * 12 + 8 }}" cy="4" r="4"/>{% endfor %}<circle class="ac ac--present" cx="4" cy="4" r="4"/></svg> Více
+      <span><svg width="8" height="8" aria-hidden="true"><circle class="ac ac--absent" cx="4" cy="4" r="3.5"/></svg> nepřítom{{ 'na' if mp.title == 'Poslankyně' else 'en' }}</span>
+      <span><svg width="8" height="8" aria-hidden="true"><circle class="ac ac--none" cx="4" cy="4" r="1"/></svg> nejednalo se</span></p>
+    <button class="btn btn--ghost" type="button" data-table-toggle aria-expanded="false" aria-controls="activity-table">{{ ui.icon('table') }} Zobrazit jako tabulku</button>
+  </div>
+  <p class="meta activity__note">Úroveň podle počtu projevů v&nbsp;jednací den, na stejné škále pro všechny poslance. <a href="{{ link('how') }}#aktivita">Jak počítáme aktivitu</a></p>
+  <div class="table-scroll"><table class="data-table visually-hidden" id="activity-table">
+    <caption class="visually-hidden">Jednací dny 10. volebního období</caption>
+    <thead><tr><th scope="col">Den</th><th scope="col">Schůze</th><th scope="col">Stav</th><th scope="col">Projevy</th><th scope="col">Slova</th><th scope="col">Hlasování</th></tr></thead>
+    <tbody>
+      {% for d in mp.activity %}
+      <tr data-year="{{ d.date[:4] }}"><td><button class="table-day" type="button" data-day="{{ d.date }}">{{ d.date|cz_date }}</button></td><td>{{ d.sittings|join(', ') }}</td><td>{{ {'spoke': 'vystoupil' ~ ('a' if mp.title == 'Poslankyně' else ''), 'present': 'přítom' ~ ('na' if mp.title == 'Poslankyně' else 'en'), 'absent': 'nepřítom' ~ ('na' if mp.title == 'Poslankyně' else 'en')}[d.state] }}</td><td>{{ d.speeches }}</td><td>{{ d.words|cz_number if d.words else '–' }}</td><td>{{ d.votes_cast }} z {{ d.votes_total }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
 
-  <section class="profile-main" aria-labelledby="speeches-title">
+<div class="wrap grid profile">
+  <section class="profile__main" aria-labelledby="speeches-title">
     <div class="section-head">
-      <h2 class="section-head__title" id="speeches-title">Projevy</h2>
-      <p class="section-head__meta">Od nejnovějších</p>
+      <h2 class="h2" id="speeches-title">Projevy</h2>
+      <p class="meta">od nejnovějších · {{ mp.speeches|length }} z&nbsp;{{ s.speeches }}</p>
     </div>
-    <form class="search-field search-field--compact" action="{{ link('search') }}" role="search">
-      <label class="visually-hidden" for="mp-q">Hledat v&nbsp;projevech poslance {{ mp.name }}</label>
-      {{ ui.icon('search') }}
-      <input id="mp-q" name="q" type="search" placeholder="Hledat v&nbsp;projevech poslance" autocomplete="off">
-    </form>
-    <div class="stack">
-      {% for c in mp.speeches %}{{ ui.quote_card(c, show_speaker=False) }}{% endfor %}
-    </div>
-    <div class="results__more">
-      <button class="btn btn--secondary" type="button">Načíst další projevy</button>
-      <p class="results__end">Zobrazeno {{ mp.speeches|length }} z&nbsp;{{ mp.stats.speeches }}</p>
-    </div>
+    {{ ui.search_bar(placeholder='Hledat v projevech poslance', id='mp-q', button=False) }}
+    <p class="day-filter" data-day-filter hidden><span class="meta" data-day-filter-label></span> <button class="btn btn--ghost" type="button" data-day-filter-clear>Zrušit filtr</button></p>
+    <ol class="results">
+      {% for c in mp.speeches %}<li>{{ ui.result_object(c, show_speaker=False) }}</li>{% endfor %}
+    </ol>
+    <p class="meta sample-note">V&nbsp;náhledu jsou čtyři ukázkové projevy. <a href="{{ mp.psp_url }}">Další projevy na psp.cz ↗</a></p>
   </section>
+
+  <aside class="profile__aside">
+    <h2 class="label">Nejčastější body</h2>
+    <ol class="topics">
+      {% for topic in mp.topics %}
+      <li><a href="{{ link('search') }}"><span class="meta">tisk&nbsp;{{ topic.tisk }}</span><span class="topics__title">{{ topic.short|nbsp }}</span><span class="meta">{{ topic.speeches|count('projev', 'projevy', 'projevů') }}</span></a></li>
+      {% endfor %}
+    </ol>
+  </aside>
 </div>
 {% endblock %}

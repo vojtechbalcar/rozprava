@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Jak to funguje · Rozprava{% endblock %}
+
+{% block content %}
+<div class="wrap grid longform">
+  <nav class="longform__toc" aria-label="Obsah">
+    <p class="label">Obsah</p>
+    <ol>
+      <li><a href="#zdroje">Zdroje dat</a></li>
+      <li><a href="#vyhledavani">Jak funguje vyhledávání</a></li>
+      <li><a href="#shrnuti">Jak vznikají shrnutí</a></li>
+      <li><a href="#neautorizovano">Co znamená „neautorizováno“</a></li>
+      <li><a href="#aktivita">Jak počítáme aktivitu a účast</a></li>
+      <li><a href="#barvy">Barvy stran</a></li>
+      <li><a href="#zkratky">Klávesové zkratky</a></li>
+      <li><a href="#kontakt">Kontakt a opravy</a></li>
+    </ol>
+  </nav>
+
+  <article class="longform__body">
+    <h1 class="h1">Jak to funguje</h1>
+    <p class="longform__lede">Rozprava je prohledávatelný záznam toho, co zaznělo na plénu Poslanecké sněmovny. Nehodnotí a&nbsp;neověřuje fakta. Ukazuje, kdo co řekl, kdy a&nbsp;kde to v&nbsp;přepisu najdete.</p>
+
+    <section id="zdroje">
+      <h2 class="h2">Zdroje dat</h2>
+      <p>Všechna data pocházejí od Poslanecké sněmovny z&nbsp;webu psp.cz. Texty projevů bereme ze stenozáznamů, které Sněmovna zveřejňuje obvykle do dvou dnů od jednání. Kdo mluvil, ke kterému bodu a&nbsp;jak hlasoval, bereme z&nbsp;otevřených dat Sněmovny, která se obnovují každou noc.</p>
+      <p>Nové přepisy načítáme jednou denně. Přepisy, které ještě nejsou konečné, stahujeme znovu, dokud je Sněmovna neautorizuje, a&nbsp;každou verzi si ukládáme.</p>
+    </section>
+
+    <section id="vyhledavani">
+      <h2 class="h2">Jak funguje vyhledávání</h2>
+      <p>Vyhledávání porovnává význam dotazu s&nbsp;významem projevů, takže najde i&nbsp;projevy, které stejnou věc říkají jinými slovy. Výsledky řadíme podle relevance nebo podle data. Nikdy je neřadíme podle strany ani podle toho, kdo má pravdu.</p>
+    </section>
+
+    <section id="shrnuti">
+      <h2 class="h2">Jak vznikají shrnutí</h2>
+      <p>Shrnutí nad výsledky píše jazykový model. Dostane jen nalezené projevy a&nbsp;každou větu musí opřít o&nbsp;konkrétní projev, na který odkazuje číslem v&nbsp;hranaté závorce. Větu bez odkazu nezobrazíme. Když se nic relevantního nenajde, shrnutí nevznikne.</p>
+      <p>Shrnutí je vždy odlišené od citací: je psané bezpatkovým písmem na šedém podkladu a&nbsp;označené jako text jazykového modelu. Rozhodující je vždy znění přepisu.</p>
+    </section>
+
+    <section id="neautorizovano">
+      <h2 class="h2">Co znamená „neautorizováno“</h2>
+      <p>Stenozáznam prochází třemi stupni. Nejdřív vyjde surový přepis, který ještě neprošel jazykovou korekturou. Pak opravená verze, kterou ještě neschválili řečníci. Nakonec konečná, autorizovaná verze, obvykle za dva až tři týdny.</p>
+      <p>Sněmovna při úpravách opravuje gramatiku a&nbsp;vypouští zaváhání. Naše citace jsou proto doslovné vůči přepisu, ne vůči zvukovému záznamu. Projevy, které ještě nejsou autorizované, označujeme štítkem <span class="auth" tabindex="0" data-tip="Stenografický záznam zatím neprošel autorizací řečníkem. Znění se může drobně změnit.">Neautorizováno</span>.</p>
+    </section>
+
+    <section id="aktivita">
+      <h2 class="h2">Jak počítáme aktivitu a&nbsp;účast</h2>
+      <p><strong>Jednací den</strong> je den, kdy zasedalo plénum. V&nbsp;10. volebním období jich bylo zatím {{ term.sitting_days }}.</p>
+      <p><strong>Účast na hlasování</strong> je podíl hlasování, při kterých byl poslanec přihlášen, ze všech hlasování během jeho mandátu. Přihlášen znamená, že hlasoval pro, proti, zdržel se nebo nehlasoval, ač byl přihlášen. Omluvená nepřítomnost se počítá jako nepřítomnost; omluvy vedeme zvlášť.</p>
+      <p><strong>Přítomen v&nbsp;jednací den</strong> je poslanec, který byl přihlášen alespoň u&nbsp;jednoho hlasování toho dne. <strong>Nepřítomen</strong> je, když nebyl přihlášen u&nbsp;žádného. Dny bez hlasování považujeme za dny s&nbsp;přítomností, protože nepřítomnost z&nbsp;nich nevyčteme.</p>
+      <p><strong>Úroveň aktivity</strong> ve dnech, kdy poslanec mluvil, má čtyři stupně. Hranice jsou kvartily přes všechny poslance a&nbsp;všechny jednací dny období, takže každý profil má stejnou škálu. Cílem je počítat slova; dokud nemáme načtené všechny přepisy, počítáme projevy. Hranice jsou teď {{ term.quartiles[0] }}, {{ term.quartiles[1] }} a&nbsp;{{ term.quartiles[2] }} projevy za den: do {{ term.quartiles[0] }} je první stupeň, do {{ term.quartiles[1] }} druhý, do {{ term.quartiles[2] }} třetí a&nbsp;víc je čtvrtý. Přepočítáváme je každou noc.</p>
+    </section>
+
+    <section id="barvy">
+      <h2 class="h2">Barvy stran</h2>
+      <p>Strany poznáte podle zkratky a&nbsp;malého čtverečku. Barvy čtverečků bereme z&nbsp;oficiálních manuálů stran a&nbsp;upravujeme je na stejný jas a&nbsp;sytost, aby žádná strana nebyla výraznější než jiná. Dokud barvu neověříme, mají všechny strany stejný šedý čtvereček. Nezařazení poslanci mají prázdný čtvereček.</p>
+    </section>
+
+    <section id="zkratky">
+      <h2 class="h2">Klávesové zkratky</h2>
+      <dl class="keys">
+        <div><dt><kbd class="kbd">⌘K</kbd> nebo <kbd class="kbd">Ctrl K</kbd></dt><dd>otevře rychlé hledání poslanců, tisků a&nbsp;schůzí</dd></div>
+        <div><dt><kbd class="kbd">/</kbd></dt><dd>totéž, když nepíšete do pole</dd></div>
+        <div><dt><kbd class="kbd">[</kbd> a <kbd class="kbd">]</kbd></dt><dd>předchozí a&nbsp;další strana přepisu</dd></div>
+        <div><dt><kbd class="kbd">Esc</kbd></dt><dd>zavře hledání nebo vysouvací panel</dd></div>
+      </dl>
+    </section>
+
+    <section id="kontakt">
+      <h2 class="h2">Kontakt a&nbsp;opravy</h2>
+      <p>Našli jste chybu v&nbsp;přiřazení projevu, v&nbsp;datech nebo ve shrnutí? Napište nám přes <a href="https://github.com/vojtechbalcar/rozprava/issues">GitHub</a>. Opravy zapisujeme veřejně.</p>
+    </section>
+  </article>
+</div>
+{% endblock %}

@@ -1,75 +1,95 @@
 {% extends "base.html" %}
 {% import "_macros.html" as ui %}
 {% block title %}{{ search.query }} · Rozprava{% endblock %}
-{% block header_search %}{% endblock %}
 
 {% block content %}
-<section class="query wrap">
-  {{ ui.search_field(query=search.query, id='search-q') }}
-  {{ ui.filter_chips(active=[('Volební období', '10. (2025–)')]) }}
-</section>
-
-<div class="results-layout wrap">
-  <aside class="facets" aria-label="Upřesnit výsledky">
-    <div class="facets__group">
-      <h2 class="facets__heading">Řazení</h2>
-      <ul class="facets__list">
-        <li><a class="facets__item" href="{{ link('search') }}" aria-current="true"><span>Relevance</span></a></li>
-        <li><a class="facets__item" href="{{ link('search') }}"><span>Nejnovější</span></a></li>
-      </ul>
-    </div>
-    <div class="facets__group">
-      <h2 class="facets__heading">Strana</h2>
-      <ul class="facets__list">
-        {% for party, n in facets.parties %}
-        <li><a class="facets__item" href="{{ link('search') }}"><span>{{ party }}</span><span class="facets__count">{{ n }}</span></a></li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="facets__group">
-      <h2 class="facets__heading">Řečník</h2>
-      <ul class="facets__list">
-        {% for name, n in facets.speakers %}
-        <li><a class="facets__item" href="{{ link('mp') }}"><span>{{ name }}</span><span class="facets__count">{{ n }}</span></a></li>
-        {% endfor %}
-      </ul>
-    </div>
-  </aside>
-
-  <div class="results">
-    <p class="results__summary">
-      <strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> v&nbsp;10. volebním období, seřazeno podle relevance
-    </p>
-
-    {% if search.answer %}
-    <section class="answer-panel" aria-labelledby="answer-title">
-      <header class="answer-panel__head">
-        <h2 class="answer-panel__title" id="answer-title">Shrnutí podle {{ search.total }}&nbsp;{{ search.total|plural('projevu', 'projevů', 'projevů') }}</h2>
-        <p class="answer-panel__by">Vytvořil jazykový model. Každá věta cituje zdroj.</p>
-      </header>
-      <div class="answer-panel__body">
-        <p>
-        {%- for s in search.answer %}
-          {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" aria-label="Zdroj {{ n }}">[{{ n }}]</a>{% endfor %}
-        {%- endfor %}
-        </p>
-      </div>
-      <footer class="answer-panel__foot">
-        <p>Rozhodující je vždy znění přepisu. <a href="{{ link('methodology') }}">Jak shrnutí vznikají</a></p>
-      </footer>
+<div class="wrap grid search-page" data-search-page data-query="{{ search.query }}">
+  <div class="search-page__main">
+    <section class="query">
+      {{ ui.search_bar(query=search.query, id='search-q') }}
+      {{ ui.filter_chips({'Volební období': '10. (2025–)'}) }}
+      <button class="btn btn--secondary filters-toggle" type="button" data-drawer-open="facets">{{ ui.icon('filter') }} Filtry</button>
     </section>
+
+    <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> v&nbsp;10. volebním období, seřazeno podle relevance</p>
+    <p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>
+    <section class="state-empty search-empty" data-search-empty hidden><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr.</p><button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button></section>
+
+    {# AI summary (§7.8): machine-made, sans, never serif #}
+    {% if search.answer %}
+    <section class="summary" aria-labelledby="summary-title">
+      <header class="summary__head">
+        <h2 class="label" id="summary-title">Shrnutí · jazykový model</h2>
+        <p class="meta">Podle {{ search.total }}&nbsp;{{ search.total|plural('projevu', 'projevů', 'projevů') }} · každá věta cituje zdroj</p>
+      </header>
+      <p class="summary__body">
+        {%- for s in search.answer %}
+        {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}" aria-describedby="cite-{{ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
+        {%- endfor %}
+      </p>
+      <footer class="summary__foot">Rozhodující je vždy znění přepisu. <a href="{{ link('how') }}#shrnuti">Jak shrnutí vznikají</a></footer>
+    </section>
+    {# Citation popover contents (§7.7) #}
+    <div hidden>
+      {% for c in search.results %}
+      <div class="cite-pop" id="cite-{{ c.n }}" role="tooltip">
+        <p class="cite-pop__who">{{ ui.party_pill(c.speaker.party) }}<span>{{ c.speaker.name }}</span></p>
+        <p class="cite-pop__quote">„{{ c.text|clip(220)|highlight(search.highlights) }}{% if (c.text|clip(220))|length < c.text|length %}&nbsp;…{% endif %}“</p>
+        <p class="cite-pop__foot"><span class="meta">{{ c.catalog|catalog }}</span><a href="{{ link('transcript', page=c.page, anchor=c.anchor, result=c.n) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a></p>
+      </div>
+      {% endfor %}
+    </div>
     {% endif %}
 
-    <h2 class="visually-hidden">Citace</h2>
-    <ol class="results__list stack">
+    <h2 class="visually-hidden">Projevy</h2>
+    <ol class="results">
       {% for c in search.results %}
-      <li style="--i: {{ loop.index0 }}">{{ ui.quote_card(c, terms=search.highlights, number=c.n) }}</li>
+      <li>{{ ui.result_object(c, terms=search.highlights, number=c.n) }}</li>
       {% endfor %}
     </ol>
-
-    <div class="results__more">
-      <p class="results__end">To jsou všechny projevy, které odpovídají dotazu.</p>
-    </div>
+    <p class="results__end meta">Konec ukázkových projevů.</p>
   </div>
+
+  {# Facets (§7.9): counts with bars, sorted by count, ties alphabetical (§10.4) #}
+  <aside class="facets" id="facets" data-drawer aria-label="Upřesnit výsledky">
+    <div class="facets__head">
+      <p class="label">Filtry</p>
+      <button class="icon-btn" type="button" data-drawer-close aria-label="Zavřít filtry">{{ ui.icon('x', 20) }}</button>
+    </div>
+    <section class="facet">
+      <h2 class="label">Řazení</h2>
+      <ul class="facet__sort">
+        <li><a href="{{ link('search', razeni='relevance') }}" data-result-sort="relevance" aria-current="true">Relevance</a></li>
+        <li><a href="{{ link('search', razeni='nejnovejsi') }}" data-result-sort="nejnovejsi">Nejnovější</a></li>
+      </ul>
+    </section>
+    <section class="facet">
+      <h2 class="label">Strana</h2>
+      <ul>
+        {% for party, n in facets.parties %}
+        <li><a class="facet__row" href="{{ link('search', strana=party) }}" data-facet="strana" data-value="{{ party }}" style="--share: {{ n / facets.parties_max }}"><span>{{ ui.swatch(party) }}{{ party|party_label }}</span><span class="meta">{{ n }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="facet">
+      <h2 class="label">Řečník</h2>
+      <ul>
+        {% for name, n in facets.speakers %}
+        <li><a class="facet__row" href="{{ link('search', poslanec=name) }}" data-facet="poslanec" data-value="{{ name }}" style="--share: {{ n / facets.speakers_max }}"><span>{{ name }}</span><span class="meta">{{ n }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="facet">
+      <h2 class="label">Datum</h2>
+      <svg class="histogram" data-date-histogram viewBox="0 0 {{ facets.months|length * 12 }} 48" width="100%" height="48" preserveAspectRatio="none" role="img" aria-label="Výsledky podle měsíců: {% for m in facets.months if m.count %}{{ m.label }} {{ m.count }}{% if not loop.last %}, {% endif %}{% endfor %}">
+        {% for m in facets.months %}
+        {% set h = 2 if not m.count else 2 + 46 * m.count / facets.months_max %}
+        <rect data-month="{{ m.month }}" x="{{ loop.index0 * 12 }}" y="{{ 48 - h }}" width="11" height="{{ h }}" class="{{ 'histogram__bar--hit' if m.count else '' }}"><title>{{ m.label }}: {{ m.count }}</title></rect>
+        {% endfor %}
+      </svg>
+      <button class="btn btn--ghost" type="button" data-date-picker>Zvolit období</button>
+      <p class="meta histogram__axis"><span>{{ facets.months[0].label }}</span><span>{{ facets.months[-1].label }}</span></p>
+    </section>
+  </aside>
 </div>
 {% endblock %}

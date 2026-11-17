@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Strana nenalezena · Rozprava{% endblock %}
+
+{% block content %}
+<section class="wrap notfound">
+  <div class="notfound__number">{{ '404'|dot('xl', label='Chyba 404', animate=True) }}</div>
+  <h1 class="h2">Tahle strana v&nbsp;záznamu není.</h1>
+  <p class="notfound__text">Odkaz je možná neúplný, nebo strana přepisu ještě nevyšla. <a href="{{ link('home') }}">Zpět na úvod</a></p>
+  {{ ui.search_bar(placeholder='Co zaznělo k automatické účasti v penzijním spoření?', id='nf-q') }}
+</section>
+{% endblock %}

@@ -12,6 +12,7 @@ from datetime import date
 from markupsafe import Markup, escape
 
 NBSP = "\u00a0"
+THIN_NBSP = "\u202f"  # narrow no-break space: the thousands separator (DESIGN.md §4.6)
 
 # One-letter prepositions and conjunctions must not end a line (k, s, v, z, o, u, a, i).
 _ONE_LETTER = re.compile(r"(?<![\w.,-])([KkSsVvZzOoUuAaIi]) (?=\S)")
@@ -67,9 +68,14 @@ def cz_date_long(value: str | date, weekday: bool = False) -> str:
 
 
 def cz_number(value: int | float, decimals: int = 0) -> str:
-    """45 813 and 1,5: non-breaking space between thousands, comma for decimals."""
+    """43 897 and 1,5: narrow no-break space between thousands, comma for decimals."""
     text = f"{value:,.{decimals}f}"
-    return text.replace(",", NBSP).replace(".", ",")
+    return text.replace(",", THIN_NBSP).replace(".", ",")
+
+
+def cz_percent(value: float, decimals: int = 0) -> str:
+    """92 % and 3,5 %: Czech puts a no-break space before the per cent sign."""
+    return f"{cz_number(value, decimals)}{NBSP}%"
 
 
 def plural(n: int, one: str, few: str, many: str) -> str:
@@ -84,6 +90,18 @@ def plural(n: int, one: str, few: str, many: str) -> str:
 def count(n: int, one: str, few: str, many: str) -> str:
     """'6 projevů' with the number formatted and bound to its noun."""
     return f"{cz_number(n)}{NBSP}{plural(n, one, few, many)}"
+
+
+def clip(text: str, limit: int = 280) -> str:
+    """The start of text, cut at a word boundary to at most `limit` characters.
+
+    Only removes text from the end; the caller adds the "…". Trailing commas and
+    dashes before the cut are dropped so the ellipsis doesn't follow punctuation.
+    """
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return cut.rstrip(",;:–- ")
 
 
 def highlight(text: str, terms: Iterable[str] = ()) -> Markup:

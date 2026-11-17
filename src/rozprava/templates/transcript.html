@@ -3,50 +3,49 @@
 {% block title %}{{ t.sitting }}. schůze, s. {{ t.page }} · Rozprava{% endblock %}
 
 {% block content %}
-<div class="doc-bar">
-  <div class="wrap doc-bar__inner">
-    <p class="doc-bar__ref">{{ t.sitting }}.&nbsp;schůze{{ ui.sep() }}<time datetime="{{ t.date }}">{{ t.date|cz_date }}</time>{{ ui.sep() }}od&nbsp;{{ t.time|replace('.', ':') }}{{ ui.sep() }}s.&nbsp;{{ t.page }}{% if ui.status_tag(t.status) %}{{ ui.sep() }}{{ ui.status_tag(t.status) }}{% endif %}</p>
-    <a class="doc-bar__source" href="{{ t.psp_url }}">Originál na psp.cz <span aria-hidden="true">↗</span></a>
+<div class="subhead">
+  <div class="wrap subhead__inner">
+    <p class="meta">{{ t.sitting }}.&nbsp;schůze{{ ui.sep() }}<time datetime="{{ t.date }}">{{ t.date|cz_date }}</time>{{ ui.sep() }}od&nbsp;{{ t.time|replace('.', ':') }}{{ ui.sep() }}s.&nbsp;{{ t.page }}{% if ui.auth_status(t.status) %}{{ ui.sep() }}{{ ui.auth_status(t.status) }}{% endif %}</p>
+    <a class="subhead__source" href="{{ t.psp_url }}">Originál na psp.cz <span aria-hidden="true">↗</span></a>
   </div>
 </div>
 
-<div class="reader-layout wrap">
-  <aside class="reader-aside">
-    <a class="back-link" href="{{ link('search') }}"><span aria-hidden="true">←</span> Zpět na výsledky</a>
-    <nav class="reader-aside__toc" aria-labelledby="toc-title">
-      <h2 class="facets__heading" id="toc-title">Na této straně</h2>
-      <ol>
-        {% for sp in t.speeches %}
-        <li><a href="#{{ sp.anchor }}"><span class="toc__name">{{ sp.speaker.name }}</span><span class="toc__role">{% if sp.continued_from %}pokračování{% elif sp.chair %}řídí schůzi{% else %}{{ sp.speaker.party }}{% endif %}</span></a></li>
-        {% endfor %}
-      </ol>
-    </nav>
-  </aside>
-
-  <article class="reader" lang="cs">
+<div class="wrap grid reader-page">
+  <article class="reader" lang="cs" data-reader data-prev="{{ link('transcript', page=t.prev_page) }}" data-next="{{ link('transcript', page=t.next_page) }}">
     <header class="reader__head">
-      <p class="kicker">{{ t.term }}.&nbsp;volební období{{ ui.sep() }}{{ t.sitting }}.&nbsp;schůze{{ ui.sep() }}bod&nbsp;{{ t.agenda.number }}</p>
+      <p class="label">{{ t.term }}.&nbsp;volební období · {{ t.sitting }}.&nbsp;schůze · bod {{ t.agenda.number }}</p>
       <h1 class="reader__title">{{ t.agenda.short|nbsp }}</h1>
-      <p class="reader__official">{{ t.agenda.title|nbsp }}. Sněmovní tisk {{ t.agenda.print }}, {{ t.agenda.reading }}.</p>
+      <p class="reader__chips">{% if t.agenda.tisk %}<span class="meta">tisk&nbsp;{{ t.agenda.tisk }}</span>{% endif %}{% if t.agenda.reading %}<span class="label tag">{{ t.agenda.reading }}</span>{% endif %}</p>
+      <div class="full-title" data-clamp>
+        <p class="full-title__text">{{ t.agenda.title|nbsp }}</p>
+        <button class="btn btn--ghost full-title__toggle" type="button" aria-expanded="false">Celý název</button>
+      </div>
       <nav class="pager" aria-label="Strany přepisu">
         <a href="{{ link('transcript', page=t.prev_page) }}" rel="prev"><span aria-hidden="true">←</span> s.&nbsp;{{ t.prev_page }}</a>
-        <span class="pager__date">{{ t.date|cz_date_long(weekday=True) }}</span>
+        <span class="meta">{{ t.date|cz_date_long(weekday=True) }}</span>
         <a href="{{ link('transcript', page=t.next_page) }}" rel="next">s.&nbsp;{{ t.next_page }} <span aria-hidden="true">→</span></a>
       </nav>
+      <p class="meta reader__keys">Klávesy <kbd class="kbd">[</kbd> a <kbd class="kbd">]</kbd> listují stranami. Označte text a&nbsp;můžete ho citovat.</p>
     </header>
 
     {% for sp in t.speeches %}
-    <section class="speech{% if sp.chair %} speech--chair{% endif %}" id="{{ sp.anchor }}" aria-label="{{ sp.speaker.name }}">
-      {{ ui.speaker_line(sp.speaker) }}
-      {% if sp.continued_from %}
-      <p class="speech__note">Pokračování projevu ze s.&nbsp;{{ sp.continued_from }}</p>
-      {% endif %}
+    {% set sw = swatches.get(sp.speaker.party) %}
+    <section class="speech{% if sp.chair %} speech--chair{% endif %}" id="{{ sp.anchor }}" aria-label="{{ sp.speaker.name }}"
+      data-speaker="{{ sp.speaker.name }}" data-party="{{ sp.speaker.party or '' }}" data-catalog="{{ sp.catalog|catalog }}" data-date="{{ t.date }}" data-page="{{ t.page }}" data-sitting="{{ t.sitting }}" data-status="{{ t.status }}" data-source-url="{{ t.psp_url }}"
+      {% if not sp.chair and sw and sw.css %}style="--rail: {{ sw.css }}"{% endif %}>
+      <p class="speech__who">
+        <a class="speech__name" href="{{ link('mp', slug=sp.speaker.slug) }}">{{ sp.speaker.name }}</a>{{ ui.party_pill(sp.speaker.party) }}
+        {%- if sp.chair %}<span class="speech__role">{{ sp.speaker.role }}, řídí schůzi</span>{% elif sp.speaker.role %}<span class="speech__role">{{ sp.speaker.role|nbsp }}</span>{% endif %}
+        <span class="speech__catalog">{{ ui.catalog_number(sp.catalog) }}</span>
+      </p>
+      {% if sp.continued_from %}<p class="meta speech__note">Pokračování projevu ze s.&nbsp;{{ sp.continued_from }}</p>{% endif %}
       {% for p in sp.paras %}
+        {% set pid = 'p-' ~ (sp.catalog|catalog_slug) ~ '-' ~ loop.index %}
         {% if p.mark is defined %}
-        <p class="passage-label" id="pasaz"><span aria-hidden="true">↓</span> Hledaná pasáž, <a href="{{ link('search') }}#v1">výsledek [1]</a></p>
-        <p class="speech__text has-passage">{{ p.before|nbsp }}<mark class="passage">{{ p.mark|nbsp }}</mark>{{ p.after|nbsp }}</p>
+        <p class="label passage-label" id="pasaz">Hledaná pasáž · <a href="{{ link('search') }}#v1">výsledek [1]</a></p>
+        <div class="para" id="{{ pid }}"><a class="permalink" href="#{{ pid }}" aria-label="Odkaz na odstavec">#</a><p class="speech__text">{{ p.before|nbsp }}<mark class="passage">{{ p.mark|nbsp }}</mark>{{ p.after|nbsp }}</p></div>
         {% else %}
-        <p class="speech__text">{{ p.text|nbsp }}</p>
+        <div class="para" id="{{ pid }}"><a class="permalink" href="#{{ pid }}" aria-label="Odkaz na odstavec">#</a><p class="speech__text">{{ p.text|nbsp }}</p></div>
         {% endif %}
       {% endfor %}
     </section>
@@ -56,5 +55,37 @@
     <p class="reader__continues">Projev pokračuje na další straně. <a href="{{ link('transcript', page=t.next_page) }}">Číst dál na s.&nbsp;{{ t.next_page }} <span aria-hidden="true">→</span></a></p>
     {% endif %}
   </article>
+
+  <aside class="reader-aside">
+    <a class="back" href="{{ link('search') }}"><span aria-hidden="true">←</span> Zpět na výsledky</a>
+    <nav aria-labelledby="toc-title">
+      <h2 class="label" id="toc-title">Na této straně</h2>
+      <ol class="toc">
+        {% for sp in t.speeches %}
+        <li><a href="#{{ sp.anchor }}"><span class="toc__name">{{ sp.speaker.name }}</span><span class="toc__role">{% if sp.continued_from %}pokračování ze s.&nbsp;{{ sp.continued_from }}{% elif sp.chair %}řídí schůzi{% else %}{{ sp.speaker.party|party_label }}{% endif %}</span></a></li>
+        {% endfor %}
+      </ol>
+    </nav>
+    {# Day minimap (§7.13): one segment per speech of the whole day, height by words #}
+    <div class="minimap">
+      <h2 class="label">Celý den · s.&nbsp;{{ t.day.first_page }}–{{ t.day.last_page }}</h2>
+      <div class="minimap__track" role="list" aria-label="Projevy dne {{ t.day.date|cz_date }}">
+        {% for s in t.day.speeches %}
+        {% set sw = swatches.get(s.party) %}
+        <a class="minimap__seg{% if s.chair %} minimap__seg--chair{% endif %}{% if s.on_page %} minimap__seg--here{% endif %}" role="listitem"
+           href="{{ link('transcript', page=s.page, anchor=s.anchor) if s.page == t.page else link('transcript', page=s.page) }}"
+           style="flex-grow: {{ s.words }};{% if not s.chair and sw and sw.css %} --seg: {{ sw.css }};{% endif %}"
+           data-tip="{{ s.name }} · s.&nbsp;{{ s.page }} · {{ s.words|count('slovo', 'slova', 'slov') }}" aria-label="{{ s.name }}, strana {{ s.page }}"></a>
+        {% endfor %}
+      </div>
+      <p class="meta">Výška podle počtu slov. Orámováno: tato strana.</p>
+    </div>
+  </aside>
+</div>
+
+{# Selection toolbar (§7.13): appears over selected transcript text #}
+<div class="selection-bar" data-selection-bar hidden>
+  <button type="button" data-cite-selection>{{ ui.icon('quote') }} Citovat</button>
+  <a href="{{ link('card') }}" data-card-selection>{{ ui.icon('image') }} Vytvořit kartu</a>
 </div>
 {% endblock %}

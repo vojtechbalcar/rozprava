@@ -1,87 +1,146 @@
-"""Generate src/rozprava/static/css/tokens.css from the YAML frontmatter of DESIGN.md.
+"""Generate src/rozprava/static/css/tokens.css from DESIGN.md.
 
-DESIGN.md is the source of truth for colours, type, radii, spacing and layout widths.
-Components are written by hand in app.css on top of these primitives.
+DESIGN.md is the single source of truth. This script copies or derives:
+- §14.1: the CSS variables block (colours, dark theme, shadows, base rules), verbatim
+- §4.1: font stacks (family plus its listed fallbacks)
+- §4.2: the type scale table, and its "Mobile (<640px)" overrides
+- §5.1: the spacing scale
+
+Components are written by hand in app.css on top of these.
 
 Usage: uv run python scripts/build_tokens.py [--check]
 """
 
+import re
 import sys
 from pathlib import Path
-
-import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 DESIGN = ROOT / "DESIGN.md"
 OUT = ROOT / "src/rozprava/static/css/tokens.css"
-GENERIC = {"serif": "serif", "sans-serif": "sans", "monospace": "mono"}
+GENERIC = {"Sans": "sans-serif", "Serif": "serif", "Mono": "monospace"}
 
 
-def frontmatter(text: str) -> dict:
-    _, head, _ = text.split("---\n", 2)
-    return yaml.safe_load(head)
+def section(text: str, heading: str) -> str:
+    """The body of a section, from its heading to the next heading of any level."""
+    start = text.index(heading)
+    rest = text[start + len(heading) :]
+    end = re.search(r"\n#{2,4} ", rest)
+    return rest[: end.start()] if end else rest
 
 
-def family(stack: str) -> str:
-    """Quote family names that contain spaces: JetBrains Mono -> 'JetBrains Mono'."""
-    names = [n.strip() for n in stack.split(",")]
-    return ", ".join(f"'{n}'" if " " in n else n for n in names)
-
-
-def render(spec: dict) -> str:
-    lines = [
-        "/* Generated from DESIGN.md by scripts/build_tokens.py. Do not edit by hand. */",
-        ":root {",
+def table_rows(block: str) -> list[list[str]]:
+    rows = [
+        line.strip().strip("|").split("|") for line in block.splitlines() if line.startswith("|")
     ]
+    return [[c.strip() for c in row] for row in rows[2:]]  # skip header and separator
 
-    lines.append("  /* colours */")
-    for name, value in spec["colors"].items():
-        lines.append(f"  --color-{name}: {value};")
 
-    lines.append("\n  /* font stacks */")
-    stacks: dict[str, str] = {}
-    for style in spec["typography"].values():
-        stack = family(style["fontFamily"])
-        generic = stack.rsplit(",", 1)[-1].strip()
-        stacks.setdefault(GENERIC[generic], stack)
-    for role, stack in stacks.items():
-        lines.append(f"  --font-{role}: {stack};")
+def quoted(name: str) -> str:
+    return f'"{name}"' if " " in name else name
 
-    lines.append("\n  /* type styles: use font: var(--x) plus letter-spacing: var(--x-tracking) */")
-    for name, s in spec["typography"].items():
-        role = GENERIC[family(s["fontFamily"]).rsplit(",", 1)[-1].strip()]
+
+def font_stacks(text: str) -> dict[str, str]:
+    stacks = {}
+    for row in table_rows(section(text, "### 4.1 Families")):
+        role = re.search(r"\*\*(Sans|Serif|Mono)", row[0])
+        if not role:
+            continue  # the dot-matrix row is SVG, not a font
+        family = re.search(r"\*\*(.+?)\*\*", row[1])
+        assert family, row
+        fallbacks = re.findall(r"`([^`]+)`", row[2])
+        names = [family.group(1), *fallbacks, GENERIC[role.group(1)]]
+        stacks[role.group(1).lower()] = ", ".join(quoted(n) for n in dict.fromkeys(names))
+    return stacks
+
+
+def type_scale(text: str) -> tuple[list[str], list[str]]:
+    block = section(text, "### 4.2 Type scale")
+    lines, mobile = [], []
+    for token, family, size, leading, tracking, weight, _use in table_rows(block):
+        name = token.strip("`")
+        px = re.match(r"\d+px", size)
+        weight_value = re.match(r"\d+", weight)
+        assert px and weight_value, (token, size, weight)
+        role = family.lower()
         lines += [
-            f"  --{name}-size: {s['fontSize']};",
-            f"  --{name}-leading: {s['lineHeight']};",
-            f"  --{name}-tracking: {s['letterSpacing'] or 0};",
-            f"  --{name}: {s['fontWeight']} var(--{name}-size)/var(--{name}-leading)"
+            f"  --t-{name}-size: {px.group()};",
+            f"  --t-{name}-leading: {leading};",
+            f"  --t-{name}-tracking: {tracking};",
+            f"  --t-{name}: {weight_value.group()} var(--t-{name}-size)/var(--t-{name}-leading)"
             f" var(--font-{role});",
         ]
+        if "UPPERCASE" in weight:
+            lines.append(f"  --t-{name}-case: uppercase;")
+    rule = re.search(r"Mobile \(<(\d+)px\): (.+)", block)
+    assert rule, "mobile overrides missing from §4.2"
+    for name, px in re.findall(r"`([\w-]+)` → (\d+px)", rule.group(2)):
+        mobile.append(f"    --t-{name}-size: {px};")
+    return lines, [
+        f"@media (max-width: {int(rule.group(1)) - 1}px) {{",
+        "  :root {",
+        *mobile,
+        "  }",
+        "}",
+    ]
 
-    lines.append("\n  /* radii */")
-    for name, value in spec["rounded"].items():
-        lines.append(f"  --radius-{name}: {value};")
 
-    lines.append("\n  /* spacing */")
-    for name, value in spec["spacing"].items():
-        lines.append(f"  --space-{name}: {value};")
+def spacing(text: str) -> list[str]:
+    scale = re.search(r"`([\d, ]+)` px → tokens", section(text, "### 5.1 Spacing scale"))
+    assert scale, "spacing scale missing from §5.1"
+    return [f"  --space-{i}: {v.strip()}px;" for i, v in enumerate(scale.group(1).split(","))]
 
-    lines.append("\n  /* layout */")
-    for name, value in spec["layout"].items():
-        lines.append(f"  --{name}: {value};")
 
-    lines.append("}")
-    return "\n".join(lines) + "\n"
+def css_block(text: str) -> str:
+    block = re.search(r"```css\n(.*?)```", section(text, "### 14.1 CSS variables"), re.S)
+    assert block, "CSS block missing from §14.1"
+    return block.group(1).rstrip() + "\n"
+
+
+def light_theme(css: str) -> list[str]:
+    """[data-theme="light"] with the light colours from §14.1's :root, so a light
+    subtree (the /_design panes) stays light inside a dark system theme."""
+    root = re.search(r":root \{(.*?)\}", css, re.S)
+    dark = re.search(r'\[data-theme="dark"\] \{(.*?)\}', css, re.S)
+    assert root and dark, "§14.1 needs :root and [data-theme=dark] blocks"
+    themed = set(re.findall(r"(--[\w-]+):", dark.group(1)))
+    lines = [line for line in root.group(1).splitlines() if line.strip().split(":")[0] in themed]
+    return ['[data-theme="light"] {', *lines, "}"]
+
+
+def render(text: str) -> str:
+    stacks = font_stacks(text)
+    scale, mobile = type_scale(text)
+    css = css_block(text)
+    out = [
+        "/* Generated from DESIGN.md by scripts/build_tokens.py. Do not edit by hand. */",
+        "",
+        "/* §14.1, verbatim */",
+        css,
+        "/* Light colours again for explicitly light subtrees (derived from §14.1) */",
+        *light_theme(css),
+        "",
+        "/* §4.1 font stacks, §4.2 type scale, §5.1 spacing */",
+        ":root {",
+        *(f"  --font-{role}: {stack};" for role, stack in stacks.items()),
+        "",
+        *scale,
+        "",
+        *spacing(text),
+        "}",
+        "",
+        *mobile,
+    ]
+    return "\n".join(out) + "\n"
 
 
 def main() -> int:
-    css = render(frontmatter(DESIGN.read_text(encoding="utf-8")))
+    css = render(DESIGN.read_text(encoding="utf-8"))
     if "--check" in sys.argv:
         if not OUT.exists() or OUT.read_text(encoding="utf-8") != css:
             print("tokens.css is out of date; run scripts/build_tokens.py")
             return 1
         return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(css, encoding="utf-8")
     print("wrote", OUT.relative_to(ROOT))
     return 0

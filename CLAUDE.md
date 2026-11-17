@@ -28,7 +28,7 @@ Why this stack: see [[stack-decision]] in `docs/`.
   `preview/site/index.html`. It renders the real templates with
   `preview/data.json` (real psp.cz excerpts).
 - Design tokens: `uv run python scripts/build_tokens.py` after editing the
-  `DESIGN.md` frontmatter; a test fails if `tokens.css` is stale.
+  `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
 
 Intended, not built yet; update when they exist:
@@ -50,16 +50,16 @@ and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
   relevant is found, say so; don't fall back to the model's own knowledge.
 - **AI text never looks like a quote.** Summaries are in the sans in the answer
   panel; quotes are in the serif in quote cards. See `DESIGN.md`.
-- **Non-partisan.** Parties never get colours. Petrol is the brand only and never
-  marks a party, side or sentiment. Rank and sort by neutral measures (date,
-  relevance), never by "who's right".
+- **Non-partisan.** Follow DESIGN.md §3.4: verified party colours appear only as
+  equally weighted OKLCH swatches and transcript rails. Until verified, use the
+  same neutral swatch for every party. Rank by date/relevance, never by judgment.
 - **Data flow.** Only the ingest job fetches from psp.cz. Web requests read
   Postgres only. All LLM and embedding calls go through one module with
   caching and a spending limit.
-- **Design.** Follow `DESIGN.md` for every UI change: the archive palette
-  (grey-green paper, green-black ink, petrol accent), Newsreader
-  serif for display and quotes, Inter for interface text, Czech typography („ “
-  quotes, non-breaking spaces after one-letter prepositions).
+- **Design.** Follow the replacement `DESIGN.md` (17 November 2026): museum
+  collection, archival paper and ink, square shapes, yellow matches, Cooper Hewitt
+  UI / Source Serif 4 quotes / IBM Plex Mono provenance, SVG dot-matrix numbers.
+  It supersedes the former teal/Newsreader direction. Preserve Czech typography.
 - Never use Anthropic's logo, fonts, colours or page copy. Only the layout and
   typographic structure are inspired by anthropic.com.
 
