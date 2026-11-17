@@ -21,15 +21,25 @@ Why this stack: see [[stack-decision]] in `docs/`.
 
 ## Commands
 
-The project isn't scaffolded yet. These are the intended commands; update this
-section when they exist.
+- Test: `uv run pytest`
+- Lint: `uv run ruff check .` (and `uv run ruff format .`)
+- Typecheck: `uv run pyright`
+- Design preview: `uv run python scripts/render_preview.py`, then open
+  `preview/site/index.html`. It renders the real templates with
+  `preview/data.json` (real psp.cz excerpts).
+- Design tokens: `uv run python scripts/build_tokens.py` after editing the
+  `DESIGN.md` frontmatter; a test fails if `tokens.css` is stale.
+- Fonts: `uv run python scripts/fetch_fonts.py`
+
+Intended, not built yet; update when they exist:
 
 - Dev: `uv run fastapi dev src/rozprava/main.py`
-- Test: `uv run pytest`
-- Lint: `uv run ruff check .`
-- Typecheck: `uv run pyright`
 - Migrate: `uv run alembic upgrade head`
 - Ingest: `uv run python -m rozprava.ingest`
+
+The project lives on an iCloud-synced Desktop. iCloud marks dot-folders hidden,
+and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
+`.venv` is a symlink to `~/.local/share/venvs/rozprava`. See [[dev-environment]].
 
 ## Hard rules
 

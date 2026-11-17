@@ -1,6 +1,6 @@
 ---
 type: research
-updated: 2026-11-15
+updated: 2026-11-17
 status: current
 ---
 
@@ -78,6 +78,9 @@ From `steno.unl` and `rec.unl` (12 Nov 2026 dump), computed by `scratch/scripts/
 - **`rec` can be stale.** In 2021/50, `rec` still listed a speech by Pavel Blažek that editors later removed from the text, so every later anchor on that page was shifted by one. The live page agrees with the edited text ([s050072](https://www.psp.cz/eknih/2021ps/stenprot/050schuz/s050072.htm)). Ingest has to treat the HTML label as the source of truth, take `id_osoba` from `rec` only when the surname matches, and otherwise resolve by name, role and date against `osoby`/`zarazeni`.
 - **`rec` lags the newest pages, sometimes by days.** On 12 Nov, page 651 (the last page from 6 Nov) wasn't in `rec` yet. On 15 Nov, the 36th sitting's day of 13 Nov had all 26 pages in `steno` and online, but **no `rec` rows at all** (dump `Last-Modified: Sun, 15 Nov 2026 00:54:41 GMT`, checked in `scratch/dl/recheck-1115/`). New sittings therefore have to be attributed from the page labels first and linked to `rec` IDs when they arrive.
 - Non-MP speakers do have IDs. Since 2013, 170 non-MP speakers appear in `rec`. 108 of them never held a government post: mostly senators (Vystrčil, Goláň, Seitlová), the ČNB governor (Singer) and the ombudsman (Šabatová).
+- **A page can open with the tail of a speech that began several pages earlier.** [s034644](https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034644.htm) opens with the end of Olga Richterová's speech, which began on s034642; s034643 has no speaker label at all. Stitching has to walk back over unlabelled pages. Found on 17 Nov while building the [[design-preview]].
+- **`rec.id_bod` can be 0 inside a debate.** Two of Jan Papajanovský's speeches have `id_bod` 0 and no `steno_bod` rows: page 16 of 13 Oct (a proposal to change the agenda) and page 243 of 21 Oct (during the budget debate). The UI says the agenda item is missing rather than guessing one.
+- **`osoby.pohlavi` is inconsistent.** Men are `M` (5 851 rows). Women are `Ž` in most rows (1 105) but `Z` in newer ones (83, e.g. Ester Weimerová, id 7061), and 7 rows hold a mis-encoded byte. Treat anything but `M` as female; Czech titles depend on it (poslanec/poslankyně).
 - Every person ID matches the psp.cz people tables in `poslanci.zip` ([schema](https://www.psp.cz/sqw/hp.sqw?k=1301)), which link people to parties, clubs and terms through `zarazeni` and `organy`.
 
 ### Publication and revisions

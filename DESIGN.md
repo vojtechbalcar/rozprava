@@ -193,7 +193,13 @@ size, never bold serif.
 - Dates: `12. 11. 2026` with non-breaking spaces; times `14:05`.
 - Numbers: thin or non-breaking space as the thousands separator (`12 480`),
   comma as decimal separator.
-- Set `lang="cs"` on Czech content so hyphenation and screen readers behave.
+- Set `lang="cs"` on Czech content so screen readers behave.
+- Numbers stay with what they count and with their digit groups ("10 let",
+  "200 000 korun", "č. 427/2011 Sb.").
+- Reference separators " · " are bound to the item before them, so a line never
+  starts with a dot.
+- Alphabetical lists use Czech order: "Ch" is a letter after "H", and Č, Ř, Š,
+  Ž are letters of their own; accented vowels sort with their base letter.
 
 ## Layout
 
@@ -204,6 +210,10 @@ size, never bold serif.
 - `{spacing.section}` 96px between landing-page bands; inside the app, 48px
   between page sections and 16px between result cards.
 - Generous card padding (32px). Let quotes breathe.
+- Sidebars (search facets, a transcript page's speakers, an MP's frequent agenda
+  items) sit to the right of the reading column from 1024px, so the reading
+  column lines up with the wordmark. Below 1024px they follow the main content
+  or are left out where the chips already cover them.
 
 ## Elevation
 
@@ -233,6 +243,20 @@ Order, top to bottom:
 3. **Meta line** — `{typography.meta}`: date · sitting/session · "Open in
    transcript →" as a `{component.text-link}`.
 
+Details:
+- An ellipsis marks a cut only when the excerpt starts or ends inside a
+  sentence. Excerpts made of whole sentences get none.
+- Above the meta line, the agenda item in `{typography.body-sm}` muted:
+  "Bod 17: Novela zákona o doplňkovém penzijním spoření".
+- Transcripts that psp.cz hasn't authorised yet carry "neautorizováno" in the
+  meta line, with a dotted underline and a tooltip saying the wording may change.
+- On search results the card shows its citation number `[1]` top right, so it
+  matches the marker in the answer panel.
+- On an MP's own profile the speaker line would repeat on every card, so the
+  card drops it and leads with the agenda item instead. When psp.cz gives no
+  agenda item, say so ("Bod pořadu není v datech Sněmovny uveden") rather than
+  guessing.
+
 ### Answer panel
 For questions that get an AI summary. `{colors.surface-card}` background,
 sans text, so it never looks like a quote. Starts with a small caption "Summary
@@ -245,6 +269,15 @@ Single reading column at `{layout.reading-max}`, serif `{typography.quote-md}`.
 Speaker changes are marked by the speaker line in the sans. The cited passage is
 highlighted with `{colors.accent-tint}` and scrolled into view. Sticky meta line at
 the top with date, sitting and a link to the original on psp.cz.
+
+- A petrol-tint label ("↓ Hledaná pasáž, výsledek [1]") sits above the paragraph
+  with the cited passage and is the scroll target, so it's visible on arrival.
+- No automatic hyphenation in verbatim text. A hyphen added by the browser would
+  look like part of the transcript (and some words, like "opt-out", really have one).
+- A page that opens mid-speech credits the speaker and says "Pokračování projevu
+  ze s. 642". Never drop or orphan that text.
+- The chair's procedural speeches are set in `{colors.body}` rather than ink.
+- From 1024px a "Na této straně" list of speakers sits to the right.
 
 ### MP profile
 `{component.mp-header}`: name in `{typography.display-lg}` serif, party badge,
@@ -272,6 +305,8 @@ non-partisanship statement.
 - Show the source with every quote: speaker, date, sitting, link.
 - Use petrol for interactive elements and the wordmark, and nowhere decorative.
 - Use Czech typographic conventions in Czech content.
+- List parties alphabetically in Czech order, with "Nezařazení" last. Never by
+  size, seats or side.
 
 ## Don't
 
@@ -296,8 +331,12 @@ is smaller).
 
 ## Known gaps
 
-- Newsreader and Inter must be self-hosted with the Latin Extended subset for
-  Czech; check ř, ů and „ “ render in every weight used.
+- Fonts are self-hosted by `scripts/fetch_fonts.py` (Latin + Latin Extended,
+  variable weights, Newsreader with its optical-size axis). The Latin subset has
+  no arrows, so a tiny arrows-only file covers Inter and JetBrains Mono.
+  Newsreader has no arrow glyphs at all: never put an arrow in serif text.
+- Interface language is still open. The design preview uses Czech.
+- MPs who changed club during a term: which badge to show on older speeches.
 - Chart styling (speech frequency over time, topic breakdowns) is not specified
   yet beyond "neutral ink, no party colours".
 - Dark mode is not specified.
