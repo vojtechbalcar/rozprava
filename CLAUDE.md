@@ -73,7 +73,7 @@ Confirmed by the user on 17 November 2026:
 - Run locally on this Mac, with PostgreSQL set up here.
 
 Keep the existing Czech interface. The detailed implementation proposal is in
-[[functional-app-design]] and is awaiting review. The stack above describes the
+[[functional-app-design]] and is approved; track execution in [[functional-app-plan]]. The stack above describes the
 longer-term direction; pgvector and the Claude API are deferred for this phase.
 Embedding model, AI provider and eventual public hosting remain open.
 

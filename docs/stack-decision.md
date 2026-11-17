@@ -18,7 +18,7 @@ plain CSS from `DESIGN.md` tokens.
 **Confirmed scope on 17 November:** the user chose the 9th and 10th parliamentary
 terms (from 2021), database-backed search before AI, and local PostgreSQL on this
 Mac. Preserve the existing Czech interface. The detailed proposal in
-[[functional-app-design]] is awaiting review; backend implementation has not started.
+[[functional-app-design]] was approved on 17 November; [[functional-app-plan]] tracks implementation.
 
 **Deferred:** pgvector, embedding-model selection and generated summaries. The
 earlier Claude API proposal is a future option, not a dependency or approved API

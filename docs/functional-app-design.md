@@ -1,7 +1,7 @@
 ---
 type: design
 updated: 2026-11-17
-status: awaiting-review
+status: approved
 ---
 
 # First functional version
@@ -15,9 +15,8 @@ functional. They selected both parliamentary terms beginning in 2021 (9th and
 10th), database-backed search before AI, and local operation on this Mac with
 PostgreSQL installed here. Keep the existing Czech interface and DESIGN.md styling.
 
-This note proposes the implementation details for review; the application is
-still a static preview. No PostgreSQL installation or backend implementation has
-started as of this note.
+The user approved this design on 17 November 2026. Implementation is tracked in
+[[functional-app-plan]].
 
 ## Approach
 
