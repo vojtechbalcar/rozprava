@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ search.query }} · Rozprava{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<section class="query wrap">
+  {{ ui.search_field(query=search.query, id='search-q') }}
+  {{ ui.filter_chips(active=[('Volební období', '10. (2025–)')]) }}
+</section>
+
+<div class="results-layout wrap">
+  <aside class="facets" aria-label="Upřesnit výsledky">
+    <div class="facets__group">
+      <h2 class="facets__heading">Řazení</h2>
+      <ul class="facets__list">
+        <li><a class="facets__item" href="{{ link('search') }}" aria-current="true"><span>Relevance</span></a></li>
+        <li><a class="facets__item" href="{{ link('search') }}"><span>Nejnovější</span></a></li>
+      </ul>
+    </div>
+    <div class="facets__group">
+      <h2 class="facets__heading">Strana</h2>
+      <ul class="facets__list">
+        {% for party, n in facets.parties %}
+        <li><a class="facets__item" href="{{ link('search') }}"><span>{{ party }}</span><span class="facets__count">{{ n }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="facets__group">
+      <h2 class="facets__heading">Řečník</h2>
+      <ul class="facets__list">
+        {% for name, n in facets.speakers %}
+        <li><a class="facets__item" href="{{ link('mp') }}"><span>{{ name }}</span><span class="facets__count">{{ n }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </aside>
+
+  <div class="results">
+    <p class="results__summary">
+      <strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> v&nbsp;10. volebním období, seřazeno podle relevance
+    </p>
+
+    {% if search.answer %}
+    <section class="answer-panel" aria-labelledby="answer-title">
+      <header class="answer-panel__head">
+        <h2 class="answer-panel__title" id="answer-title">Shrnutí podle {{ search.total }}&nbsp;{{ search.total|plural('projevu', 'projevů', 'projevů') }}</h2>
+        <p class="answer-panel__by">Vytvořil jazykový model. Každá věta cituje zdroj.</p>
+      </header>
+      <div class="answer-panel__body">
+        <p>
+        {%- for s in search.answer %}
+          {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" aria-label="Zdroj {{ n }}">[{{ n }}]</a>{% endfor %}
+        {%- endfor %}
+        </p>
+      </div>
+      <footer class="answer-panel__foot">
+        <p>Rozhodující je vždy znění přepisu. <a href="{{ link('methodology') }}">Jak shrnutí vznikají</a></p>
+      </footer>
+    </section>
+    {% endif %}
+
+    <h2 class="visually-hidden">Citace</h2>
+    <ol class="results__list stack">
+      {% for c in search.results %}
+      <li style="--i: {{ loop.index0 }}">{{ ui.quote_card(c, terms=search.highlights, number=c.n) }}</li>
+      {% endfor %}
+    </ol>
+
+    <div class="results__more">
+      <p class="results__end">To jsou všechny projevy, které odpovídají dotazu.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

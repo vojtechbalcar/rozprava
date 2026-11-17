@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Poslanci · Rozprava{% endblock %}
+
+{% block content %}
+<header class="page-head wrap">
+  <h1 class="page-head__title">Poslanci</h1>
+  <p class="page-head__lead">{{ total|count('poslanec', 'poslanci', 'poslanců') }} 10.&nbsp;volebního období, abecedně podle příjmení. Strany řadíme abecedně, ne podle velikosti.</p>
+</header>
+
+<div class="wrap directory-tools">
+  <form class="search-field search-field--compact" role="search" action="{{ link('mps') }}">
+    <label class="visually-hidden" for="mp-filter">Najít poslance podle jména</label>
+    {{ ui.icon('search') }}
+    <input id="mp-filter" name="jmeno" type="search" placeholder="Najít podle jména" autocomplete="off">
+  </form>
+  <div class="chips chips--scroll" role="group" aria-label="Poslanecký klub">
+    <span class="chip chip--active"><span class="chip__label">Všichni <span class="chip__count">{{ total }}</span></span></span>
+    {% for party, n in parties %}
+    <button class="chip" type="button">{{ party }} <span class="chip__count">{{ n }}</span></button>
+    {% endfor %}
+  </div>
+  <nav class="alphabet" aria-label="Rejstřík podle příjmení">
+    {% for letter, _ in groups %}<a href="#pismeno-{{ loop.index }}">{{ letter }}</a>{% endfor %}
+  </nav>
+</div>
+
+<div class="wrap directory">
+  {% for letter, people in groups %}
+  <section class="directory__group" id="pismeno-{{ loop.index }}" aria-labelledby="pismeno-{{ loop.index }}-title">
+    <h2 class="directory__letter" id="pismeno-{{ loop.index }}-title">{{ letter }}</h2>
+    <ul class="directory__list">
+      {% for mp in people %}
+      <li><a class="directory__item" href="{{ link('mp', slug=mp.slug) }}"><span class="directory__name"><span class="directory__surname">{{ mp.surname }}</span> {{ mp.forename }}</span>{{ ui.party_badge(mp.party) }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

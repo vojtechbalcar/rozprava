@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Rozprava{% endblock %}</title>
+  <meta name="description" content="Hledejte, co poslanci opravdu řekli ve Sněmovně. Doslovné citace s&nbsp;odkazem na stenozáznam.">
+  <meta name="theme-color" content="#f6f7f4">
+  <link rel="preload" href="{{ static('fonts/newsreader-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ static('fonts/inter-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ static('css/fonts.css') }}">
+  <link rel="stylesheet" href="{{ static('css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ static('css/app.css') }}">
+</head>
+<body class="page-{{ page }}">
+  <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
+
+  {% if preview %}
+  <div class="preview-strip" role="note">
+    <div class="wrap preview-strip__inner">
+      <p><strong>Náhled návrhu.</strong> Skutečné úryvky z&nbsp;psp.cz, stav k&nbsp;{{ preview.retrieved|cz_date }}.<span class="preview-strip__more"> Odkazy na poslance a&nbsp;přepisy vedou na ukázkové stránky.</span></p>
+      <nav aria-label="Stránky náhledu">
+        {% for name, (file, label) in preview_pages.items() %}
+        <a href="{{ file }}"{% if name == page %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+  </div>
+  {% endif %}
+
+  {% import "_macros.html" as ui %}
+  <header class="site-header">
+    <div class="wrap site-header__inner">
+      <a class="wordmark" href="{{ link('home') }}" aria-label="Rozprava, úvod">Rozprava<span class="wordmark__stop">.</span></a>
+
+      {% block header_search %}
+      <form class="nav-search" action="{{ link('search') }}" role="search">
+        <label class="visually-hidden" for="nav-q">Hledat v&nbsp;projevech</label>
+        {{ ui.icon('search') }}
+        <input id="nav-q" name="q" type="search" placeholder="Hledat v&nbsp;projevech" autocomplete="off">
+        <kbd class="nav-search__key" aria-hidden="true">/</kbd>
+      </form>
+      {% endblock %}
+
+      <nav class="site-nav" aria-label="Hlavní">
+        <a href="{{ link('search') }}"{% if page in ('search', 'states') %} aria-current="page"{% endif %}>Hledat</a>
+        <a href="{{ link('mps') }}"{% if page in ('mps', 'mp') %} aria-current="page"{% endif %}>Poslanci</a>
+        <a href="{{ link('methodology') }}">Jak to funguje</a>
+      </nav>
+
+      <details class="menu">
+        <summary class="menu__toggle"><span class="menu__open">Menu</span><span class="menu__close">Zavřít</span></summary>
+        <div class="menu__sheet">
+          <form class="search-field search-field--sheet" action="{{ link('search') }}" role="search">
+            <label class="visually-hidden" for="sheet-q">Hledat v&nbsp;projevech</label>
+            <input id="sheet-q" name="q" type="search" placeholder="Co zaznělo k&nbsp;…?" autocomplete="off">
+          </form>
+          <nav aria-label="Hlavní">
+            <a href="{{ link('search') }}">Hledat</a>
+            <a href="{{ link('mps') }}">Poslanci</a>
+            <a href="{{ link('methodology') }}">Jak to funguje</a>
+          </nav>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <main id="obsah">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="wordmark wordmark--on-dark" href="{{ link('home') }}">Rozprava<span class="wordmark__stop">.</span></a>
+          <p>Co poslanci opravdu řekli. Doslovně, s&nbsp;odkazem na stenozáznam.</p>
+        </div>
+        <div>
+          <h2 class="site-footer__heading">Zdroj</h2>
+          <p>Stenozáznamy a&nbsp;otevřená data Poslanecké sněmovny Parlamentu ČR, <a href="https://www.psp.cz/">psp.cz</a>. Sněmovna přepisy jazykově upravuje; my je citujeme beze změn a&nbsp;neautorizované označujeme.</p>
+        </div>
+        <div>
+          <h2 class="site-footer__heading">Nestrannost</h2>
+          <p>Strany u&nbsp;nás nemají barvy. Řadíme podle relevance nebo data, nikdy podle názoru. Rozprava není spojená s&nbsp;žádnou stranou ani se Sněmovnou.</p>
+        </div>
+        <div>
+          <h2 class="site-footer__heading">Projekt</h2>
+          <ul class="site-footer__links">
+            <li><a href="{{ link('methodology') }}">Jak to funguje</a></li>
+            <li><a href="{{ link('methodology') }}">Jak vznikají shrnutí</a></li>
+            <li><a href="https://github.com/vojtechbalcar/rozprava">Zdrojový kód</a></li>
+          </ul>
+        </div>
+      </div>
+      {% if preview %}
+      <p class="site-footer__note">{{ preview.source }}. Ukázková data pro náhled návrhu, nejde o&nbsp;živý index.</p>
+      {% endif %}
+    </div>
+  </footer>
+</body>
+</html>

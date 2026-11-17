@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ mp.name }} · Rozprava{% endblock %}
+
+{% block content %}
+<header class="mp-header wrap">
+  <a class="back-link" href="{{ link('mps') }}"><span aria-hidden="true">←</span> Všichni poslanci</a>
+  <div class="mp-header__body">
+    <span class="monogram" aria-hidden="true">{{ mp.initials }}</span>
+    <div>
+      <h1 class="mp-header__name">{{ mp.name }}</h1>
+      <p class="mp-header__facts">
+        {{ ui.party_badge(mp.party) }}
+        <span>{{ mp.title }} za {{ mp.region }} kraj</span>
+        {% for term in mp.terms %}<span class="mono">{{ term.number }}.&nbsp;volební období, od {{ term.from }}</span>{% endfor %}
+      </p>
+    </div>
+  </div>
+</header>
+
+<section class="wrap" aria-labelledby="stats-title">
+  <h2 class="visually-hidden" id="stats-title">V&nbsp;číslech</h2>
+  <dl class="stat-tiles">
+    <div class="stat-tile"><dt>Projevy</dt><dd>{{ mp.stats.speeches|cz_number }}</dd></div>
+    <div class="stat-tile"><dt>Vysloveno slov</dt><dd>{{ mp.stats.words|cz_number }}</dd></div>
+    <div class="stat-tile"><dt>Jednací dny s&nbsp;projevem</dt><dd>{{ mp.stats.days|cz_number }}</dd></div>
+    <div class="stat-tile"><dt>Nejdelší projev</dt><dd>{{ mp.stats.longest_words|cz_number }}<span class="stat-tile__unit">&nbsp;{{ mp.stats.longest_words|plural('slovo', 'slova', 'slov') }}</span></dd></div>
+  </dl>
+  <p class="stat-note">Od prvního projevu {{ mp.first_speech|cz_date }} do {{ mp.last_speech|cz_date }}. Počítáno ze stenozáznamů, včetně krátkých vystoupení a&nbsp;faktických poznámek.</p>
+</section>
+
+<div class="profile-layout wrap">
+  <aside class="profile-aside">
+    <section aria-labelledby="topics-title">
+      <h2 class="facets__heading" id="topics-title">Nejčastější body jednání</h2>
+      <ol class="topics">
+        {% for topic in mp.topics %}
+        <li><a href="{{ link('search') }}"><span class="topics__title">{{ topic.title|nbsp }}</span><span class="topics__count">{{ topic.speeches|count('projev', 'projevy', 'projevů') }}</span></a></li>
+        {% endfor %}
+      </ol>
+    </section>
+  </aside>
+
+  <section class="profile-main" aria-labelledby="speeches-title">
+    <div class="section-head">
+      <h2 class="section-head__title" id="speeches-title">Projevy</h2>
+      <p class="section-head__meta">Od nejnovějších</p>
+    </div>
+    <form class="search-field search-field--compact" action="{{ link('search') }}" role="search">
+      <label class="visually-hidden" for="mp-q">Hledat v&nbsp;projevech poslance {{ mp.name }}</label>
+      {{ ui.icon('search') }}
+      <input id="mp-q" name="q" type="search" placeholder="Hledat v&nbsp;projevech poslance" autocomplete="off">
+    </form>
+    <div class="stack">
+      {% for c in mp.speeches %}{{ ui.quote_card(c, show_speaker=False) }}{% endfor %}
+    </div>
+    <div class="results__more">
+      <button class="btn btn--secondary" type="button">Načíst další projevy</button>
+      <p class="results__end">Zobrazeno {{ mp.speeches|length }} z&nbsp;{{ mp.stats.speeches }}</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

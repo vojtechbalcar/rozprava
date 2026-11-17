@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Stavy · Rozprava{% endblock %}
+{% block header_search %}{% endblock %}
+
+{% block content %}
+<header class="page-head wrap">
+  <h1 class="page-head__title">Stavy</h1>
+  <p class="page-head__lead">Jak vypadá hledání, když se načítá, když nic nenajde a&nbsp;když selže. Jen pro náhled návrhu.</p>
+</header>
+
+<div class="wrap states">
+  <section class="state" aria-labelledby="state-suggest">
+    <h2 class="state__label" id="state-suggest">Našeptávač při psaní</h2>
+    <div class="suggest">
+      <form class="search-field is-focused" role="search" action="{{ link('search') }}">
+        <label class="visually-hidden" for="suggest-q">Hledat v&nbsp;projevech poslanců</label>
+        {{ ui.icon('search') }}
+        <input id="suggest-q" name="q" type="search" value="papaj" autocomplete="off" aria-expanded="true" aria-controls="suggest-list">
+        <button class="btn btn--primary" type="submit">Hledat</button>
+      </form>
+      <div class="suggest__panel" id="suggest-list" role="listbox" aria-label="Návrhy">
+        <p class="suggest__group">Poslanci</p>
+        <a class="suggest__item is-active" role="option" aria-selected="true" href="{{ link('mp') }}"><span><mark class="term">Papaj</mark>anovský Jan</span>{{ ui.party_badge('STAN') }}</a>
+        <p class="suggest__group">Hledat v&nbsp;projevech</p>
+        <a class="suggest__item" role="option" aria-selected="false" href="{{ link('search') }}"><span>„papaj“ ve všech projevech</span><kbd class="suggest__key">↵</kbd></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="state-loading">
+    <h2 class="state__label" id="state-loading">Načítání výsledků</h2>
+    <div class="stack" aria-busy="true" aria-label="Načítám výsledky">
+      {% for _ in range(2) %}
+      <div class="quote-card skeleton" aria-hidden="true">
+        <span class="skeleton__line skeleton__line--name"></span>
+        <span class="skeleton__line"></span>
+        <span class="skeleton__line"></span>
+        <span class="skeleton__line skeleton__line--short"></span>
+        <span class="skeleton__line skeleton__line--meta"></span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="state-empty">
+    <h2 class="state__label" id="state-empty">Nic nenalezeno</h2>
+    <div class="empty">
+      <p class="empty__title">Nikdo to tak neřekl.</p>
+      <p class="empty__text">Pro „kvantové počítače v&nbsp;zemědělství“ jsme 6.&nbsp;11.&nbsp;2026 nenašli žádný projev, a&nbsp;proto ani shrnutí. Zkuste obecnější slova nebo delší období.</p>
+      <div class="empty__actions">
+        <p>Zkuste filtr zrušit:</p>
+        <div class="chips">
+          {{ ui.chip('Datum', active=True, value='6. 11. 2026') }}
+          {{ ui.chip('Volební období', active=True, value='10. (2025–)') }}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="state-error">
+    <h2 class="state__label" id="state-error">Chyba</h2>
+    <div class="error-state">
+      <p>Hledání se teď nepodařilo dokončit. Vaše filtry zůstaly nastavené.</p>
+      <button class="btn btn--secondary" type="button">Zkusit znovu</button>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="state-chips">
+    <h2 class="state__label" id="state-chips">Filtry a&nbsp;tlačítka</h2>
+    <div class="state__row">
+      {{ ui.filter_chips(active=[('Poslanec', 'Jan Papajanovský')]) }}
+    </div>
+    <div class="state__row">
+      <button class="btn btn--primary" type="button">Hledat</button>
+      <button class="btn btn--secondary" type="button">Načíst další</button>
+      <a class="text-link" href="{{ link('search') }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
+      <span class="cite" aria-hidden="true">[3]</span>
+      {{ ui.party_badge('KDU-ČSL') }}
+      {{ ui.status_tag('Neautorizováno!') }}
+    </div>
+  </section>
+</div>
+{% endblock %}

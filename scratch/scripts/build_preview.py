@@ -106,6 +106,15 @@ search = {
 pg = read_page(os.path.join(H, "live-2025-034b", "s034644.htm"))
 mark = results[0]["text"]
 reader_speeches = []
+lead = pg["segs"][0]
+if lead["r"] is None and lead["paras"]:
+    # The page opens mid-speech: credit it to whoever spoke last on the previous page.
+    # The speech may have started several pages earlier; the stitched speeches know where.
+    prev = next(x for x in sp if x["turn"] < 644 and any(pg_ == 644 for pg_, _ in x["paras"]))
+    assert [t for pg_, t in prev["paras"] if pg_ == 644] == lead["paras"]
+    pid = find_pid(prev["label"], (SITTING, prev["turn"]), prev["r"])
+    reader_speeches.append({"anchor": f"s{prev['turn']}-r{prev['r']}", "speaker": person(pid, prev["label"]), "chair": False,
+                            "continued_from": prev["turn"], "paras": [{"text": x} for x in lead["paras"]]})
 for seg in pg["segs"]:
     if seg["r"] is None: continue
     pid = find_pid(seg["label"], (SITTING, 644), seg["r"])
@@ -149,7 +158,8 @@ topics = [{"title": short_title(bod[b][5]), "speeches": n} for b, n in bod_count
 o = osoby[PID]
 mp = person(PID)
 mp.update({
-    "initials": o[3][0] + o[2][0], "region": org[mps174[PID][2]][4], "terms": [{"number": 10, "from": 2025, "to": None}],
+    # pohlavi is M for men; women are Ž, Z (newer rows) or a mis-encoded byte.
+    "initials": o[3][0] + o[2][0], "region": org[mps174[PID][2]][4], "title": "Poslanec" if o[6] == "M" else "Poslankyně", "terms": [{"number": 10, "from": 2025, "to": None}],
     "stats": {"speeches": len(mine), "words": sum(s["words"] for s in mine), "days": len({iso((s["sitting"], s["turn"])) for s in mine}), "longest_words": max(s["words"] for s in mine)},
     "first_speech": iso((mine[0]["sitting"], mine[0]["turn"])), "last_speech": iso((mine[-1]["sitting"], mine[-1]["turn"])),
     "topics": topics, "rec_speeches": sum(1 for x in rec if x[1] == PID and x[0] in steno and steno[x[0]][1] == "174"),
@@ -160,6 +170,9 @@ if "--list" in sys.argv:
         for _, p in s["paras"][:4]: print("    ", p[:500])
 MP_CARDS = [
     (34, 644, "2", "Nejde o nucené spoření.", "statisíce korun místo nuly."),
+    (34, 243, "5", "Nejnáročnější studium pro státní rozpočet", "třeba medicínské, obory."),
+    (34, 28, "2", "Není přece možné, aby ty mimořádné náklady", "ve správný čas na správném místě."),
+    (34, 16, "4", "Nová lékařská fakulta je u nás v kraji opravdu potřeba", "v jednotlivých ambulantních praxích."),
 ]
 extra = os.environ.get("MP_CARDS")
 if extra: MP_CARDS += [tuple(x) for x in json.loads(extra)]
@@ -169,7 +182,10 @@ for sit, turn, r, a, b in MP_CARDS:
     c = card(turn, r, a, b, speech=s, sitting=sit)
     rr = next((x for x in rec if x[0] == st174[(sit, turn)][0] and x[2] == r and x[1] == PID), None)
     b_ = bod.get(rr[3]) if rr and rr[3] not in ("", "0") else None
-    c["agenda"] = {"short": short_title(b_[5]), "number": int(b_[4]) if b_[4] else None} if b_ else None
+    if b_ and b_[0] == AGENDA[0]:
+        c["agenda"] = agenda  # the same bill as the search sample, with its short name
+    else:
+        c["agenda"] = {"short": short_title(b_[5]), "number": int(b_[4]) if b_[4] else None} if b_ else None
     mp_speeches.append(c)
 mp_speeches.sort(key=lambda c: (c["date"], c["page"]), reverse=True)
 mp["speeches"] = mp_speeches
@@ -195,7 +211,7 @@ for c in home_cards: c["agenda"] = agenda
 
 data = {
     "meta": {"note": "Sample data for the design preview. Real excerpts from psp.cz transcripts and open data; not a live index.",
-             "source": "Poslanecká sněmovna Parlamentu ČR, www.psp.cz", "retrieved": "2026-11-12"},
+             "source": "Poslanecká sněmovna Parlamentu ČR, www.psp.cz", "retrieved": datetime.date.today().isoformat()},
     "parties": [c for c, _ in collections.Counter(m["party"] for m in mps).most_common()],
     "archive": archive, "search": search, "transcript": transcript, "mp": mp, "mps": mps, "home_cards": home_cards,
 }

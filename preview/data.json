@@ -1,0 +1,2156 @@
+{
+ "meta": {
+  "note": "Sample data for the design preview. Real excerpts from psp.cz transcripts and open data; not a live index.",
+  "source": "Poslanecká sněmovna Parlamentu ČR, www.psp.cz",
+  "retrieved": "2026-11-17"
+ },
+ "parties": [
+  "ANO",
+  "ODS",
+  "STAN",
+  "Piráti",
+  "KDU-ČSL",
+  "SPD",
+  "Motoristé",
+  "TOP 09",
+  "Nezařazení"
+ ],
+ "archive": {
+  "speeches": 45813,
+  "speakers": 341,
+  "days": 417,
+  "sittings": 178,
+  "from": "2021-11-08",
+  "to": "2026-11-06"
+ },
+ "search": {
+  "query": "Co zaznělo k automatické účasti v penzijním spoření?",
+  "highlights": [
+   "automatickou účast",
+   "automatické účasti",
+   "automatickému zapojení",
+   "automaticky enrollment",
+   "automatický enrollment",
+   "opt-outem",
+   "opt-outu",
+   "opt-out"
+  ],
+  "total": 6,
+  "answer": [
+   {
+    "text": "Jan Papajanovský a Marian Jurečka představili ve druhém čtení novely o doplňkovém penzijním spoření pozměňovací návrhy na automatické zapojení zaměstnanců do spoření s právem odmítnout (opt-out).",
+    "cites": [
+     1,
+     2
+    ]
+   },
+   {
+    "text": "Ester Weimerová argumentaci pro automatickou účast podpořila; podle ní lidé zůstávají u možnosti, která je jim nabídnuta jako první nebo jako automatická.",
+    "cites": [
+     3
+    ]
+   },
+   {
+    "text": "Karel Haas a Jiří Havránek mluvili o automatickém převodu střadatelů z transformovaných fondů do strategie životního cyklu, rovněž s možností opt-outu.",
+    "cites": [
+     4,
+     5
+    ]
+   },
+   {
+    "text": "Ministryně financí Alena Schillerová řekla, že pozměňovací návrh, který zavádí opt-out bez debaty, nepodpoří, protože znamená zásah i do středních a menších firem; debatovat o něm je ochotná, až novela projde.",
+    "cites": [
+     6
+    ]
+   }
+  ],
+  "results": [
+   {
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "No a třetí návrh, to je návrh, který je zdaleka nejambicióznější z těch třech, o kterých budu hovořit, zavádí automatickou účast zaměstnanců s příspěvkem zaměstnavatele a s právem kdykoliv říct ne. To je ten anglickým slovním spojením nebo slovem vyjádřená možnost opt-outu.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 644,
+    "page": 644,
+    "anchor": "r2",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034644.htm#r2",
+    "n": 1,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 6205,
+     "name": "Marian Jurečka",
+     "slug": "6205-marian-jurecka",
+     "party": "KDU-ČSL",
+     "role": null
+    },
+    "text": "A jeho cílem je řešit situaci, kdy zaměstnavatel nabízí příspěvek na penzijko, ale zaměstnanec jej nevyužívá, protože si spoření vůbec nezřídil. Návrh směřuje k automatickému zapojení s právem odmítnout, aniž by zaměstnanec musel povinně přispívat ze své mzdy.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 636,
+    "page": 639,
+    "anchor": "r3",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034639.htm",
+    "n": 2,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 7061,
+     "name": "Ester Weimerová",
+     "slug": "7061-ester-weimerova",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "Já bych jenom chtěla podpořit argumentaci pana kolegy Papajanovského k té automatické účasti. Na studiích psychologie nám říkali o tom, jak je tento efekt velmi účinný. Skutečně tam lidé jsou velmi vytížení, rádi si nechají poradit, co je jakoby ta první, ta optimální varianta, a na základě toho potom zůstávají s tou možností, která jim je nabídnuta jako první nebo jako automatická.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 646,
+    "page": 646,
+    "anchor": "r2",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034646.htm#r2",
+    "n": 3,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 6751,
+     "name": "Karel Haas",
+     "slug": "6751-karel-haas",
+     "party": "ODS",
+     "role": null
+    },
+    "text": "Já v té věci a my všichni kolegové v ODS v té věci máme jasno, byli bychom velmi důslední a velmi ambiciózní v tom, abychom dostali na palubu lidi z transformovaných fondů, to znamená automaticky enrollment z transformovaných fondů do fondů životního cyklu, do té správné strategie životního cyklu, kterou reforma nastavuje, samozřejmě s možností opt-outu, to znamená s možností exitu, ale my bychom pro ten automatický enrollment byli.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 646,
+    "page": 647,
+    "anchor": "r4",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034647.htm",
+    "n": 4,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 6755,
+     "name": "Jiří Havránek",
+     "slug": "6755-jiri-havranek",
+     "party": "ODS",
+     "role": null
+    },
+    "text": "Dále se hlásím k dokumentu 2247, autoenvironment transformovaných fondů do Life Cycle Strategie s opt-outem. Znovu říkám, je to návrh, respektive nápad pana kolegy Patrika Nachera rozpracovaný do paragrafového znění a cílem je tedy přesun střadatelů z nevýnosných transformovaných fondů do Life Cycle Strategie s možností opt-outu, a to s cílem zvýšení jejich výnosů.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 650,
+    "page": 650,
+    "anchor": "r4",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034650.htm#r4",
+    "n": 5,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 6545,
+     "name": "Alena Schillerová",
+     "slug": "6545-alena-schillerova",
+     "party": "ANO",
+     "role": "místopředsedkyně vlády a ministryně financí ČR"
+    },
+    "text": "To je tak velký zásah, že znovu opakuji, že až projde tato novela a stane se součástí legislativy, což snad bude do konce roku, tak jsem – znovu opakuji – ochotná o tom debatovat. A já v tuto chvíli říkám otevřeně, já nepodpořím pozměňovací návrh, který zavádí bez nějaké debaty opt-out. Nepodpořím, protože to znamená zásah i na střední firmy, třeba středně velké, možná i na menší a tak dále.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 648,
+    "page": 649,
+    "anchor": "r2",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034649.htm",
+    "n": 6,
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   }
+  ]
+ },
+ "transcript": {
+  "term": 10,
+  "term_year": 2025,
+  "sitting": 34,
+  "page": 644,
+  "date": "2026-11-06",
+  "time": "12.50",
+  "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+  "agenda": {
+   "number": 17,
+   "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+   "short": "Novela zákona o doplňkovém penzijním spoření",
+   "print": 285,
+   "reading": "druhé čtení"
+  },
+  "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034644.htm",
+  "prev_page": 643,
+  "next_page": 645,
+  "continues": true,
+  "speeches": [
+   {
+    "anchor": "s642-r2",
+    "speaker": {
+     "id": 6473,
+     "name": "Olga Richterová",
+     "slug": "6473-olga-richterova",
+     "party": "Piráti",
+     "role": null
+    },
+    "chair": false,
+    "continued_from": 642,
+    "paras": [
+     {
+      "text": "Bez tohohle všeho to nebude fungovat. Vy jste si zatím vybrali jenom cestu jednorázových dárečků. Mě to mrzí, ale pořád je prostor se vrátit k těm nezbytným změnám systémovým. Děkuji za případné odpovědi."
+     }
+    ]
+   },
+   {
+    "anchor": "r1",
+    "speaker": {
+     "id": 6418,
+     "name": "Jan Skopeček",
+     "slug": "6418-jan-skopecek",
+     "party": "ODS",
+     "role": "místopředseda PSP"
+    },
+    "chair": true,
+    "paras": [
+     {
+      "text": "Tak děkuji, paní poslankyně. A v tuhletu chvíli další přihlášený do rozpravy pan poslanec Papajanovský a než dojde k řečnickému pultíku, načtu jednu omluvu. Pan poslanec Kupka Martin se omlouvá od 12.20 hodin z pracovních důvodů. Pane poslanče, prosím, máte slovo."
+     }
+    ]
+   },
+   {
+    "anchor": "r2",
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "chair": false,
+    "paras": [
+     {
+      "text": "Vážený pane předsedající, vážené kolegyně, vážení kolegové, vážená paní ministryně, dovolte mi, abych zde pohovořil v obecné rozpravě ve druhém čtení zejména o třech pozměňovacích návrzích, které jsme s kolegy z klubu Starostů podávali a na jejichž přípravě jsem se podílel."
+     },
+     {
+      "text": "Začnu něčím, čím možná paní ministryni překvapím a co tady v té Sněmovně nezaznívá často ten vládní návrh, který projednáváme, tedy vládní návrh na změnu doplňkového penzijního spoření, Lepší penzijko, jak ho myslím, velmi chytlavě marketingově paní ministryně pojmenovala, je v řadě věcí dobrý. Zavádí strategii životního cyklu jako základní strategii spoření pro každého, kdo si sám nic lepšího vhodnějšího nevybere. Stanoví jednotný strop poplatků na půl procenta, zvyšuje státní příspěvek mladým lidem do 30 let a velmi důležitá věc – po 13 letech konečně říká, že transformované fondy, tedy to staré penzijní připojištění, jednou skončí. To všechno jsou kroky správným směrem a já je rád podpořím."
+     },
+     {
+      "text": "Ty tři návrhy, o kterých budu teď tady hovořit, nejdou proti tomu vládnímu návrhu. Jdou dál tam, kde vláda zastavila v půlce cesty. A co je zajímavé, ve všech třech případech používám argumenty, které najdeme v důvodové zprávě toho předkládaného materiálu. Je to skutečně tak, že Ministerstvo financí ten problém, který tady máme, velmi dobře popsalo, velmi dobře ho zanalyzovalo. Nicméně ta řešení, která představilo, ta řešení, která jsou součástí toho tisku, zůstávají na půli cesty, jsou dobrým krokem, ale právě proto předkládáme konkrétní pozměňovací návrhy, které mají ambici tu reformu toho soukromého spoření na stáří dotáhnout ještě dál."
+     },
+     {
+      "text": "Proč na tom záleží? Ve třetím pilíři máme dnes 3,9 milionu osob a v úsporách zhruba 660 miliard korun. To je největší úspora na stáří, největší objem peněz, úspor, které v této zemi máme. A zároveň, a to je důležité, je to systém, ve kterém má průměrný účastník toho transformovaného fondu, toho starého penzijka, po 30 letech jeho existence naspořeno zhruba 200 000 korun. Ne proto, že by ti lidé nespořili, ale proto, že jim tenhle stát, Česká republika, 30 let nabízela produkt, který nic nevydělává nebo téměř nic nevydělává. No a v tom produktu jsme je prostě nechali."
+     },
+     {
+      "text": "Tři návrhy, které předkládám, mají společného jmenovatele. Každý z nich mění výchozí nastavení toho systému tak, aby člověk, který nic neudělá, který není odborníkem, který se o to nijak detailně nezajímá, skončil lépe, ne hůře. Jsou to návrhy, které nikomu nic nepřikazují. Každý se může rozhodnout jinak. Každý se může rozhodnout nenechat se tím systémem dovést tam, kam ho chceme dovést. Ale prosím, vážené kolegyně, vážení kolegové, přestaňme trestat ty, kteří se k ničemu nerozhodnou. A takových lidí je v penzijním spoření většina. To je potřeba si přiznat."
+     },
+     {
+      "before": "První návrh tedy zkracuje konec transformovaných fondů z roku 2036 na rok 2030. Druhý říká, že peníze z nich nepůjdou do toho povinného konzervativního fondu, ale do té strategie životního cyklu, kterou Ministerstvo financí zcela správně navrhuje v tom návrhu zavést. ",
+      "mark": "No a třetí návrh, to je návrh, který je zdaleka nejambicióznější z těch třech, o kterých budu hovořit, zavádí automatickou účast zaměstnanců s příspěvkem zaměstnavatele a s právem kdykoliv říct ne. To je ten anglickým slovním spojením nebo slovem vyjádřená možnost opt-outu.",
+      "after": " Vezmu ty tři návrhy popořadě."
+     },
+     {
+      "text": "Ten první návrh, tedy ten, který se věnuje otázce konce transformovaných fondů, je jednoduchý. Vláda v tom tisku navrhuje, aby transformované fondy skončily 31. prosince 2036. Ten návrh, o kterém hovořím a který zdůvodňuje, to mění a navrhuje, aby transformované fondy skončily 31. prosince 2030. Nic jiného se nemění v tom návrhu. Mechanismus přechodu zůstává zachovaný, zůstává zachovaná ochrana do životních penzí, ochrana dluhopisů držených do splatnosti, informační povinnosti, to vše zůstává přesně tak, jak to odborníci z Ministerstva financí napsali. Jen se všechna data posouvají o šest let dopředu."
+     },
+     {
+      "text": "Proč? Dovolte mi to, vážené kolegyně, vážení kolegové, zdůvodnit. A zdůvodním to tak, že přečtu jednu konkrétní větu z důvodové zprávy toho vládního návrhu. Transformované fondy a teď cituji: v dnešní době již neplní vhodnou roli pro dlouhodobé zabezpečení na stáří. A o kus dál v té důvodové zprávě: účastníci tuto situaci z různých důvodů nedostatečně vnímají. To napsala sama vláda a pak navrhla, že se s tím něco udělá až za 10 let."
+     },
+     {
+      "text": "Co to znamená v číslech? Podle Asociace penzijních společností vynesly transponované fondy v posledních 10 letech v průměru 1,13 procenta ročně. Za rok 2025 to bylo 1,57 procenta. Naopak dynamické účastnické fondy, tedy to nové aktuální penzijko, vynesly za stejných 10 let v průměru 5,61 procenta ročně a za rok 2025, což byl, co si budeme povídat, z hlediska investování velmi úspěšný rok, vynesly 16,5 procenta. Vyvážené fondy potom 9 procent. I ten nejkonzervativnější povinný konzervativní fond, tedy ten nejkonzervativnější fond z toho současného nového penzijka, vynesl 2,53 procenta, tedy pořád o procento víc než ty transformované fondy. A v transformovaných fondech přitom zůstávalo k loňskému září 1,77 milionu lidí se 356 miliardami korun. Když si vezmete rozdíl ve výnosech pouhé tři procentní body oproti té umírněné strategii, tak to vychází, že tihle lidé každý rok přichází o 10 miliard korun ročně."
+     },
+     {
+      "text": "O ty peníze nepřichází stát, o ty peníze přichází lidé, kteří si spoří na stáří a pro které stát neumí vyřešit jejich pasivitu, neumí vyřešit jejich neaktivitu. Ještě jednou, 10 miliard korun na stáří, o které přicházíme, které by mohly být použity k tomu, aby se stabilizoval nebo doplnil ten náš průběžný důchodový systém. Vláda navrhuje čekat 10 let do doby, když tento systém vyřešíme, než tento problém vyřešíme."
+     },
+     {
+      "text": "No, vážené kolegyně, vážení kolegové, když si to vynásobíme, tak za těch 10 let tihle střadatelé odhadem přijdou o 100 miliard korun, o 100 miliard korun, které jim prostě nepřijdou na účet."
+     },
+     {
+      "text": "V té diskusi, protože už jsme ji samozřejmě absolvovali na rozpočtovém výboru, zaznívá námitka legitimních očekávání. Lidé v transformovaných fondech mají garanci, že neprodělají. Ano, mají. A ta garance je ale zároveň důvodem, proč nevydělávají. Ale podívejme se na to, prosím, věcně. Každý účastník může už dnes kdykoliv bezplatně přejít do nového penzijka se započtením celé dosažené doby spoření na stáří. Za loňský rok ubylo z těch transformovaných fondů něco přes 200 000 lidí. Za druhé ta garance nezáporného zhodnocení je zákonný parametr. Není to nějaký smluvní závazek, není to něco, co by ti lidé měli podepsaného. Je to zkrátka součástí té zákonné úpravy. A sama důvodová zpráva a tady zase budu citovat, říká, že legitimní očekávání u dlouhodobých finančních produktů a teď cituji, nikdy nemůže být absolutní. A třetí argument proti tomu argumentu o legitimních očekáváních máme v téhle zemi v tomto ohledu precedens."
+     },
+     {
+      "text": "Druhý pilíř Důchodové spoření bylo zrušeno zákonem z 10. prosince 2015, který byl vyhlášen 28. prosince 2015 a účinný byl, prosím vás, 1. ledna 2016. Tedy lidem, kteří do něj vstoupili s tím, že v něm budou spořit do důchodu jsme peníze vyplatili zhruba do roka, tři dny mezi vyhlášením a účinností. A dnes se bavíme o tom, jestli je příliš krátký horizont čtyř let, během kterých se nikomu nic nevyplácí, ale jen přechází do obdobného produktu u téže penzijní společnosti s plným zachováním veškerých nároků."
+     }
+    ]
+   }
+  ]
+ },
+ "mp": {
+  "id": 7030,
+  "name": "Jan Papajanovský",
+  "slug": "7030-jan-papajanovsky",
+  "party": "STAN",
+  "role": null,
+  "initials": "JP",
+  "region": "Ústecký",
+  "title": "Poslanec",
+  "terms": [
+   {
+    "number": 10,
+    "from": 2025,
+    "to": null
+   }
+  ],
+  "stats": {
+   "speeches": 72,
+   "words": 43897,
+   "days": 26,
+   "longest_words": 3629
+  },
+  "first_speech": "2025-11-26",
+  "last_speech": "2026-11-06",
+  "topics": [
+   {
+    "title": "Návrh poslanců Andreje Babiše, Karla Havlíčka, Tomia Okamury, Petra Macinky, Aleny Schillerové, Zuzany…",
+    "speeches": 6
+   },
+   {
+    "title": "Návrh poslanců Radka Vondráčka, Renaty Vesecké, Libora Vondráčka a Zuzany Ožanové na vydání zákona, kterým…",
+    "speeches": 4
+   },
+   {
+    "title": "Návrh poslanců Radka Vondráčka, Andreje Babiše, Tomia Okamury, Petra Macinky, Marka Bendy, Taťány Malé,…",
+    "speeches": 4
+   },
+   {
+    "title": "Návrh zákona, kterým se mění některé zákony v oblasti veřejných rozpočtů",
+    "speeches": 4
+   }
+  ],
+  "rec_speeches": 72,
+  "speeches": [
+   {
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "Nejde o nucené spoření. Jde o to, že člověk, který neudělá nic, bude mít na účtu za 30 let statisíce korun místo nuly.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-11-06",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 644,
+    "page": 646,
+    "anchor": "r2",
+    "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034646.htm",
+    "agenda": {
+     "number": 17,
+     "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+     "short": "Novela zákona o doplňkovém penzijním spoření",
+     "print": 285,
+     "reading": "druhé čtení"
+    }
+   },
+   {
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "Nejnáročnější studium pro státní rozpočet je studium medicíny, zubního lékařství a tak podobně. To znamená, my dneska víme, že v okamžiku, kdy reálně klesají peníze na vysoké školy, tak jako první začnou ty vysoké školy škrtat právě tady ty nejnáročnější, třeba medicínské, obory.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-10-21",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 243,
+    "page": 243,
+    "anchor": "r5",
+    "status": "Neautorizováno!",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034243.htm#r5",
+    "agenda": null
+   },
+   {
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "Není přece možné, aby ty mimořádné náklady na sebe vzal stát, jaksi celá společnost, třeba v podobě právě těch spotřebitelů, a ten mimořádný zisk zůstal jenom těm, kdo zrovna mají to štěstí, že se ocitli ve správný čas na správném místě.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-10-13",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 28,
+    "page": 28,
+    "anchor": "r2",
+    "status": "Autorizováno.",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034028.htm#r2",
+    "agenda": {
+     "short": "Vládní návrh zákona, kterým se mění zákon č. 586/1992 Sb., o daních z příjmů, ve znění pozdějších předpisů",
+     "number": 49
+    }
+   },
+   {
+    "speaker": {
+     "id": 7030,
+     "name": "Jan Papajanovský",
+     "slug": "7030-jan-papajanovsky",
+     "party": "STAN",
+     "role": null
+    },
+    "text": "Nová lékařská fakulta je u nás v kraji opravdu potřeba, protože řada úspěšných studentů středních škol z našeho kraje odchází studovat na lékařské fakulty do celé republiky a v okamžiku, kdy se přesunou za studiem, tak ta šance, že se do našeho regionu vrátí už není vysoká, a proto trpíme neustálým, setrvalým nedostatkem lékařů, ať už v nemocnicích, nebo potom v jednotlivých ambulantních praxích.",
+    "lead": true,
+    "trail": true,
+    "date": "2026-10-13",
+    "term": 10,
+    "term_year": 2025,
+    "sitting": 34,
+    "turn": 16,
+    "page": 16,
+    "anchor": "r4",
+    "status": "Autorizováno.",
+    "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034016.htm#r4",
+    "agenda": null
+   }
+  ]
+ },
+ "mps": [
+  {
+   "id": 5700,
+   "name": "Ivan Adamec",
+   "surname": "Adamec",
+   "forename": "Ivan",
+   "slug": "5700-ivan-adamec",
+   "party": "ODS"
+  },
+  {
+   "id": 6254,
+   "name": "Věra Adámková",
+   "surname": "Adámková",
+   "forename": "Věra",
+   "slug": "6254-vera-adamkova",
+   "party": "ANO"
+  },
+  {
+   "id": 6986,
+   "name": "Hana Ančincová",
+   "surname": "Ančincová",
+   "forename": "Hana",
+   "slug": "6986-hana-ancincova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6150,
+   "name": "Andrej Babiš",
+   "surname": "Babiš",
+   "forename": "Andrej",
+   "slug": "6150-andrej-babis",
+   "party": "ANO"
+  },
+  {
+   "id": 6623,
+   "name": "Ondřej Babka",
+   "surname": "Babka",
+   "forename": "Ondřej",
+   "slug": "6623-ondrej-babka",
+   "party": "ANO"
+  },
+  {
+   "id": 6719,
+   "name": "Jana Bačíková",
+   "surname": "Bačíková",
+   "forename": "Jana",
+   "slug": "6719-jana-bacikova",
+   "party": "ODS"
+  },
+  {
+   "id": 6987,
+   "name": "Jiří Barták",
+   "surname": "Barták",
+   "forename": "Jiří",
+   "slug": "6987-jiri-bartak",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6988,
+   "name": "Pavel Bartoň",
+   "surname": "Bartoň",
+   "forename": "Pavel",
+   "slug": "6988-pavel-barton",
+   "party": "ANO"
+  },
+  {
+   "id": 6433,
+   "name": "Ivan Bartoš",
+   "surname": "Bartoš",
+   "forename": "Ivan",
+   "slug": "6433-ivan-bartos",
+   "party": "Piráti"
+  },
+  {
+   "id": 6178,
+   "name": "Jan Bartošek",
+   "surname": "Bartošek",
+   "forename": "Jan",
+   "slug": "6178-jan-bartosek",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6989,
+   "name": "Lucie Bartošová",
+   "surname": "Bartošová",
+   "forename": "Lucie",
+   "slug": "6989-lucie-bartosova",
+   "party": "ODS"
+  },
+  {
+   "id": 5379,
+   "name": "Jan Bauer",
+   "surname": "Bauer",
+   "forename": "Jan",
+   "slug": "5379-jan-bauer",
+   "party": "ODS"
+  },
+  {
+   "id": 6435,
+   "name": "Martin Baxa",
+   "surname": "Baxa",
+   "forename": "Martin",
+   "slug": "6435-martin-baxa",
+   "party": "ODS"
+  },
+  {
+   "id": 4,
+   "name": "Marek Benda",
+   "surname": "Benda",
+   "forename": "Marek",
+   "slug": "4-marek-benda",
+   "party": "ODS"
+  },
+  {
+   "id": 346,
+   "name": "Petr Bendl",
+   "surname": "Bendl",
+   "forename": "Petr",
+   "slug": "346-petr-bendl",
+   "party": "ODS"
+  },
+  {
+   "id": 6722,
+   "name": "Jan Berki",
+   "surname": "Berki",
+   "forename": "Jan",
+   "slug": "6722-jan-berki",
+   "party": "STAN"
+  },
+  {
+   "id": 6723,
+   "name": "Jana Berkovcová",
+   "surname": "Berkovcová",
+   "forename": "Jana",
+   "slug": "6723-jana-berkovcova",
+   "party": "ANO"
+  },
+  {
+   "id": 6991,
+   "name": "Drahomír Blažej",
+   "surname": "Blažej",
+   "forename": "Drahomír",
+   "slug": "6991-drahomir-blazej",
+   "party": "ANO"
+  },
+  {
+   "id": 6992,
+   "name": "Zdeňka Blišťanová",
+   "surname": "Blišťanová",
+   "forename": "Zdeňka",
+   "slug": "6992-zdenka-blistanova",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6993,
+   "name": "Jiří Bouška",
+   "surname": "Bouška",
+   "forename": "Jiří",
+   "slug": "6993-jiri-bouska",
+   "party": "ANO"
+  },
+  {
+   "id": 6185,
+   "name": "Milan Brázdil",
+   "surname": "Brázdil",
+   "forename": "Milan",
+   "slug": "6185-milan-brazdil",
+   "party": "ANO"
+  },
+  {
+   "id": 6994,
+   "name": "Monika Brzesková",
+   "surname": "Brzesková",
+   "forename": "Monika",
+   "slug": "6994-monika-brzeskova",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6995,
+   "name": "František Bureš",
+   "surname": "Bureš",
+   "forename": "František",
+   "slug": "6995-frantisek-bures",
+   "party": "ANO"
+  },
+  {
+   "id": 5899,
+   "name": "Jan Bureš",
+   "surname": "Bureš",
+   "forename": "Jan",
+   "slug": "5899-jan-bures",
+   "party": "ODS"
+  },
+  {
+   "id": 5903,
+   "name": "Jana Černochová",
+   "surname": "Černochová",
+   "forename": "Jana",
+   "slug": "5903-jana-cernochova",
+   "party": "ODS"
+  },
+  {
+   "id": 6996,
+   "name": "Igor Červený",
+   "surname": "Červený",
+   "forename": "Igor",
+   "slug": "6996-igor-cerveny",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6997,
+   "name": "Adriana Chochelová",
+   "surname": "Chochelová",
+   "forename": "Adriana",
+   "slug": "6997-adriana-chochelova",
+   "party": "STAN"
+  },
+  {
+   "id": 6998,
+   "name": "Benjamin Činčila",
+   "surname": "Činčila",
+   "forename": "Benjamin",
+   "slug": "6998-benjamin-cincila",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6727,
+   "name": "Eva Decroix",
+   "surname": "Decroix",
+   "forename": "Eva",
+   "slug": "6727-eva-decroix",
+   "party": "ODS"
+  },
+  {
+   "id": 6999,
+   "name": "Katerina Demetrashvili",
+   "surname": "Demetrashvili",
+   "forename": "Katerina",
+   "slug": "6999-katerina-demetrashvili",
+   "party": "Piráti"
+  },
+  {
+   "id": 7068,
+   "name": "Jana Demjanová",
+   "surname": "Demjanová",
+   "forename": "Jana",
+   "slug": "7068-jana-demjanova",
+   "party": "ANO"
+  },
+  {
+   "id": 7000,
+   "name": "Denis Doksanský",
+   "surname": "Doksanský",
+   "forename": "Denis",
+   "slug": "7000-denis-doksansky",
+   "party": "ANO"
+  },
+  {
+   "id": 7001,
+   "name": "Tomáš Doležal",
+   "surname": "Doležal",
+   "forename": "Tomáš",
+   "slug": "7001-tomas-dolezal",
+   "party": "SPD"
+  },
+  {
+   "id": 6431,
+   "name": "Lenka Dražilová",
+   "surname": "Dražilová",
+   "forename": "Lenka",
+   "slug": "6431-lenka-drazilova",
+   "party": "ANO"
+  },
+  {
+   "id": 7002,
+   "name": "Karel Dvořák",
+   "surname": "Dvořák",
+   "forename": "Karel",
+   "slug": "7002-karel-dvorak",
+   "party": "STAN"
+  },
+  {
+   "id": 6190,
+   "name": "Jaroslav Faltýnek",
+   "surname": "Faltýnek",
+   "forename": "Jaroslav",
+   "slug": "6190-jaroslav-faltynek",
+   "party": "ANO"
+  },
+  {
+   "id": 6447,
+   "name": "Kamal Farhan",
+   "surname": "Farhan",
+   "forename": "Kamal",
+   "slug": "6447-kamal-farhan",
+   "party": "ANO"
+  },
+  {
+   "id": 7003,
+   "name": "Irena Ferčíková Konečná",
+   "surname": "Ferčíková Konečná",
+   "forename": "Irena",
+   "slug": "7003-irena-fercikova-konecna",
+   "party": "Piráti"
+  },
+  {
+   "id": 6074,
+   "name": "Petr Fiala",
+   "surname": "Fiala",
+   "forename": "Petr",
+   "slug": "6074-petr-fiala",
+   "party": "ODS"
+  },
+  {
+   "id": 5459,
+   "name": "Radim Fiala",
+   "surname": "Fiala",
+   "forename": "Radim",
+   "slug": "5459-radim-fiala",
+   "party": "SPD"
+  },
+  {
+   "id": 6457,
+   "name": "Eva Fialová",
+   "surname": "Fialová",
+   "forename": "Eva",
+   "slug": "6457-eva-fialova",
+   "party": "ANO"
+  },
+  {
+   "id": 7004,
+   "name": "Jana Filipovičová",
+   "surname": "Filipovičová",
+   "forename": "Jana",
+   "slug": "7004-jana-filipovicova",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6750,
+   "name": "Josef Flek",
+   "surname": "Flek",
+   "forename": "Josef",
+   "slug": "6750-josef-flek",
+   "party": "STAN"
+  },
+  {
+   "id": 5911,
+   "name": "Jaroslav Foldyna",
+   "surname": "Foldyna",
+   "forename": "Jaroslav",
+   "slug": "5911-jaroslav-foldyna",
+   "party": "SPD"
+  },
+  {
+   "id": 7106,
+   "name": "Libor Forman",
+   "surname": "Forman",
+   "forename": "Libor",
+   "slug": "7106-libor-forman",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6451,
+   "name": "Stanislav Fridrich",
+   "surname": "Fridrich",
+   "forename": "Stanislav",
+   "slug": "6451-stanislav-fridrich",
+   "party": "ANO"
+  },
+  {
+   "id": 7005,
+   "name": "Karin Gajdová",
+   "surname": "Gajdová",
+   "forename": "Karin",
+   "slug": "7005-karin-gajdova",
+   "party": "ANO"
+  },
+  {
+   "id": 7006,
+   "name": "Matěj Gregor",
+   "surname": "Gregor",
+   "forename": "Matěj",
+   "slug": "7006-matej-gregor",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6751,
+   "name": "Karel Haas",
+   "surname": "Haas",
+   "forename": "Karel",
+   "slug": "6751-karel-haas",
+   "party": "ODS"
+  },
+  {
+   "id": 6753,
+   "name": "Jana Hanzlíková",
+   "surname": "Hanzlíková",
+   "forename": "Jana",
+   "slug": "6753-jana-hanzlikova",
+   "party": "ANO"
+  },
+  {
+   "id": 6754,
+   "name": "Matěj Ondřej Havel",
+   "surname": "Havel",
+   "forename": "Matěj Ondřej",
+   "slug": "6754-matej-ondrej-havel",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6621,
+   "name": "Karel Havlíček",
+   "surname": "Havlíček",
+   "forename": "Karel",
+   "slug": "6621-karel-havlicek",
+   "party": "ANO"
+  },
+  {
+   "id": 6755,
+   "name": "Jiří Havránek",
+   "surname": "Havránek",
+   "forename": "Jiří",
+   "slug": "6755-jiri-havranek",
+   "party": "ODS"
+  },
+  {
+   "id": 7066,
+   "name": "Vlastimil Hebr",
+   "surname": "Hebr",
+   "forename": "Vlastimil",
+   "slug": "7066-vlastimil-hebr",
+   "party": "ANO"
+  },
+  {
+   "id": 6756,
+   "name": "Tomáš Helebrant",
+   "surname": "Helebrant",
+   "forename": "Tomáš",
+   "slug": "6756-tomas-helebrant",
+   "party": "ANO"
+  },
+  {
+   "id": 6758,
+   "name": "Igor Hendrych",
+   "surname": "Hendrych",
+   "forename": "Igor",
+   "slug": "6758-igor-hendrych",
+   "party": "ANO"
+  },
+  {
+   "id": 6881,
+   "name": "Petr Hladík",
+   "surname": "Hladík",
+   "forename": "Petr",
+   "slug": "6881-petr-hladik",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 7011,
+   "name": "Matěj Hlavatý",
+   "surname": "Hlavatý",
+   "forename": "Matěj",
+   "slug": "7011-matej-hlavaty",
+   "party": "STAN"
+  },
+  {
+   "id": 6905,
+   "name": "Andrea Hoffmannová",
+   "surname": "Hoffmannová",
+   "forename": "Andrea",
+   "slug": "6905-andrea-hoffmannova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6693,
+   "name": "Libor Hoppe",
+   "surname": "Hoppe",
+   "forename": "Libor",
+   "slug": "6693-libor-hoppe",
+   "party": "ODS"
+  },
+  {
+   "id": 6803,
+   "name": "Jiří Horák",
+   "surname": "Horák",
+   "forename": "Jiří",
+   "slug": "6803-jiri-horak",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6552,
+   "name": "Zdeněk Hřib",
+   "surname": "Hřib",
+   "forename": "Zdeněk",
+   "slug": "6552-zdenek-hrib",
+   "party": "Piráti"
+  },
+  {
+   "id": 6455,
+   "name": "Jan Hrnčíř",
+   "surname": "Hrnčíř",
+   "forename": "Jan",
+   "slug": "6455-jan-hrncir",
+   "party": "SPD"
+  },
+  {
+   "id": 7007,
+   "name": "Monika Hubíková",
+   "surname": "Hubíková",
+   "forename": "Monika",
+   "slug": "7007-monika-hubikova",
+   "party": "ANO"
+  },
+  {
+   "id": 6687,
+   "name": "Jan Jakob",
+   "surname": "Jakob",
+   "forename": "Jan",
+   "slug": "6687-jan-jakob",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6459,
+   "name": "Jakub Janda",
+   "surname": "Janda",
+   "forename": "Jakub",
+   "slug": "6459-jakub-janda",
+   "party": "ODS"
+  },
+  {
+   "id": 6201,
+   "name": "Miloslav Janulík",
+   "surname": "Janulík",
+   "forename": "Miloslav",
+   "slug": "6201-miloslav-janulik",
+   "party": "ANO"
+  },
+  {
+   "id": 6463,
+   "name": "Aleš Juchelka",
+   "surname": "Juchelka",
+   "forename": "Aleš",
+   "slug": "6463-ales-juchelka",
+   "party": "ANO"
+  },
+  {
+   "id": 6205,
+   "name": "Marian Jurečka",
+   "surname": "Jurečka",
+   "forename": "Marian",
+   "slug": "6205-marian-jurecka",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6603,
+   "name": "Pavel Karpíšek",
+   "surname": "Karpíšek",
+   "forename": "Pavel",
+   "slug": "6603-pavel-karpisek",
+   "party": "ODS"
+  },
+  {
+   "id": 6209,
+   "name": "David Kasal",
+   "surname": "Kasal",
+   "forename": "David",
+   "slug": "6209-david-kasal",
+   "party": "ANO"
+  },
+  {
+   "id": 7008,
+   "name": "Zdena Kašparová",
+   "surname": "Kašparová",
+   "forename": "Zdena",
+   "slug": "7008-zdena-kasparova",
+   "party": "STAN"
+  },
+  {
+   "id": 7009,
+   "name": "Jiřina Klčová",
+   "surname": "Klčová",
+   "forename": "Jiřina",
+   "slug": "7009-jirina-klcova",
+   "party": "ANO"
+  },
+  {
+   "id": 7010,
+   "name": "Oto Klempíř",
+   "surname": "Klempíř",
+   "forename": "Oto",
+   "slug": "7010-oto-klempir",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6506,
+   "name": "Tomáš Kohoutek",
+   "surname": "Kohoutek",
+   "forename": "Tomáš",
+   "slug": "6506-tomas-kohoutek",
+   "party": "ANO"
+  },
+  {
+   "id": 7012,
+   "name": "Vladimír Kolek",
+   "surname": "Kolek",
+   "forename": "Vladimír",
+   "slug": "7012-vladimir-kolek",
+   "party": "ANO"
+  },
+  {
+   "id": 6211,
+   "name": "Martin Kolovratník",
+   "surname": "Kolovratník",
+   "forename": "Martin",
+   "slug": "6211-martin-kolovratnik",
+   "party": "ANO"
+  },
+  {
+   "id": 6508,
+   "name": "Radek Koten",
+   "surname": "Koten",
+   "forename": "Radek",
+   "slug": "6508-radek-koten",
+   "party": "SPD"
+  },
+  {
+   "id": 7108,
+   "name": "Jiří Kotlík",
+   "surname": "Kotlík",
+   "forename": "Jiří",
+   "slug": "7108-jiri-kotlik",
+   "party": "ANO"
+  },
+  {
+   "id": 6214,
+   "name": "Věra Kovářová",
+   "surname": "Kovářová",
+   "forename": "Věra",
+   "slug": "6214-vera-kovarova",
+   "party": "STAN"
+  },
+  {
+   "id": 7013,
+   "name": "Veronika Kovářová",
+   "surname": "Kovářová",
+   "forename": "Veronika",
+   "slug": "7013-veronika-kovarova",
+   "party": "Piráti"
+  },
+  {
+   "id": 7014,
+   "name": "Petr Kowanda",
+   "surname": "Kowanda",
+   "forename": "Petr",
+   "slug": "7014-petr-kowanda",
+   "party": "ANO"
+  },
+  {
+   "id": 7015,
+   "name": "Jakub Krainer",
+   "surname": "Krainer",
+   "forename": "Jakub",
+   "slug": "7015-jakub-krainer",
+   "party": "STAN"
+  },
+  {
+   "id": 6509,
+   "name": "Robert Králíček",
+   "surname": "Králíček",
+   "forename": "Robert",
+   "slug": "6509-robert-kralicek",
+   "party": "ANO"
+  },
+  {
+   "id": 7016,
+   "name": "Miroslav Krejčí",
+   "surname": "Krejčí",
+   "forename": "Miroslav",
+   "slug": "7016-miroslav-krejci",
+   "party": "Motoristé"
+  },
+  {
+   "id": 7017,
+   "name": "Vojtěch Krňanský",
+   "surname": "Krňanský",
+   "forename": "Vojtěch",
+   "slug": "7017-vojtech-krnansky",
+   "party": "Motoristé"
+  },
+  {
+   "id": 7018,
+   "name": "Marie Kršková",
+   "surname": "Kršková",
+   "forename": "Marie",
+   "slug": "7018-marie-krskova",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6466,
+   "name": "Jana Krutáková",
+   "surname": "Krutáková",
+   "forename": "Jana",
+   "slug": "6466-jana-krutakova",
+   "party": "STAN"
+  },
+  {
+   "id": 6215,
+   "name": "Roman Kubíček",
+   "surname": "Kubíček",
+   "forename": "Roman",
+   "slug": "6215-roman-kubicek",
+   "party": "ANO"
+  },
+  {
+   "id": 6216,
+   "name": "Michal Kučera",
+   "surname": "Kučera",
+   "forename": "Michal",
+   "slug": "6216-michal-kucera",
+   "party": "TOP 09"
+  },
+  {
+   "id": 7021,
+   "name": "Martin Kupec",
+   "surname": "Kupec",
+   "forename": "Martin",
+   "slug": "7021-martin-kupec",
+   "party": "ANO"
+  },
+  {
+   "id": 6538,
+   "name": "Martin Kupka",
+   "surname": "Kupka",
+   "forename": "Martin",
+   "slug": "6538-martin-kupka",
+   "party": "ODS"
+  },
+  {
+   "id": 6738,
+   "name": "Hubert Lang",
+   "surname": "Lang",
+   "forename": "Hubert",
+   "slug": "6738-hubert-lang",
+   "party": "ANO"
+  },
+  {
+   "id": 5943,
+   "name": "Helena Langšádlová",
+   "surname": "Langšádlová",
+   "forename": "Helena",
+   "slug": "5943-helena-langsadlova",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6537,
+   "name": "Jan Lipavský",
+   "surname": "Lipavský",
+   "forename": "Jan",
+   "slug": "6537-jan-lipavsky",
+   "party": "ODS"
+  },
+  {
+   "id": 7022,
+   "name": "Petr Macinka",
+   "surname": "Macinka",
+   "forename": "Petr",
+   "slug": "7022-petr-macinka",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6732,
+   "name": "Ivana Mádlová",
+   "surname": "Mádlová",
+   "forename": "Ivana",
+   "slug": "6732-ivana-madlova",
+   "party": "ANO"
+  },
+  {
+   "id": 6467,
+   "name": "Zuzana Majerová",
+   "surname": "Majerová",
+   "forename": "Zuzana",
+   "slug": "6467-zuzana-majerova",
+   "party": "SPD"
+  },
+  {
+   "id": 6468,
+   "name": "Taťána Malá",
+   "surname": "Malá",
+   "forename": "Taťána",
+   "slug": "6468-tatana-mala",
+   "party": "ANO"
+  },
+  {
+   "id": 7023,
+   "name": "Lenka Martínková Španihelová",
+   "surname": "Martínková Španihelová",
+   "forename": "Lenka",
+   "slug": "7023-lenka-martinkova-spanihelova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6534,
+   "name": "Jiří Mašek",
+   "surname": "Mašek",
+   "forename": "Jiří",
+   "slug": "6534-jiri-masek",
+   "party": "ANO"
+  },
+  {
+   "id": 6544,
+   "name": "Lubomír Metnar",
+   "surname": "Metnar",
+   "forename": "Lubomír",
+   "slug": "6544-lubomir-metnar",
+   "party": "ANO"
+  },
+  {
+   "id": 7024,
+   "name": "Michaela Moricová",
+   "surname": "Moricová",
+   "forename": "Michaela",
+   "slug": "7024-michaela-moricova",
+   "party": "Piráti"
+  },
+  {
+   "id": 7040,
+   "name": "Zuzana Mrázová",
+   "surname": "Mrázová",
+   "forename": "Zuzana",
+   "slug": "7040-zuzana-mrazova",
+   "party": "ANO"
+  },
+  {
+   "id": 6486,
+   "name": "Vojtěch Munzar",
+   "surname": "Munzar",
+   "forename": "Vojtěch",
+   "slug": "6486-vojtech-munzar",
+   "party": "ODS"
+  },
+  {
+   "id": 7025,
+   "name": "Jana Murová",
+   "surname": "Murová",
+   "forename": "Jana",
+   "slug": "7025-jana-murova",
+   "party": "ANO"
+  },
+  {
+   "id": 6487,
+   "name": "Patrik Nacher",
+   "surname": "Nacher",
+   "forename": "Patrik",
+   "slug": "6487-patrik-nacher",
+   "party": "ANO"
+  },
+  {
+   "id": 7026,
+   "name": "Anežka Nedomová",
+   "surname": "Nedomová",
+   "forename": "Anežka",
+   "slug": "7026-anezka-nedomova",
+   "party": "STAN"
+  },
+  {
+   "id": 7027,
+   "name": "Irena Němcová",
+   "surname": "Němcová",
+   "forename": "Irena",
+   "slug": "7027-irena-nemcova",
+   "party": "SPD"
+  },
+  {
+   "id": 6804,
+   "name": "Zdenka Němečková Crkvenjaš",
+   "surname": "Němečková Crkvenjaš",
+   "forename": "Zdenka",
+   "slug": "6804-zdenka-nemeckova-crkvenjas",
+   "party": "ODS"
+  },
+  {
+   "id": 6664,
+   "name": "Josef Nerušil",
+   "surname": "Nerušil",
+   "forename": "Josef",
+   "slug": "6664-josef-nerusil",
+   "party": "SPD"
+  },
+  {
+   "id": 7028,
+   "name": "Bohuslav Niemiec",
+   "surname": "Niemiec",
+   "forename": "Bohuslav",
+   "slug": "7028-bohuslav-niemiec",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6533,
+   "name": "Marek Novák",
+   "surname": "Novák",
+   "forename": "Marek",
+   "slug": "6533-marek-novak",
+   "party": "ANO"
+  },
+  {
+   "id": 6475,
+   "name": "Monika Oborná",
+   "surname": "Oborná",
+   "forename": "Monika",
+   "slug": "6475-monika-oborna",
+   "party": "ANO"
+  },
+  {
+   "id": 6769,
+   "name": "Hayato Okamura",
+   "surname": "Okamura",
+   "forename": "Hayato",
+   "slug": "6769-hayato-okamura",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6105,
+   "name": "Tomio Okamura",
+   "surname": "Okamura",
+   "forename": "Tomio",
+   "slug": "6105-tomio-okamura",
+   "party": "SPD"
+  },
+  {
+   "id": 6172,
+   "name": "Ladislav Okleštěk",
+   "surname": "Okleštěk",
+   "forename": "Ladislav",
+   "slug": "6172-ladislav-oklestek",
+   "party": "ANO"
+  },
+  {
+   "id": 6766,
+   "name": "Eliška Olšáková",
+   "surname": "Olšáková",
+   "forename": "Eliška",
+   "slug": "6766-eliska-olsakova",
+   "party": "STAN"
+  },
+  {
+   "id": 6770,
+   "name": "Renata Oulehlová",
+   "surname": "Oulehlová",
+   "forename": "Renata",
+   "slug": "6770-renata-oulehlova",
+   "party": "ANO"
+  },
+  {
+   "id": 7029,
+   "name": "Pavel Outrata",
+   "surname": "Outrata",
+   "forename": "Pavel",
+   "slug": "7029-pavel-outrata",
+   "party": "ANO"
+  },
+  {
+   "id": 6474,
+   "name": "Zuzana Ožanová",
+   "surname": "Ožanová",
+   "forename": "Zuzana",
+   "slug": "6474-zuzana-ozanova",
+   "party": "ANO"
+  },
+  {
+   "id": 7030,
+   "name": "Jan Papajanovský",
+   "surname": "Papajanovský",
+   "forename": "Jan",
+   "slug": "7030-jan-papajanovsky",
+   "party": "STAN"
+  },
+  {
+   "id": 7031,
+   "name": "Patrik Pařil",
+   "surname": "Pařil",
+   "forename": "Patrik",
+   "slug": "7031-patrik-paril",
+   "party": "ANO"
+  },
+  {
+   "id": 6225,
+   "name": "Jana Pastuchová",
+   "surname": "Pastuchová",
+   "forename": "Jana",
+   "slug": "6225-jana-pastuchova",
+   "party": "ANO"
+  },
+  {
+   "id": 7032,
+   "name": "Jana Patková",
+   "surname": "Patková",
+   "forename": "Jana",
+   "slug": "7032-jana-patkova",
+   "party": "Piráti"
+  },
+  {
+   "id": 7067,
+   "name": "Jiří Penc",
+   "surname": "Penc",
+   "forename": "Jiří",
+   "slug": "7067-jiri-penc",
+   "party": "ANO"
+  },
+  {
+   "id": 6780,
+   "name": "Berenika Peštová",
+   "surname": "Peštová",
+   "forename": "Berenika",
+   "slug": "6780-berenika-pestova",
+   "party": "ANO"
+  },
+  {
+   "id": 6409,
+   "name": "František Petrtýl",
+   "surname": "Petrtýl",
+   "forename": "František",
+   "slug": "6409-frantisek-petrtyl",
+   "party": "ANO"
+  },
+  {
+   "id": 6555,
+   "name": "Tom Philipp",
+   "surname": "Philipp",
+   "forename": "Tom",
+   "slug": "6555-tom-philipp",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 7034,
+   "name": "Vladimír Pikora",
+   "surname": "Pikora",
+   "forename": "Vladimír",
+   "slug": "7034-vladimir-pikora",
+   "party": "Motoristé"
+  },
+  {
+   "id": 7035,
+   "name": "Barbora Pipášová",
+   "surname": "Pipášová",
+   "forename": "Barbora",
+   "slug": "7035-barbora-pipasova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6762,
+   "name": "Pavla Pivoňka Vaňková",
+   "surname": "Pivoňka Vaňková",
+   "forename": "Pavla",
+   "slug": "6762-pavla-pivonka-vankova",
+   "party": "STAN"
+  },
+  {
+   "id": 6549,
+   "name": "Robert Plaga",
+   "surname": "Plaga",
+   "forename": "Robert",
+   "slug": "6549-robert-plaga",
+   "party": "ANO"
+  },
+  {
+   "id": 7036,
+   "name": "Václav Pláteník",
+   "surname": "Pláteník",
+   "forename": "Václav",
+   "slug": "7036-vaclav-platenik",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6745,
+   "name": "Marie Pošarová",
+   "surname": "Pošarová",
+   "forename": "Marie",
+   "slug": "6745-marie-posarova",
+   "party": "SPD"
+  },
+  {
+   "id": 5273,
+   "name": "Jiří Pospíšil",
+   "surname": "Pospíšil",
+   "forename": "Jiří",
+   "slug": "5273-jiri-pospisil",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6527,
+   "name": "David Pražák",
+   "surname": "Pražák",
+   "forename": "David",
+   "slug": "6527-david-prazak",
+   "party": "Nezařazení"
+  },
+  {
+   "id": 7037,
+   "name": "Jindřich Rajchl",
+   "surname": "Rajchl",
+   "forename": "Jindřich",
+   "slug": "7037-jindrich-rajchl",
+   "party": "SPD"
+  },
+  {
+   "id": 6524,
+   "name": "Vít Rakušan",
+   "surname": "Rakušan",
+   "forename": "Vít",
+   "slug": "6524-vit-rakusan",
+   "party": "STAN"
+  },
+  {
+   "id": 6523,
+   "name": "Michal Ratiborský",
+   "surname": "Ratiborský",
+   "forename": "Michal",
+   "slug": "6523-michal-ratiborsky",
+   "party": "ANO"
+  },
+  {
+   "id": 7038,
+   "name": "Barbora Rázga",
+   "surname": "Rázga",
+   "forename": "Barbora",
+   "slug": "7038-barbora-razga",
+   "party": "ANO"
+  },
+  {
+   "id": 6767,
+   "name": "Michaela Řehková",
+   "surname": "Řehková",
+   "forename": "Michaela",
+   "slug": "6767-michaela-rehkova",
+   "party": "STAN"
+  },
+  {
+   "id": 6500,
+   "name": "Jan Richter",
+   "surname": "Richter",
+   "forename": "Jan",
+   "slug": "6500-jan-richter",
+   "party": "ANO"
+  },
+  {
+   "id": 6473,
+   "name": "Olga Richterová",
+   "surname": "Richterová",
+   "forename": "Olga",
+   "slug": "6473-olga-richterova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6520,
+   "name": "Pavel Růžička",
+   "surname": "Růžička",
+   "forename": "Pavel",
+   "slug": "6520-pavel-ruzicka",
+   "party": "ANO"
+  },
+  {
+   "id": 6782,
+   "name": "Drahoslav Ryba",
+   "surname": "Ryba",
+   "forename": "Drahoslav",
+   "slug": "6782-drahoslav-ryba",
+   "party": "ANO"
+  },
+  {
+   "id": 6518,
+   "name": "Petr Sadovský",
+   "surname": "Sadovský",
+   "forename": "Petr",
+   "slug": "6518-petr-sadovsky",
+   "party": "ANO"
+  },
+  {
+   "id": 6479,
+   "name": "Lucie Šafránková",
+   "surname": "Šafránková",
+   "forename": "Lucie",
+   "slug": "6479-lucie-safrankova",
+   "party": "SPD"
+  },
+  {
+   "id": 6688,
+   "name": "Miroslav Samaš",
+   "surname": "Samaš",
+   "forename": "Miroslav",
+   "slug": "6688-miroslav-samas",
+   "party": "ANO"
+  },
+  {
+   "id": 6545,
+   "name": "Alena Schillerová",
+   "surname": "Schillerová",
+   "forename": "Alena",
+   "slug": "6545-alena-schillerova",
+   "party": "ANO"
+  },
+  {
+   "id": 7039,
+   "name": "Vítězslav Schrek",
+   "surname": "Schrek",
+   "forename": "Vítězslav",
+   "slug": "7039-vitezslav-schrek",
+   "party": "ODS"
+  },
+  {
+   "id": 6763,
+   "name": "Michaela Šebelová",
+   "surname": "Šebelová",
+   "forename": "Michaela",
+   "slug": "6763-michaela-sebelova",
+   "party": "STAN"
+  },
+  {
+   "id": 7041,
+   "name": "Gabriela Sedláčková",
+   "surname": "Sedláčková",
+   "forename": "Gabriela",
+   "slug": "7041-gabriela-sedlackova",
+   "party": "Motoristé"
+  },
+  {
+   "id": 7042,
+   "name": "Lucie Sedmihradská",
+   "surname": "Sedmihradská",
+   "forename": "Lucie",
+   "slug": "7042-lucie-sedmihradska",
+   "party": "STAN"
+  },
+  {
+   "id": 6064,
+   "name": "Miroslav Ševčík",
+   "surname": "Ševčík",
+   "forename": "Miroslav",
+   "slug": "6064-miroslav-sevcik",
+   "party": "SPD"
+  },
+  {
+   "id": 6783,
+   "name": "Jan Síla",
+   "surname": "Síla",
+   "forename": "Jan",
+   "slug": "6783-jan-sila",
+   "party": "SPD"
+  },
+  {
+   "id": 6418,
+   "name": "Jan Skopeček",
+   "surname": "Skopeček",
+   "forename": "Jan",
+   "slug": "6418-jan-skopecek",
+   "party": "ODS"
+  },
+  {
+   "id": 7043,
+   "name": "Štěpán Slovák",
+   "surname": "Slovák",
+   "forename": "Štěpán",
+   "slug": "7043-stepan-slovak",
+   "party": "ODS"
+  },
+  {
+   "id": 7044,
+   "name": "Julie Smejkalová",
+   "surname": "Smejkalová",
+   "forename": "Julie",
+   "slug": "7044-julie-smejkalova",
+   "party": "STAN"
+  },
+  {
+   "id": 7065,
+   "name": "Martin Šmída",
+   "surname": "Šmída",
+   "forename": "Martin",
+   "slug": "7065-martin-smida",
+   "party": "Piráti"
+  },
+  {
+   "id": 7045,
+   "name": "Petr Sokol",
+   "surname": "Sokol",
+   "forename": "Petr",
+   "slug": "7045-petr-sokol",
+   "party": "ODS"
+  },
+  {
+   "id": 7046,
+   "name": "Eva Šrámková",
+   "surname": "Šrámková",
+   "forename": "Eva",
+   "slug": "7046-eva-sramkova",
+   "party": "Piráti"
+  },
+  {
+   "id": 5512,
+   "name": "Boris Šťastný",
+   "surname": "Šťastný",
+   "forename": "Boris",
+   "slug": "5512-boris-stastny",
+   "party": "Motoristé"
+  },
+  {
+   "id": 7048,
+   "name": "Kateřina Stojanová",
+   "surname": "Stojanová",
+   "forename": "Kateřina",
+   "slug": "7048-katerina-stojanova",
+   "party": "Piráti"
+  },
+  {
+   "id": 6484,
+   "name": "David Štolpa",
+   "surname": "Štolpa",
+   "forename": "David",
+   "slug": "6484-david-stolpa",
+   "party": "ANO"
+  },
+  {
+   "id": 6515,
+   "name": "Jiří Strýček",
+   "surname": "Strýček",
+   "forename": "Jiří",
+   "slug": "6515-jiri-strycek",
+   "party": "ANO"
+  },
+  {
+   "id": 6743,
+   "name": "Robert Stržínek",
+   "surname": "Stržínek",
+   "forename": "Robert",
+   "slug": "6743-robert-strzinek",
+   "party": "ANO"
+  },
+  {
+   "id": 7049,
+   "name": "Gabriela Svárovská",
+   "surname": "Svárovská",
+   "forename": "Gabriela",
+   "slug": "7049-gabriela-svarovska",
+   "party": "Piráti"
+  },
+  {
+   "id": 7050,
+   "name": "Jan Sviták",
+   "surname": "Sviták",
+   "forename": "Jan",
+   "slug": "7050-jan-svitak",
+   "party": "STAN"
+  },
+  {
+   "id": 7033,
+   "name": "Jiří Svoboda",
+   "surname": "Svoboda",
+   "forename": "Jiří",
+   "slug": "7033-jiri-svoboda",
+   "party": "ANO"
+  },
+  {
+   "id": 7051,
+   "name": "Vendula Svobodová",
+   "surname": "Svobodová",
+   "forename": "Vendula",
+   "slug": "7051-vendula-svobodova",
+   "party": "Piráti"
+  },
+  {
+   "id": 7052,
+   "name": "František Talíř",
+   "surname": "Talíř",
+   "forename": "František",
+   "slug": "7052-frantisek-talir",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6786,
+   "name": "Róbert Teleky",
+   "surname": "Teleky",
+   "forename": "Róbert",
+   "slug": "6786-robert-teleky",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 7053,
+   "name": "Václav Trojan",
+   "surname": "Trojan",
+   "forename": "Václav",
+   "slug": "7053-vaclav-trojan",
+   "party": "ANO"
+  },
+  {
+   "id": 6240,
+   "name": "Karel Tureček",
+   "surname": "Tureček",
+   "forename": "Karel",
+   "slug": "6240-karel-turecek",
+   "party": "ANO"
+  },
+  {
+   "id": 7059,
+   "name": "Filip Turek",
+   "surname": "Turek",
+   "forename": "Filip",
+   "slug": "7059-filip-turek",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6787,
+   "name": "Libor Turek",
+   "surname": "Turek",
+   "forename": "Libor",
+   "slug": "6787-libor-turek",
+   "party": "ODS"
+  },
+  {
+   "id": 6788,
+   "name": "Barbora Urbanová",
+   "surname": "Urbanová",
+   "forename": "Barbora",
+   "slug": "6788-barbora-urbanova",
+   "party": "STAN"
+  },
+  {
+   "id": 6482,
+   "name": "Vlastimil Válek",
+   "surname": "Válek",
+   "forename": "Vlastimil",
+   "slug": "6482-vlastimil-valek",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6168,
+   "name": "Helena Válková",
+   "surname": "Válková",
+   "forename": "Helena",
+   "slug": "6168-helena-valkova",
+   "party": "ANO"
+  },
+  {
+   "id": 6946,
+   "name": "Josef Váňa",
+   "surname": "Váňa",
+   "forename": "Josef",
+   "slug": "6946-josef-vana",
+   "party": "ANO"
+  },
+  {
+   "id": 7054,
+   "name": "Renata Vesecká",
+   "surname": "Vesecká",
+   "forename": "Renata",
+   "slug": "7054-renata-vesecka",
+   "party": "Motoristé"
+  },
+  {
+   "id": 6789,
+   "name": "Lukáš Vlček",
+   "surname": "Vlček",
+   "forename": "Lukáš",
+   "slug": "6789-lukas-vlcek",
+   "party": "STAN"
+  },
+  {
+   "id": 7055,
+   "name": "Jiří Vojáček",
+   "surname": "Vojáček",
+   "forename": "Jiří",
+   "slug": "7055-jiri-vojacek",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 6491,
+   "name": "Adam Vojtěch",
+   "surname": "Vojtěch",
+   "forename": "Adam",
+   "slug": "6491-adam-vojtech",
+   "party": "ANO"
+  },
+  {
+   "id": 7056,
+   "name": "Jitka Volfová",
+   "surname": "Volfová",
+   "forename": "Jitka",
+   "slug": "7056-jitka-volfova",
+   "party": "ANO"
+  },
+  {
+   "id": 7057,
+   "name": "Samuel Volpe",
+   "surname": "Volpe",
+   "forename": "Samuel",
+   "slug": "7057-samuel-volpe",
+   "party": "Piráti"
+  },
+  {
+   "id": 7058,
+   "name": "Libor Vondráček",
+   "surname": "Vondráček",
+   "forename": "Libor",
+   "slug": "7058-libor-vondracek",
+   "party": "SPD"
+  },
+  {
+   "id": 6165,
+   "name": "Radek Vondráček",
+   "surname": "Vondráček",
+   "forename": "Radek",
+   "slug": "6165-radek-vondracek",
+   "party": "ANO"
+  },
+  {
+   "id": 7060,
+   "name": "Otto Vopěnka",
+   "surname": "Vopěnka",
+   "forename": "Otto",
+   "slug": "7060-otto-vopenka",
+   "party": "ANO"
+  },
+  {
+   "id": 6490,
+   "name": "Petr Vrána",
+   "surname": "Vrána",
+   "forename": "Petr",
+   "slug": "6490-petr-vrana",
+   "party": "ANO"
+  },
+  {
+   "id": 6513,
+   "name": "Marek Výborný",
+   "surname": "Výborný",
+   "forename": "Marek",
+   "slug": "6513-marek-vyborny",
+   "party": "KDU-ČSL"
+  },
+  {
+   "id": 7061,
+   "name": "Ester Weimerová",
+   "surname": "Weimerová",
+   "forename": "Ester",
+   "slug": "7061-ester-weimerova",
+   "party": "STAN"
+  },
+  {
+   "id": 6730,
+   "name": "Lubomír Wenzl",
+   "surname": "Wenzl",
+   "forename": "Lubomír",
+   "slug": "6730-lubomir-wenzl",
+   "party": "ANO"
+  },
+  {
+   "id": 5226,
+   "name": "Pavel Žáček",
+   "surname": "Žáček",
+   "forename": "Pavel",
+   "slug": "5226-pavel-zacek",
+   "party": "ODS"
+  },
+  {
+   "id": 7062,
+   "name": "Martin Záhoř",
+   "surname": "Záhoř",
+   "forename": "Martin",
+   "slug": "7062-martin-zahor",
+   "party": "ANO"
+  },
+  {
+   "id": 6793,
+   "name": "Renáta Zajíčková",
+   "surname": "Zajíčková",
+   "forename": "Renáta",
+   "slug": "6793-renata-zajickova",
+   "party": "ODS"
+  },
+  {
+   "id": 7064,
+   "name": "Miroslav Žbánek",
+   "surname": "Žbánek",
+   "forename": "Miroslav",
+   "slug": "7064-miroslav-zbanek",
+   "party": "ANO"
+  },
+  {
+   "id": 6154,
+   "name": "Marek Ženíšek",
+   "surname": "Ženíšek",
+   "forename": "Marek",
+   "slug": "6154-marek-zenisek",
+   "party": "TOP 09"
+  },
+  {
+   "id": 6796,
+   "name": "Michal Zuna",
+   "surname": "Zuna",
+   "forename": "Michal",
+   "slug": "6796-michal-zuna",
+   "party": "TOP 09"
+  }
+ ],
+ "home_cards": [
+  {
+   "speaker": {
+    "id": 6796,
+    "name": "Michal Zuna",
+    "slug": "6796-michal-zuna",
+    "party": "TOP 09",
+    "role": null
+   },
+   "text": "Já se jdu přihlásit k pozměňovacímu návrhu číslo 2201, je to pozměňovací návrh skupiny poslanců michal Zuna, Jiří Havránek, Jan Jakob a Benjamin Činčila, který se týká právě možnosti investovat do bitcoinu v rámci dlouhodobého investičního produktu.",
+   "lead": true,
+   "trail": true,
+   "date": "2026-11-06",
+   "term": 10,
+   "term_year": 2025,
+   "sitting": 34,
+   "turn": 650,
+   "page": 650,
+   "anchor": "r6",
+   "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+   "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034650.htm#r6",
+   "agenda": {
+    "number": 17,
+    "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+    "short": "Novela zákona o doplňkovém penzijním spoření",
+    "print": 285,
+    "reading": "druhé čtení"
+   }
+  },
+  {
+   "speaker": {
+    "id": 7018,
+    "name": "Marie Kršková",
+    "slug": "7018-marie-krskova",
+    "party": "KDU-ČSL",
+    "role": null
+   },
+   "text": "Přihlašuji se ke svému pozměňovacímu návrhu, který je v systému veden jako sněmovní dokument číslo 2209 a týká se státního příspěvku pro rodiče pobírající peněžitou pomoc v mateřství nebo rodičovský příspěvek.",
+   "lead": true,
+   "trail": true,
+   "date": "2026-11-06",
+   "term": 10,
+   "term_year": 2025,
+   "sitting": 34,
+   "turn": 650,
+   "page": 650,
+   "anchor": "r8",
+   "status": "Neprošlo jazykovou korekturou, neautorizováno!",
+   "psp_url": "https://www.psp.cz/eknih/2025ps/stenprot/034schuz/s034650.htm#r8",
+   "agenda": {
+    "number": 17,
+    "title": "Vládní návrh zákona, kterým se mění zákon č. 427/2011 Sb., o doplňkovém penzijním spoření, ve znění pozdějších předpisů, a mění a zrušují další související zákony",
+    "short": "Novela zákona o doplňkovém penzijním spoření",
+    "print": 285,
+    "reading": "druhé čtení"
+   }
+  }
+ ]
+}

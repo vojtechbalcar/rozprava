@@ -1,0 +1,96 @@
+{# Shared components. Names follow the components in DESIGN.md. #}
+
+{% macro icon(name) -%}
+{%- if name == 'search' -%}
+<svg class="icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l4.25 4.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+{%- elif name == 'chevron' -%}
+<svg class="icon icon--chevron" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+{%- elif name == 'close' -%}
+<svg class="icon icon--close" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+{%- endif -%}
+{%- endmacro %}
+
+{# Middle dot between references: stays with the item before it, line may break after. #}
+{% macro sep() %}&nbsp;<span class="sep" aria-hidden="true">·</span> {% endmacro %}
+
+{% macro party_badge(party) -%}
+{%- if party -%}<span class="party-badge" title="Poslanecký klub">{{ party }}</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro speaker_line(speaker, link_name=True) -%}
+<p class="speaker-line">
+  {%- if link_name %}<a class="speaker-line__name" href="{{ link('mp', slug=speaker.slug) }}">{{ speaker.name }}</a>
+  {%- else %}<span class="speaker-line__name">{{ speaker.name }}</span>{% endif %}
+  {{ party_badge(speaker.party) }}
+  {%- if speaker.role %}<span class="speaker-line__role">{{ speaker.role|nbsp }}</span>{% endif -%}
+</p>
+{%- endmacro %}
+
+{% macro status_tag(status) -%}
+{%- if status and 'neautorizováno' in status|lower -%}
+<span class="status-tag" title="Přepis zatím neprošel autorizací{% if 'korektur' in status %} ani jazykovou korekturou{% endif %}. Znění se může změnit.">neautorizováno</span>
+{%- endif -%}
+{%- endmacro %}
+
+{#
+  Quote card: speaker line, the verbatim quote, then the meta line.
+  The quote text is printed exactly as stored; highlight only adds <mark>.
+#}
+{#
+  show_speaker=False is for an MP's own profile, where the name would repeat on every
+  card; the card then leads with the agenda item instead.
+#}
+{% macro quote_card(c, terms=(), number=None, show_agenda=True, show_speaker=True) -%}
+<article class="quote-card"{% if number %} id="v{{ number }}"{% endif %}>
+  {%- if show_speaker %}
+  <header class="quote-card__head">
+    {{ speaker_line(c.speaker) }}
+    {%- if number %}<span class="quote-card__number" aria-label="Výsledek {{ number }}">[{{ number }}]</span>{% endif %}
+  </header>
+  {%- else %}
+  <header class="quote-card__head quote-card__head--topic">
+    <p class="quote-card__topic">{% if c.agenda %}{% if c.agenda.number %}Bod {{ c.agenda.number }}: {% endif %}{{ c.agenda.short|nbsp }}{% else %}Bod pořadu není v&nbsp;datech Sněmovny uveden{% endif %}</p>
+  </header>
+  {%- endif %}
+  <blockquote class="quote" lang="cs" cite="{{ c.psp_url }}">
+    {#- An ellipsis marks a cut only inside a sentence; whole sentences need none. #}
+    {%- set cut_start = c.lead and c.text[:1].islower() %}
+    {%- set cut_end = c.trail and c.text[-1:] not in '.!?…' %}
+    <p><span class="quote__open" aria-hidden="true">„</span>{% if cut_start %}<span class="quote__cut" aria-hidden="true">…&nbsp;</span>{% endif %}{{ c.text|highlight(terms) }}{% if cut_end %}<span class="quote__cut" aria-hidden="true">&nbsp;…</span>{% endif %}<span aria-hidden="true">“</span></p>
+  </blockquote>
+  <footer class="quote-card__foot">
+    {%- if show_agenda and show_speaker and c.agenda %}
+    <p class="quote-card__agenda">{% if c.agenda.number %}Bod {{ c.agenda.number }}: {% endif %}{{ c.agenda.short|nbsp }}</p>
+    {%- endif %}
+    <div class="meta-line">
+      <p class="meta-line__ref"><time datetime="{{ c.date }}">{{ c.date|cz_date }}</time>{{ sep() }}{{ c.sitting }}.&nbsp;schůze{{ sep() }}s.&nbsp;{{ c.page }}{% if status_tag(c.status) %}{{ sep() }}{{ status_tag(c.status) }}{% endif %}</p>
+      <a class="meta-line__open" href="{{ link('transcript', term=c.term, sitting=c.sitting, page=c.page, anchor=c.anchor, result=number) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
+    </div>
+  </footer>
+</article>
+{%- endmacro %}
+
+{% macro chip(label, active=False, value=None, menu=True) -%}
+{%- if active -%}
+<span class="chip chip--active"><span class="chip__label">{{ label }}{% if value %}: <strong>{{ value }}</strong>{% endif %}</span><button class="chip__remove" type="button" aria-label="Zrušit filtr {{ label }}">{{ icon('close') }}</button></span>
+{%- else -%}
+<button class="chip" type="button"{% if menu %} aria-haspopup="listbox"{% endif %}>{{ label }}{% if menu %}{{ icon('chevron') }}{% endif %}</button>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro search_field(query='', placeholder='', id='q', autofocus=False) -%}
+<form class="search-field" action="{{ link('search') }}" role="search">
+  <label class="visually-hidden" for="{{ id }}">Hledat v&nbsp;projevech poslanců</label>
+  {{ icon('search') }}
+  <input id="{{ id }}" name="q" type="search" value="{{ query }}" placeholder="{{ placeholder }}" autocomplete="off"{% if autofocus %} autofocus{% endif %}>
+  <button class="btn btn--primary" type="submit">Hledat</button>
+</form>
+{%- endmacro %}
+
+{% macro filter_chips(active=()) -%}
+<div class="chips" role="group" aria-label="Filtry">
+  {%- for label, value in active %}{{ chip(label, active=True, value=value) }}{% endfor %}
+  {%- set used = active|map('first')|list %}
+  {%- for label in ('Poslanec', 'Strana', 'Volební období', 'Datum') if label not in used %}{{ chip(label) }}{% endfor %}
+</div>
+{%- endmacro %}

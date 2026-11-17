@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ t.sitting }}. schůze, s. {{ t.page }} · Rozprava{% endblock %}
+
+{% block content %}
+<div class="doc-bar">
+  <div class="wrap doc-bar__inner">
+    <p class="doc-bar__ref">{{ t.sitting }}.&nbsp;schůze{{ ui.sep() }}<time datetime="{{ t.date }}">{{ t.date|cz_date }}</time>{{ ui.sep() }}od&nbsp;{{ t.time|replace('.', ':') }}{{ ui.sep() }}s.&nbsp;{{ t.page }}{% if ui.status_tag(t.status) %}{{ ui.sep() }}{{ ui.status_tag(t.status) }}{% endif %}</p>
+    <a class="doc-bar__source" href="{{ t.psp_url }}">Originál na psp.cz <span aria-hidden="true">↗</span></a>
+  </div>
+</div>
+
+<div class="reader-layout wrap">
+  <aside class="reader-aside">
+    <a class="back-link" href="{{ link('search') }}"><span aria-hidden="true">←</span> Zpět na výsledky</a>
+    <nav class="reader-aside__toc" aria-labelledby="toc-title">
+      <h2 class="facets__heading" id="toc-title">Na této straně</h2>
+      <ol>
+        {% for sp in t.speeches %}
+        <li><a href="#{{ sp.anchor }}"><span class="toc__name">{{ sp.speaker.name }}</span><span class="toc__role">{% if sp.continued_from %}pokračování{% elif sp.chair %}řídí schůzi{% else %}{{ sp.speaker.party }}{% endif %}</span></a></li>
+        {% endfor %}
+      </ol>
+    </nav>
+  </aside>
+
+  <article class="reader" lang="cs">
+    <header class="reader__head">
+      <p class="kicker">{{ t.term }}.&nbsp;volební období{{ ui.sep() }}{{ t.sitting }}.&nbsp;schůze{{ ui.sep() }}bod&nbsp;{{ t.agenda.number }}</p>
+      <h1 class="reader__title">{{ t.agenda.short|nbsp }}</h1>
+      <p class="reader__official">{{ t.agenda.title|nbsp }}. Sněmovní tisk {{ t.agenda.print }}, {{ t.agenda.reading }}.</p>
+      <nav class="pager" aria-label="Strany přepisu">
+        <a href="{{ link('transcript', page=t.prev_page) }}" rel="prev"><span aria-hidden="true">←</span> s.&nbsp;{{ t.prev_page }}</a>
+        <span class="pager__date">{{ t.date|cz_date_long(weekday=True) }}</span>
+        <a href="{{ link('transcript', page=t.next_page) }}" rel="next">s.&nbsp;{{ t.next_page }} <span aria-hidden="true">→</span></a>
+      </nav>
+    </header>
+
+    {% for sp in t.speeches %}
+    <section class="speech{% if sp.chair %} speech--chair{% endif %}" id="{{ sp.anchor }}" aria-label="{{ sp.speaker.name }}">
+      {{ ui.speaker_line(sp.speaker) }}
+      {% if sp.continued_from %}
+      <p class="speech__note">Pokračování projevu ze s.&nbsp;{{ sp.continued_from }}</p>
+      {% endif %}
+      {% for p in sp.paras %}
+        {% if p.mark is defined %}
+        <p class="passage-label" id="pasaz"><span aria-hidden="true">↓</span> Hledaná pasáž, <a href="{{ link('search') }}#v1">výsledek [1]</a></p>
+        <p class="speech__text has-passage">{{ p.before|nbsp }}<mark class="passage">{{ p.mark|nbsp }}</mark>{{ p.after|nbsp }}</p>
+        {% else %}
+        <p class="speech__text">{{ p.text|nbsp }}</p>
+        {% endif %}
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    {% if t.continues %}
+    <p class="reader__continues">Projev pokračuje na další straně. <a href="{{ link('transcript', page=t.next_page) }}">Číst dál na s.&nbsp;{{ t.next_page }} <span aria-hidden="true">→</span></a></p>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}
