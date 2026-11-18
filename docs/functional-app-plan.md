@@ -40,10 +40,10 @@ def test_configuration_is_postgresql_only():
 
 ## 2. Schema and database tests
 
-- [ ] Define SQLAlchemy tables with upstream/composite keys: term, person, mandate, organization, membership, sitting/day, bill/agenda, source page, page revision, speech revision/paragraphs, vote/per-person vote, import run. Allow unknown speaker, agenda, club and vote states.
-- [ ] Store current source-page revision separately from immutable revision content. An assembled speech revision records its constituent source revisions and original paragraph positions. Retired versions remain addressable for citations.
-- [ ] Add Alembic configuration and initial migration. Create `unaccent`, a `simple`-based search configuration with `unaccent,simple` mappings, and a GIN search-vector index. Keep migration operations explicit and repeatable.
-- [ ] Add an integration fixture that only resets a dedicated `_test` database. Test migration from empty, duplicate source keys, cross-term bill keys and normalized search.
+- [x] Define SQLAlchemy tables with upstream/composite keys: term, person, mandate, organization, membership, sitting/day, bill/agenda, source page, page revision, speech revision/paragraphs, vote/per-person vote, import run. Allow unknown speaker, agenda, club and vote states.
+- [x] Store current source-page revision separately from immutable revision content. An assembled speech revision records its constituent source revisions and original paragraph positions. Retired versions remain addressable for citations.
+- [x] Add Alembic configuration and initial migration. Create `unaccent`, a `simple`-based search configuration with `unaccent,simple` mappings, and a GIN search-vector index. Keep migration operations explicit and repeatable.
+- [x] Add an integration fixture that only resets a dedicated `_test` database. Test migration from empty, duplicate source keys, cross-term bill keys and normalized search.
 
 ```python
 def test_search_dictionary_preserves_phrase_positions(db):
@@ -56,7 +56,7 @@ def test_search_dictionary_preserves_phrase_positions(db):
     assert row is True
 ```
 
-- [ ] Run `uv run alembic upgrade head`, database tests and lint/type checks. Commit and push the schema.
+- [x] Run `uv run alembic upgrade head`, database tests and lint/type checks. Commit and push the schema.
 
 ## 3. Source parsing and identity
 

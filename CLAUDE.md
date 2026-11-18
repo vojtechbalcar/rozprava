@@ -30,15 +30,15 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Design tokens: `uv run python scripts/build_tokens.py` after editing the
   `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
-
 - Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db`.
   Rozprava's own PostgreSQL 18 cluster in `~/.local/share/rozprava/postgres` on
   `127.0.0.1:55432`; `init` writes the private `.env`. See [[dev-environment]].
+- Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
+  `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
 Intended, not built yet; update when they exist:
 
 - Dev: `uv run fastapi dev src/rozprava/main.py`
-- Migrate: `uv run alembic upgrade head`
 - Ingest: `uv run python -m rozprava.ingest`
 
 The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
