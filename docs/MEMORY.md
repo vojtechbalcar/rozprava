@@ -15,4 +15,5 @@
 
 ## Problems solved
 
-- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink.
+- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink. Also the local PostgreSQL 18 cluster.
+- [[transcript-import]] — how psp.cz transcript pages really behave (continuation markers, mid-speech headings, unanchored labels, stale `rec`), attribution rules and the running backfill.

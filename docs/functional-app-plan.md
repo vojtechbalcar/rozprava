@@ -95,7 +95,7 @@ def test_unchanged_reimport_does_not_duplicate(db, source_page):
     assert revision_count(db, source_page.id) == 1
 ```
 
-- [ ] Import consecutive real pages from both terms, verify speaker/source links and quotations, then start the full backfill with a durable log and recorded process ID. Continue application work while the polite crawler runs. Commit and push importer code once checks pass.
+- [x] Import consecutive real pages from both terms, verify speaker/source links and quotations, then start the full backfill with a durable log and recorded process ID. Continue application work while the polite crawler runs. Commit and push importer code once checks pass. *(Started 18 Nov 09:01, PID 26257; see [[transcript-import]].)*
 
 ## 5. Search and reader routes
 
