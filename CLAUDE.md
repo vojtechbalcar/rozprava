@@ -36,10 +36,13 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
   `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
+- Ingest: `uv run python -m rozprava.ingest metadata|backfill|update|refresh|assemble|retry|status`
+  (see the module docstring). Only this job contacts psp.cz; it caches downloads in
+  `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
+
 Intended, not built yet; update when they exist:
 
 - Dev: `uv run fastapi dev src/rozprava/main.py`
-- Ingest: `uv run python -m rozprava.ingest`
 
 The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
 symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project

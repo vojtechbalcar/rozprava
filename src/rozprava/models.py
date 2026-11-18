@@ -270,6 +270,13 @@ class SourcePage(Base):
     current_revision_id: Mapped[int | None] = mapped_column(
         ForeignKey("page_revision.id", use_alter=True)
     )
+    # The revision the sitting's speeches were last assembled from; differs from
+    # current_revision_id (or is reset) when the sitting needs assembling again.
+    assembled_revision_id: Mapped[int | None] = mapped_column(
+        ForeignKey("page_revision.id", use_alter=True)
+    )
+    # Digest of psp.cz's speech-index rows for this page, to notice when they change.
+    index_digest: Mapped[str | None] = mapped_column(String(64))
 
     __table_args__ = (
         UniqueConstraint("term_id", "sitting_number", "page"),
@@ -291,6 +298,7 @@ class PageRevision(Base):
     stage: Mapped[str] = mapped_column(String(8))
     status_line: Mapped[str | None] = mapped_column(Text)  # None once final
     time_label: Mapped[str | None] = mapped_column(Text)  # "(12.50 hodin)"
+    continues: Mapped[str | None] = mapped_column(Text)  # name in "(pokračuje …)"
     parser_version: Mapped[int] = mapped_column(SmallInteger)
 
     segments: Mapped[list["PageSegment"]] = relationship(order_by="PageSegment.position")
@@ -313,6 +321,7 @@ class PageSegment(Base):
     link_person_id: Mapped[int | None] = mapped_column(Integer)  # from the label's link
     link_url: Mapped[str | None] = mapped_column(Text)
     paragraphs: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    heading: Mapped[bool] = mapped_column(Boolean, default=False)  # agenda heading, not speech
 
 
 class TranscriptIndexEntry(Base):
@@ -375,6 +384,8 @@ class SpeechRevision(Base):
     date: Mapped[dt.date | None] = mapped_column(Date)
     person_id: Mapped[int | None] = mapped_column(ForeignKey("person.id"))
     label: Mapped[str | None] = mapped_column(Text)
+    # How person_id was established: "link", "index" or "name"; None if unresolved.
+    attribution: Mapped[str | None] = mapped_column(String(8))
     role: Mapped[str] = mapped_column(String(8))
     agenda_item_id: Mapped[int | None] = mapped_column(ForeignKey("agenda_item.id"))
     first_page: Mapped[int] = mapped_column(SmallInteger)

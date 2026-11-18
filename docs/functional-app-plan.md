@@ -81,11 +81,11 @@ def test_missing_page_breaks_speech_continuation():
 
 ## 4. Metadata and resumable transcript ingestion
 
-- [ ] Implement `fetch.py` with allowlisted PSP source URLs, robots checks, at least one second between request starts, bounded timeout/retry/backoff, cache files written atomically and SHA-256 provenance. Validate ZIP paths rather than using unrestricted extraction. Do not classify transient errors as permanent unavailability.
-- [ ] Import people/organizations/mandates/dated memberships, sittings/agendas/bills, transcript pages and speech metadata from official dumps for organizations 173 and 174. Retain metadata-only pages as pending; record dump retrieval times separately from transcript import times.
-- [ ] Implement per-page persistence and an import lock. Atomically publish a parsed revision; source failure leaves the last good revision readable. Rebuild affected speech boundaries when neighboring pages arrive.
-- [ ] Implement `uv run python -m rozprava.ingest metadata`, `backfill --term 9|10 --limit N`, `update`, `refresh`, `status` and explicit retry controls. Default backfill covers both terms, can resume, reports counts/errors and never fetches from web routes.
-- [ ] Test the same fixture imported twice, changed source revision, interrupted/resumed import and repaired missing page.
+- [x] Implement `fetch.py` with allowlisted PSP source URLs, robots checks, at least one second between request starts, bounded timeout/retry/backoff, cache files written atomically and SHA-256 provenance. Validate ZIP paths rather than using unrestricted extraction. Do not classify transient errors as permanent unavailability.
+- [x] Import people/organizations/mandates/dated memberships, sittings/agendas/bills, transcript pages and speech metadata from official dumps for organizations 173 and 174. Retain metadata-only pages as pending; record dump retrieval times separately from transcript import times.
+- [x] Implement per-page persistence and an import lock. Atomically publish a parsed revision; source failure leaves the last good revision readable. Rebuild affected speech boundaries when neighboring pages arrive.
+- [x] Implement `uv run python -m rozprava.ingest metadata`, `backfill --term 9|10 --limit N`, `update`, `refresh`, `status` and explicit retry controls. Default backfill covers both terms, can resume, reports counts/errors and never fetches from web routes.
+- [x] Test the same fixture imported twice, changed source revision, interrupted/resumed import and repaired missing page.
 
 ```python
 def test_unchanged_reimport_does_not_duplicate(db, source_page):
