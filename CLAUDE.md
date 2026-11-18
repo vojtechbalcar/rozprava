@@ -31,15 +31,20 @@ Why this stack: see [[stack-decision]] in `docs/`.
   `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
 
+- Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db`.
+  Rozprava's own PostgreSQL 18 cluster in `~/.local/share/rozprava/postgres` on
+  `127.0.0.1:55432`; `init` writes the private `.env`. See [[dev-environment]].
+
 Intended, not built yet; update when they exist:
 
 - Dev: `uv run fastapi dev src/rozprava/main.py`
 - Migrate: `uv run alembic upgrade head`
 - Ingest: `uv run python -m rozprava.ingest`
 
-The project lives on an iCloud-synced Desktop. iCloud marks dot-folders hidden,
-and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
-`.venv` is a symlink to `~/.local/share/venvs/rozprava`. See [[dev-environment]].
+The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
+symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project
+lived on the iCloud-synced Desktop (iCloud hides dot-folders and Python 3.14 skips
+hidden `.pth` files). See [[dev-environment]].
 
 ## Hard rules
 

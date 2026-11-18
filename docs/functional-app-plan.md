@@ -24,10 +24,10 @@ Related: [[functional-app-design]], [[dev-environment]], [[feasibility-research]
 
 ## 1. Workspace, dependencies and local database
 
-- [ ] Create `feature/functional-local-app` in a worktree outside iCloud using T3's worktree handoff; preserve the existing preview checkout. Run `uv sync` and `uv run pytest` there; baseline is 32 passing tests.
-- [ ] Add `sqlalchemy>=2.0,<2.1`, `alembic>=1.14`, `psycopg[binary]>=3.2`, `httpx>=0.28`, `beautifulsoup4>=4.12` and `pydantic-settings>=2` through uv. Use the standard library for CLI and archive extraction.
-- [ ] Add ignored `.env` and `.env.example` with `DATABASE_URL`, `ROZPRAVA_DATA_DIR`, `ROZPRAVA_CACHE_DIR`. Defaults live under `~/.local/share/rozprava`, not Desktop. No credentials in tracked files.
-- [ ] Write configuration tests before implementing settings; reject non-PostgreSQL URLs and keep configuration import free of network/process side effects.
+- [x] Create `feature/functional-local-app` in a worktree outside iCloud using T3's worktree handoff; preserve the existing preview checkout. Run `uv sync` and `uv run pytest` there; baseline is 32 passing tests. *(Done 17 Nov in `~/.local/share/rozprava-worktrees/functional-app`; from 18 Nov work continues on the same branch in `~/Users/vojtechbalcar/WebstormProjects/rozprava`, which is not iCloud-synced.)*
+- [x] Add `sqlalchemy>=2.0,<2.1`, `alembic>=1.14`, `psycopg[binary]>=3.2`, `httpx>=0.28`, `beautifulsoup4>=4.12` and `pydantic-settings>=2` through uv. Use the standard library for CLI and archive extraction.
+- [x] Add ignored `.env` and `.env.example` with `DATABASE_URL`, `ROZPRAVA_DATA_DIR`, `ROZPRAVA_CACHE_DIR`. Defaults live under `~/.local/share/rozprava`, not Desktop. No credentials in tracked files.
+- [x] Write configuration tests before implementing settings; reject non-PostgreSQL URLs and keep configuration import free of network/process side effects.
 
 ```python
 def test_configuration_is_postgresql_only():
@@ -35,8 +35,8 @@ def test_configuration_is_postgresql_only():
         Settings(database_url="sqlite:///example.db")
 ```
 
-- [ ] Install Homebrew PostgreSQL 18. Implement `uv run python scripts/local_db.py init|start|stop|status|backup`. Initialize a dedicated UTF-8 cluster with peer/local administration and SCRAM host authentication, listen on `127.0.0.1:55432`, create a non-superuser app role, and write generated credentials to a private `.env` without printing them. Repeated init preserves existing data and credentials.
-- [ ] Verify start, readiness, stop/start persistence and application connection. Create a separate test database; it must be identified explicitly before any test cleanup. Commit and push the verified foundation.
+- [x] Install Homebrew PostgreSQL 18. Implement `uv run python scripts/local_db.py init|start|stop|status|backup`. Initialize a dedicated UTF-8 cluster with peer/local administration and SCRAM host authentication, listen on `127.0.0.1:55432`, create a non-superuser app role, and write generated credentials to a private `.env` without printing them. Repeated init preserves existing data and credentials.
+- [x] Verify start, readiness, stop/start persistence and application connection. Create a separate test database; it must be identified explicitly before any test cleanup. Commit and push the verified foundation.
 
 ## 2. Schema and database tests
 
@@ -47,10 +47,12 @@ def test_configuration_is_postgresql_only():
 
 ```python
 def test_search_dictionary_preserves_phrase_positions(db):
-    row = db.execute(text("""
+    row = db.execute(
+        text("""
         SELECT to_tsvector('rozprava', 'důchodová reforma')
           @@ websearch_to_tsquery('rozprava', '"duchodova reforma"')
-    """)).scalar_one()
+    """)
+    ).scalar_one()
     assert row is True
 ```
 
@@ -63,8 +65,10 @@ def test_search_dictionary_preserves_phrase_positions(db):
 
 ```python
 def test_missing_page_breaks_speech_continuation():
-    pages = [page(1, speaker="Jan Novák", text="První část."),
-             page(3, speaker=None, text="Neznámý začátek.")]
+    pages = [
+        page(1, speaker="Jan Novák", text="První část."),
+        page(3, speaker=None, text="Neznámý začátek."),
+    ]
     speeches = assemble(pages)
     assert speeches[0].text == "První část."
     assert speeches[1].speaker_id is None

@@ -26,10 +26,10 @@ Also on this machine: `uv` came from Homebrew (`brew install uv`) on 17 Nov 2026
 
 ## Functional application checkout and PostgreSQL
 
-The functional build lives outside iCloud at
-`~/.local/share/rozprava-worktrees/functional-app`, on
-`feature/functional-local-app`. Its ordinary `.venv` works without the Desktop
-symlink workaround. The original Desktop checkout still contains the design preview.
+The functional build is on `feature/functional-local-app`. It started on 17 Nov in a
+worktree at `~/.local/share/rozprava-worktrees/functional-app`, which no longer
+exists; since 18 Nov it continues in `~/Users/vojtechbalcar/WebstormProjects/rozprava`.
+That folder isn't iCloud-synced, but it still uses the venv symlink above.
 
 PostgreSQL 18 is installed through Homebrew. Rozprava uses its own cluster at
 `~/.local/share/rozprava/postgres` and loopback port 55432; it does not use the
