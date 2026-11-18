@@ -60,8 +60,8 @@ def test_search_dictionary_preserves_phrase_positions(db):
 
 ## 3. Source parsing and identity
 
-- [ ] Capture small representative HTML/UNL fixtures from existing cached sources in both terms, preserving provenance in a fixture README. Include stale `rec` attribution, a headerless continuation and unknown agenda. Tests never fetch live sources.
-- [ ] Write tests for Windows-1250 decoding, paragraph preservation, role recognition, actual person links, publication status, empty/private pages and cross-page gaps before implementing `ingest/parser.py`.
+- [x] Capture small representative HTML/UNL fixtures from existing cached sources in both terms, preserving provenance in a fixture README. Include stale `rec` attribution, a headerless continuation and unknown agenda. Tests never fetch live sources. *(18 Nov: the research cache was gone, so pages were fetched again through `ingest/fetch.py`; see `tests/fixtures/psp/README.md`.)*
+- [x] Write tests for Windows-1250 decoding, paragraph preservation, role recognition, actual person links, publication status, empty/private pages and cross-page gaps before implementing `ingest/parser.py`.
 
 ```python
 def test_missing_page_breaks_speech_continuation():
@@ -75,9 +75,9 @@ def test_missing_page_breaks_speech_continuation():
     assert speeches[1].incomplete is True
 ```
 
-- [ ] Implement pure parser dataclasses and UNL helpers. Match names with whole normalized name boundaries and unique source evidence; never choose the first ambiguous person. Check HTML IDs/labels before accepting metadata IDs.
-- [ ] Add dated membership lookup tests around a club change; keep unknown distinct from independent. Change `titles.short_title` overrides to term-qualified keys and update preview callers/tests.
-- [ ] Run parser/title tests, review against real fixture paragraphs, lint and typecheck. Commit and push.
+- [x] Implement pure parser dataclasses and UNL helpers. Match names with whole normalized name boundaries and unique source evidence; never choose the first ambiguous person. Check HTML IDs/labels before accepting metadata IDs.
+- [x] Add dated membership lookup tests around a club change; keep unknown distinct from independent. Change `titles.short_title` overrides to term-qualified keys and update preview callers/tests.
+- [x] Run parser/title tests, review against real fixture paragraphs, lint and typecheck. Commit and push.
 
 ## 4. Metadata and resumable transcript ingestion
 
