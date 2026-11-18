@@ -3,6 +3,7 @@
 uv run fastapi dev src/rozprava/main.py
 """
 
+import datetime as dt
 from collections.abc import Iterator
 from typing import Annotated
 
@@ -15,9 +16,9 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 from rozprava.db import get_session_factory
-from rozprava.queries import common, search, transcripts
+from rozprava.queries import activity, archive, common, people, search, transcripts
 from rozprava.templating import STATIC
-from rozprava.web import SHARED, link, render, safe_back
+from rozprava.web import SHARED, activity_views, link, render, safe_back
 
 app = FastAPI(title="Rozprava", docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
@@ -60,7 +61,7 @@ def optional_int(request: Request, name: str) -> int | None:
     value = request.query_params.get(name)
     if value is None:
         return None
-    if not value.isdigit() or len(value) > 9:
+    if not value.isascii() or not value.isdigit() or len(value) > 9:
         raise not_found()
     return int(value)
 
@@ -72,8 +73,135 @@ def health(db: DB) -> dict:
 
 
 @app.get("/")
-def home() -> RedirectResponse:
-    return RedirectResponse(link("search"), status_code=307)
+def home(request: Request, db: DB) -> Response:
+    view = archive.home(db, dt.datetime.now(dt.UTC))
+    return render(
+        request, "home.html", "home", {"home": view, "archive": view["archive"]}, SHARED.get(db)
+    )
+
+
+def selected_term(request: Request, db: Session) -> common.TermInfo | None:
+    terms = common.terms(db)
+    number = optional_int(request, "obdobi")
+    if number is not None:
+        if number not in terms:
+            raise not_found()
+        return terms[number]
+    return terms.get(10) or (terms[max(terms)] if terms else None)
+
+
+@app.get("/poslanci")
+def directory_page(request: Request, db: DB) -> Response:
+    term = selected_term(request, db)
+    query = request.query_params.get("q", "").strip()[:200]
+    clubs = tuple(request.query_params.getlist("klub")[:20])
+    region = request.query_params.get("kraj", "")[:200]
+    sort = request.query_params.get("razeni", "name")
+    if sort not in ("name", "party", "region", "speeches", "attendance"):
+        sort = "name"
+    a = activity.term_activity(db, term.id) if term else None
+    view = (
+        people.directory(db, term, a, query, clubs, region, sort)
+        if term and a
+        else {
+            "mps": [],
+            "parties": [],
+            "regions": [],
+            "unknown_club": 0,
+            "total_mps": 0,
+        }
+    )
+    params = {
+        "obdobi": term.number if term else None,
+        "q": query,
+        "klub": list(clubs),
+        "kraj": region,
+        "razeni": sort,
+    }
+    return render(
+        request,
+        "mps.html",
+        "mps",
+        view
+        | {
+            "term": term,
+            "provisional": a.provisional if a else True,
+            "directory": {
+                "query": query,
+                "clubs": clubs,
+                "region": region,
+                "sort": sort,
+                "params": params,
+            },
+        },
+        SHARED.get(db),
+    )
+
+
+@app.get("/poslanec/{slug}")
+def profile_page(request: Request, slug: str, db: DB) -> Response:
+    person_id = common.parse_slug(slug)
+    term = selected_term(request, db)
+    page = optional_int(request, "stranka")
+    if person_id is None or term is None or (page is not None and not 1 <= page <= 10000):
+        raise not_found()
+    a = activity.term_activity(db, term.id)
+    view = people.profile(db, term, person_id, a, page or 1)
+    if view is None:
+        raise not_found()
+    graphs, compact = activity_views(view["activity"])
+    return render(
+        request,
+        "mp.html",
+        "mp",
+        {
+            "mp": view,
+            "term": term,
+            "graphs": graphs,
+            "compact": compact,
+        },
+        SHARED.get(db),
+    )
+
+
+@app.get("/schuze")
+def sessions_page(request: Request, db: DB) -> Response:
+    term = selected_term(request, db)
+    return render(
+        request,
+        "sessions.html",
+        "sessions",
+        {
+            "sessions": archive.sittings(db, term) if term else [],
+            "term": term,
+            "selected_sitting": None,
+        },
+        SHARED.get(db),
+    )
+
+
+@app.get("/schuze/{term}/{sitting}")
+def sitting_page(request: Request, term: int, sitting: int, db: DB) -> Response:
+    info = common.terms(db).get(term)
+    views = [s for s in archive.sittings(db, info) if s["number"] == sitting] if info else []
+    if not views:
+        raise not_found()
+    return render(
+        request,
+        "sessions.html",
+        "sessions",
+        {
+            "sessions": views,
+            "term": info,
+            "selected_sitting": sitting,
+        },
+        SHARED.get(db),
+    )
+
+
+@app.get("/jak-to-funguje")
+def methodology(request: Request, db: DB) -> Response:
+    return render(request, "how.html", "how", {}, SHARED.get(db))
 
 
 @app.get("/hledat")

@@ -411,37 +411,39 @@
       toggle.setAttribute("aria-expanded", String(!hidden));
       toggle.lastChild.textContent = hidden ? " Zobrazit jako tabulku" : " Skrýt tabulku";
     });
-    const filter = $("[data-day-filter]");
-    const objects = $$(".profile__main .obj");
-    const search = $("#mp-q");
-    const state = new URLSearchParams(location.search);
-    let chosenDay = state.get("den") || "";
-    search.value = state.get("q") || "";
-    function applyProfile() {
-      const query = fold(search.value.trim());
-      let shown = 0;
-      objects.forEach(o => {
-        const hit = (!chosenDay || o.dataset.date === chosenDay) && (!query || fold(o.dataset.search).includes(query));
-        o.closest("li").hidden = !hit; shown += hit;
+    if (document.body.dataset.live !== "true") {
+      const filter = $("[data-day-filter]");
+      const objects = $$(".profile__main .obj");
+      const search = $("#mp-q");
+      const state = new URLSearchParams(location.search);
+      let chosenDay = state.get("den") || "";
+      search.value = state.get("q") || "";
+      function applyProfile() {
+        const query = fold(search.value.trim());
+        let shown = 0;
+        objects.forEach(o => {
+          const hit = (!chosenDay || o.dataset.date === chosenDay) && (!query || fold(o.dataset.search).includes(query));
+          o.closest("li").hidden = !hit; shown += hit;
+        });
+        $("[data-day-filter-label]", filter).textContent = `${chosenDay ? cz(chosenDay) + ": " : ""}${shown} z ukázkových projevů`;
+        filter.hidden = !chosenDay && !query;
+        state.delete("den"); state.delete("q");
+        if (chosenDay) state.set("den", chosenDay);
+        if (search.value) state.set("q", search.value);
+        history.replaceState(null, "", `${location.pathname}${state.size ? `?${state}` : ""}${location.hash}`);
+      }
+      activity.addEventListener("click", e => {
+        const day = e.target.closest("[data-day]");
+        if (!day || !filter) return;
+        chosenDay = day.dataset.day; applyProfile();
       });
-      $("[data-day-filter-label]", filter).textContent = `${chosenDay ? cz(chosenDay) + ": " : ""}${shown} z ukázkových projevů`;
-      filter.hidden = !chosenDay && !query;
-      state.delete("den"); state.delete("q");
-      if (chosenDay) state.set("den", chosenDay);
-      if (search.value) state.set("q", search.value);
-      history.replaceState(null, "", `${location.pathname}${state.size ? `?${state}` : ""}${location.hash}`);
+      search.addEventListener("input", applyProfile);
+      search.closest("form").addEventListener("submit", e => { e.preventDefault(); applyProfile(); });
+      $("[data-day-filter-clear]", filter).addEventListener("click", () => {
+        chosenDay = ""; search.value = ""; applyProfile();
+      });
+      applyProfile();
     }
-    activity.addEventListener("click", e => {
-      const day = e.target.closest("[data-day]");
-      if (!day || !filter) return;
-      chosenDay = day.dataset.day; applyProfile();
-    });
-    search.addEventListener("input", applyProfile);
-    search.closest("form").addEventListener("submit", e => { e.preventDefault(); applyProfile(); });
-    $("[data-day-filter-clear]", filter).addEventListener("click", () => {
-      chosenDay = ""; search.value = ""; applyProfile();
-    });
-    applyProfile();
   }
 
   /* ---------- MP directory (§11.5) ---------- */

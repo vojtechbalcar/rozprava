@@ -36,13 +36,15 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
   `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
-- Ingest: `uv run python -m rozprava.ingest metadata|backfill|update|refresh|assemble|retry|status`
+- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|status`
   (see the module docstring). Only this job contacts psp.cz; it caches downloads in
   `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
 
 - Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
-  --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/hledat`, `/prepis/{term}/{sitting}/{page}`,
-  `/projev/{catalog}`, `/health`.
+  --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
+  `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`,
+  `/jak-to-funguje`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
+  Quote export and the server palette endpoint remain in step 7.
 
 The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
 symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project

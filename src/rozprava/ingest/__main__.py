@@ -1,8 +1,9 @@
 """Import psp.cz data into the local database.
 
     uv run python -m rozprava.ingest metadata            # official dumps: people, sittings, index
+    uv run python -m rozprava.ingest votes               # votes and apologies (may run alongside)
     uv run python -m rozprava.ingest backfill [--term 9|10] [--limit N]
-    uv run python -m rozprava.ingest update              # metadata, new pages, non-final pages
+    uv run python -m rozprava.ingest update              # metadata, votes, new and non-final pages
     uv run python -m rozprava.ingest refresh [--term …]  # re-download imported pages
     uv run python -m rozprava.ingest assemble            # re-assemble changed sittings
     uv run python -m rozprava.ingest retry [--unavailable]
@@ -23,7 +24,15 @@ from rozprava import models
 from rozprava.db import get_engine, get_session_factory
 from rozprava.ingest import metadata
 from rozprava.ingest.fetch import Cache, Fetcher, FetchError
-from rozprava.ingest.runner import TERM_NUMBERS, ImportLocked, Runner, coverage, import_lock
+from rozprava.ingest.runner import (
+    LOCK_KEY,
+    TERM_NUMBERS,
+    VOTES_LOCK_KEY,
+    ImportLocked,
+    Runner,
+    coverage,
+    import_lock,
+)
 from rozprava.settings import get_settings
 
 
@@ -64,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("metadata", help="download and import the official open-data dumps")
+    commands.add_parser("votes", help="download and import votes and apologies")
     for name in ("backfill", "update", "refresh"):
         sub = commands.add_parser(name)
         sub.add_argument("--term", type=int, choices=sorted(TERM_NUMBERS), action="append")
@@ -85,18 +95,23 @@ def main(argv: list[str] | None = None) -> int:
     terms = getattr(args, "term", None) or sorted(TERM_NUMBERS)
     cache = Cache(settings.cache_dir / "http")  # type: ignore[operator]
     try:
+        lock_key = VOTES_LOCK_KEY if args.command == "votes" else LOCK_KEY
         with (
             get_engine().connect() as lock_connection,
-            import_lock(lock_connection),
+            import_lock(lock_connection, lock_key),
             Fetcher(cache) as fetcher,
         ):
             runner = Runner(get_session_factory(), fetcher)
             if args.command == "metadata":
                 result = runner.metadata(lambda s: metadata.download(fetcher, s))
+            elif args.command == "votes":
+                result = runner.votes(lambda s: metadata.download_votes(fetcher, s))
             elif args.command == "backfill":
                 result = runner.backfill(terms, args.limit)
             elif args.command == "update":
                 runner.metadata(lambda s: metadata.download(fetcher, s))
+                with import_lock(lock_connection, VOTES_LOCK_KEY):
+                    runner.votes(lambda s: metadata.download_votes(fetcher, s))
                 result = runner.update(terms, args.limit)
             elif args.command == "refresh":
                 result = runner.refresh(terms, args.limit)

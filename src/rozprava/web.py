@@ -1,6 +1,8 @@
 """URL building, the template environment and page rendering for the web app."""
 
+import datetime as dt
 import time
+from collections import defaultdict
 from collections.abc import Callable
 from urllib.parse import quote, urlencode
 
@@ -11,8 +13,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from rozprava import models
+from rozprava.activity import calendar
 from rozprava.parties import PARTIES
-from rozprava.queries import common
+from rozprava.queries import archive, common
 from rozprava.templating import make_env
 from rozprava.typography import MONTHS_GENITIVE, czech_sort_key
 
@@ -91,6 +94,7 @@ EMPTY_CONTEXT = {
     },
     "filters": {},
     "terms": [],
+    "coverage": [],
 }
 
 
@@ -108,6 +112,7 @@ def shared_context(session: Session) -> dict:
     people = sorted(seen.values(), key=lambda p: (czech_sort_key(p.surname), p.forename))
     return {
         "updated": common.last_import(session),
+        "coverage": archive.coverage(session),
         "terms": [{"value": str(t.number), "label": t.label} for t in terms.values()],
         "current_term": current_term,
         "palette": {
@@ -162,3 +167,18 @@ def safe_back(value: str | None, fallback: Callable[[], str]) -> str:
     if value and value.startswith("/") and not value.startswith("//") and "\\" not in value:
         return value
     return fallback()
+
+
+def activity_views(days: list[dict]) -> tuple[dict, list]:
+    if not days:
+        return {}, []
+    first, last = dt.date.fromisoformat(days[0]["date"]), dt.date.fromisoformat(days[-1]["date"])
+    graphs = {"term": calendar(days, first, last)}
+    for year in range(last.year, first.year - 1, -1):
+        graphs[str(year)] = calendar(
+            days, max(first, dt.date(year, 1, 1)), min(last, dt.date(year, 12, 31))
+        )
+    months: dict[str, list] = defaultdict(list)
+    for day in days:
+        months[day["date"][:7]].append(day)
+    return graphs, list(months.items())

@@ -101,19 +101,23 @@ def test_unchanged_reimport_does_not_duplicate(db, source_page):
 
 - [x] Add `SearchFilters` with bounded query/page length, ISO dates, term/ID validation and stable sort choices. Build parameterized SQL and 20-item pagination. Search full stored speech text; browse newest for an empty query. Include labeled chair contributions.
 - [x] Test accent-free keywords, quoted phrases, AND/OR/exclusions, all filters, count/facet consistency, deterministic pages and injection-like input against PostgreSQL.
-- [x] Build per-request view data and URL helper. Core routes: `/`, `/hledat`, `/poslanci`, `/poslanec/{id}`, `/schuze`, `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/karta`, `/jak-to-funguje`, `/api/palette`, `/health`.
+- [x] Build per-request view data and URL helper. Search/reader routes: `/hledat`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/health`. Home, people, sittings and methodology are implemented in step 6; `/karta` and `/api/palette` remain in step 7.
 - [x] Preserve revision parameters in result/citation/composer links; normal reader navigation shows page/day neighbors and explicit pending/missing states. Unknown IDs return 404; database outages return 503 and never fixture content.
 - [x] Adapt search and reader templates to real URL-backed GET controls. Escape excerpts before adding highlight spans. Keep safe back links within the app and do not render source HTML.
 - [x] Test route behavior and citations after a revision. Run the app on loopback, check real results from both terms in T3's browser, then commit and push. *(18 Nov: checked on the partly loaded corpus; T3's screenshot tool failed on most pages, so the reader was verified through the DOM. `/` redirects to search until step 6.)*
 
 ## 6. Home, people, sittings and statistics
 
-- [ ] Build common coverage context with expected/imported/pending/failed/unavailable counts per term and last successful import time. Represent no imported data with an empty state, never a fake latest day.
-- [ ] Home uses imported data and a deterministic hourly sample of source speeches with at least 60 words. Directory and sessions default to term 10, search to both; every card/link carries real IDs.
-- [ ] Build paginated MP profiles, dated club and mandate display, region/club filters, term-specific bill links and counts from assembled speeches. Extend activity rendering to unknown/missing data and two weekend sittings without cell overlap.
-- [ ] Import vote and apology metadata for both terms. Test A/B/N/C/F/K registration, @/M absence, W ineligibility, invalidated/manual/technical votes, mandate dates and missing records. Suppress unsupported percentages and exclude unknown values from medians.
-- [ ] Compute word-count activity quartiles across positive MP-days in the same term excluding known chair roles. Mark incomplete coverage and provisional aggregates on profile/calendar/table views.
-- [ ] Test actual MP distinctions, identical bill numbers across terms, pending days and unknown attendance; check desktop/mobile pages. Commit and push.
+- [x] Build common coverage context with expected/imported/pending/failed/unavailable counts per term and last successful import time. Represent no imported data with an empty state, never a fake latest day.
+- [x] Home uses imported data and a deterministic hourly sample of source speeches with at least 60 words. Directory and sessions default to term 10, search to both; every card/link carries real IDs.
+- [x] Build paginated MP profiles, dated club and mandate display, region/club filters, term-specific bill links and counts from assembled speeches. Extend activity rendering to unknown/missing data and two weekend sittings without cell overlap.
+- [x] Import vote and apology metadata for both terms. Test A/B/N/C/F/K registration, @/M absence, W ineligibility, invalidated/manual/technical votes, mandate dates and missing records. Suppress unsupported percentages and exclude unknown values from medians.
+- [x] Compute word-count activity quartiles across positive MP-days in the same term excluding known chair roles. Mark incomplete coverage and provisional aggregates on profile/calendar/table views.
+- [x] Test actual MP distinctions, identical bill numbers across terms, pending days and unknown attendance; check desktop/mobile pages. Commit and push.
+
+18 Nov: step 6 is implemented and verified (143 tests); see [[archive-views]].
+Live home/methodology copy and profile filtering from step 7 were adapted here
+so the newly enabled pages describe and query the real application.
 
 ## 7. Palette, quotation export and truthful copy
 

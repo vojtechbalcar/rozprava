@@ -125,3 +125,101 @@ def test_database_outage_is_503_without_sample_data(client: TestClient):
     assert "Archiv je teď nedostupný." in visible(response.text)
     assert "Papajanovský" not in response.text
     assert client.get("/health").status_code == 503
+
+
+def test_home_directory_profiles_and_sittings_use_real_data(client: TestClient):
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "Poslední načtený jednací den" in visible(home.text)
+    assert "podle smyslu" not in visible(home.text)
+    directory = client.get("/poslanci", params={"q": "richterova", "obdobi": 10})
+    assert directory.status_code == 200
+    assert 'href="/poslanec/6473-olga-richterova?obdobi=10"' in directory.text
+    assert "Papajanovský" not in directory.text.split("<tbody>")[1].split("</tbody>")[0]
+    profile = client.get("/poslanec/6473?obdobi=10")
+    assert profile.status_code == 200
+    assert "Olga Richterová" in visible(profile.text)
+    assert "ukázkové projevy" not in visible(profile.text)
+    assert "Účast nelze spolehlivě určit" in visible(profile.text)
+    assert 'name="poslanec" value="6473"' in profile.text
+    assert "tisk=10-285" in profile.text
+    sessions = client.get("/schuze?obdobi=9")
+    assert sessions.status_code == 200
+    assert 'href="/prepis/9/50/' in sessions.text
+    sitting = client.get("/schuze/10/34")
+    assert sitting.status_code == 200 and '<details class="session" open>' in sitting.text
+    assert "neúplnými přepisy" in visible(sitting.text)
+
+
+def test_profiles_paginate_and_preserve_term(client: TestClient, monkeypatch, sessions):
+    from sqlalchemy import func, select
+
+    from rozprava import models
+    from rozprava.queries import people
+
+    monkeypatch.setattr(people, "PER_PAGE", 1)
+    with sessions() as db:
+        person = db.scalar(
+            select(models.SpeechRevision.person_id)
+            .where(
+                models.SpeechRevision.term_id == 174,
+                models.SpeechRevision.person_id.is_not(None),
+                models.SpeechRevision.retired_at.is_(None),
+            )
+            .group_by(models.SpeechRevision.person_id)
+            .having(func.count() > 1)
+            .limit(1)
+        )
+    assert person
+    first = client.get(f"/poslanec/{person}?obdobi=10")
+    assert "stranka=2#speeches-title" in first.text
+    second = client.get(f"/poslanec/{person}?obdobi=10&stranka=2")
+    assert second.status_code == 200 and "Strana 2" in visible(second.text)
+    assert (
+        first.text.split('class="obj__excerpt"')[1] != second.text.split('class="obj__excerpt"')[1]
+    )
+    assert client.get("/poslanec/6473?stranka=0").status_code == 404
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/poslanci?obdobi=123",
+        "/poslanci?obdobi=²",
+        "/schuze?obdobi=abc",
+        "/poslanec/unknown",
+        "/poslanec/9999999",
+        "/schuze/10/999",
+        "/schuze/99/1",
+    ],
+)
+def test_invalid_archive_ids_are_404(client: TestClient, url):
+    assert client.get(url).status_code == 404
+
+
+def test_live_methodology_describes_actual_search_and_unknown_attendance(client: TestClient):
+    response = client.get("/jak-to-funguje")
+    assert response.status_code == 200
+    text = visible(response.text)
+    assert "kvartilů" in text and "neznámou účast" in text
+    assert "Vyhledávání porovnává význam" not in text
+    assert "Shrnutí nad výsledky píše" not in text
+
+
+def test_empty_archive_renders_without_fake_dates(sessions):
+    def db():
+        with sessions() as session:
+            yield session
+
+    SHARED.clear()
+    main.app.dependency_overrides[main.get_db] = db
+    try:
+        with TestClient(main.app) as client:
+            for url in ("/", "/poslanci", "/schuze", "/jak-to-funguje"):
+                response = client.get(url)
+                assert response.status_code == 200, url
+                assert "2026-11-06" not in response.text
+            assert "Zatím nejsou načtené žádné projevy" in visible(client.get("/").text)
+    finally:
+        main.app.dependency_overrides.clear()
+        SHARED.clear()

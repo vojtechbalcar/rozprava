@@ -22,7 +22,8 @@ from rozprava.ingest import metadata, store
 from rozprava.ingest.fetch import Fetched, FetchError, Forbidden, NotFound
 from rozprava.ingest.parser import ParseError, parse_page
 
-LOCK_KEY = 0x526F7A70  # "Rozp"
+LOCK_KEY = 0x526F7A70  # "Rozp": transcripts and metadata
+VOTES_LOCK_KEY = LOCK_KEY + 1  # votes touch separate tables and may run alongside
 TERM_NUMBERS = {9: 173, 10: 174}
 
 log = logging.getLogger("rozprava.ingest")
@@ -37,13 +38,13 @@ class ImportLocked(RuntimeError):
 
 
 @contextmanager
-def import_lock(connection: Connection) -> Iterator[None]:
-    if not connection.execute(text("SELECT pg_try_advisory_lock(:k)"), {"k": LOCK_KEY}).scalar():
+def import_lock(connection: Connection, key: int = LOCK_KEY) -> Iterator[None]:
+    if not connection.execute(text("SELECT pg_try_advisory_lock(:k)"), {"k": key}).scalar():
         raise ImportLocked("Another import is running; try again when it has finished.")
     try:
         yield
     finally:
-        connection.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": LOCK_KEY})
+        connection.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": key})
 
 
 @dataclass
@@ -108,6 +109,14 @@ class Runner:
             metadata.mark_imported(session, metadata.DUMPS)
             counts.update(result.values)
             self._context = None
+        return counts
+
+    def votes(self, download: Callable[[Session], dict[int, dict[str, list[bytes]]]]) -> dict:
+        with self.run("votes") as counts, self.sessions.begin() as session:
+            for term_id, tables in download(session).items():
+                result = metadata.import_votes(session, term_id, tables)
+                counts[str(term_id)] = dict(result.values)
+            metadata.mark_imported(session, metadata.VOTE_DUMPS)
         return counts
 
     def backfill(

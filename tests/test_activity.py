@@ -24,3 +24,11 @@ def test_weekend_row_appears_only_for_weekend_sittings():
 def test_month_labels():
     cal = calendar([], date(2025, 11, 3), date(2026, 1, 16))
     assert [label for _, label in cal.months] == ["lis 2025", "pro", "led 2026"]
+
+
+def test_saturday_and_sunday_sittings_get_separate_rows():
+    days = [{"date": "2026-10-24"}, {"date": "2026-10-25"}]  # Saturday and Sunday
+    cal = calendar(days, date(2026, 10, 19), date(2026, 10, 25))
+    positions = [(c.x, c.y) for c in cal.cells]
+    assert len(positions) == len(set(positions)) == 7
+    assert [label for _, label in cal.weekdays][-2:] == ["So", "Ne"]

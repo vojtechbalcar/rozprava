@@ -1,8 +1,9 @@
 """Layout of the session-day activity graph (DESIGN.md §7.11).
 
 Columns are ISO weeks, rows are Monday to Friday. A sixth row (weekend) appears
-only when the period contains a weekend sitting. Every calendar day in the period
-is a cell, so days without a sitting keep the grid visible as tiny dots.
+only when the period contains a weekend sitting; if some week sits on both
+Saturday and Sunday, each gets a row so cells never overlap. Every calendar day
+in the period is a cell, so days without a sitting keep the grid visible as tiny dots.
 """
 
 from collections.abc import Iterable
@@ -43,7 +44,8 @@ def calendar(days: Iterable[dict], start: date, end: date) -> Calendar:
     by_date = {date.fromisoformat(d["date"]): d for d in days}
     in_range = {d: v for d, v in by_date.items() if start <= d <= end}
     weekend = any(d.weekday() >= 5 for d in in_range)
-    rows = 6 if weekend else 5
+    both = any(d.weekday() == 5 and d + timedelta(days=1) in in_range for d in in_range)
+    rows = 7 if both else 6 if weekend else 5
     first, weeks = _monday(start), (_monday(end) - _monday(start)).days // 7 + 1
     cal = Calendar(width=LEFT + weeks * PITCH, height=TOP + rows * PITCH)
     seen_months: set[tuple[int, int]] = set()
@@ -62,11 +64,15 @@ def calendar(days: Iterable[dict], start: date, end: date) -> Calendar:
                 cal.months.append((LEFT + week * PITCH, label))
             if offset < 5:
                 cal.cells.append(Cell(x, TOP + offset * PITCH + DOT / 2, day, in_range.get(day)))
+            elif both:
+                cal.cells.append(Cell(x, TOP + offset * PITCH + DOT / 2, day, in_range.get(day)))
             elif weekend and (
                 day in in_range or (offset == 5 and monday + timedelta(days=6) not in in_range)
             ):
                 cal.cells.append(Cell(x, TOP + 5 * PITCH + DOT / 2, day, in_range.get(day)))
     cal.weekdays = [(TOP + row * PITCH + DOT / 2, label) for row, label in WEEKDAY_LABELS.items()]
-    if weekend:
+    if both:
+        cal.weekdays += [(TOP + 5 * PITCH + DOT / 2, "So"), (TOP + 6 * PITCH + DOT / 2, "Ne")]
+    elif weekend:
         cal.weekdays.append((TOP + 5 * PITCH + DOT / 2, "So/Ne"))
     return cal

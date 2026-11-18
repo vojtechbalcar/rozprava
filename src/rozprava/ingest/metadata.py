@@ -10,6 +10,7 @@ is marked for re-assembly.
 
 import datetime as dt
 import hashlib
+import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -425,3 +426,132 @@ def _update_index_digests(
             )
             requeued += result.rowcount  # type: ignore[attr-defined]
     return requeued
+
+
+# --- Votes ----------------------------------------------------------------------------
+
+VOTE_DUMPS = {"hl-2021ps.zip": 173, "hl-2025ps.zip": 174}
+REGISTERED = frozenset("ABNCFK")  # took part: yes, no, abstained, did not press
+ABSENT = frozenset("@M")  # not logged in, excused
+BEFORE_OATH = "W"
+
+
+def download_votes(fetcher: Fetcher, session: Session) -> dict[int, dict[str, list[bytes]]]:
+    """Fetch the vote dumps; return per term: votes, records, invalidated, apologies."""
+    out: dict[int, dict[str, list[bytes]]] = {}
+    for name, term in VOTE_DUMPS.items():
+        fetched = fetcher.fetch(f"{OPENDATA}/{name}")
+        session.execute(
+            insert(models.SourceFile)
+            .values(
+                name=name,
+                url=fetched.url,
+                sha256=fetched.sha256,
+                size=fetched.size,
+                retrieved_at=dt.datetime.fromisoformat(fetched.retrieved_at),
+                last_modified=fetched.last_modified,
+            )
+            .on_conflict_do_nothing(index_elements=["name", "sha256"])
+        )
+        out[term] = vote_tables(zip_members(fetched.path))
+    return out
+
+
+def vote_tables(members: Mapping[str, bytes]) -> dict[str, list[bytes]]:
+    tables: dict[str, list[bytes]] = {
+        "votes": [],
+        "records": [],
+        "invalidated": [],
+        "apologies": [],
+    }
+    for name, data in sorted(members.items()):
+        if re.fullmatch(r"hl\d{4}s\.unl", name):
+            tables["votes"].append(data)
+        elif re.fullmatch(r"hl\d{4}h\d+\.unl", name):
+            tables["records"].append(data)
+        elif name == "zmatecne.unl":
+            tables["invalidated"].append(data)
+        elif name == "omluvy.unl":
+            tables["apologies"].append(data)
+    return tables
+
+
+def import_votes(session: Session, term_id: int, tables: Mapping[str, list[bytes]]) -> Counts:
+    """Replace one term's votes, per-MP records and apologies."""
+    if not tables["votes"] or not tables["records"]:
+        raise ValueError("Vote dump is missing its vote or per-MP records table")
+    counts = Counts()
+    invalidated = {
+        int(r[0])
+        for data in tables["invalidated"]
+        for r in unl.rows(data, 1)
+        if r[0]  # type: ignore[arg-type]
+    }
+    votes = []
+    for data in tables["votes"]:
+        for r in unl.rows(data, 17):
+            if r[1] != str(term_id) or not r[0] or not r[5]:
+                continue
+            day = unl.date(r[5])
+            hour, _, minute = (r[6] or "00:00").partition(":")
+            votes.append(
+                dict(
+                    id=int(r[0]),
+                    term_id=term_id,
+                    sitting_number=int(r[2] or 0),
+                    number=int(r[3] or 0),
+                    agenda_number=_int(r[4]),
+                    held_at=dt.datetime(day.year, day.month, day.day, int(hour), int(minute or 0)),  # type: ignore[union-attr]
+                    kind=r[13] or "?",
+                    result=r[14] or "X",
+                    invalidated=int(r[0]) in invalidated,
+                    title=r[15] or "",
+                    short_title=r[16] or "",
+                )
+            )
+    vote_ids = {v["id"] for v in votes}
+    session.execute(
+        delete(models.VoteRecord).where(
+            models.VoteRecord.vote_id.in_(
+                select(models.Vote.id).where(models.Vote.term_id == term_id)
+            )
+        )
+    )
+    session.execute(delete(models.Vote).where(models.Vote.term_id == term_id))
+    insert_rows(session, models.Vote, votes)
+    counts.add("votes", len(votes))
+    mandates = set(
+        session.scalars(select(models.Mandate.id).where(models.Mandate.term_id == term_id))
+    )
+    raw = session.connection().connection.driver_connection
+    assert raw is not None
+    records = 0
+    with raw.cursor() as cursor:  # type: ignore[attr-defined]
+        with cursor.copy("COPY vote_record (vote_id, mandate_id, code) FROM STDIN") as copy:
+            for data in tables["records"]:
+                for r in unl.rows(data, 3):
+                    if not r[0] or not r[1] or not r[2]:
+                        continue
+                    vote, mandate = int(r[1]), int(r[0])
+                    if vote in vote_ids and mandate in mandates:
+                        if len(r[2]) != 1:
+                            raise ValueError("Invalid vote record code")
+                        copy.write_row((vote, mandate, r[2]))
+                        records += 1
+    counts.add("vote records", records)
+    session.execute(delete(models.Apology).where(models.Apology.term_id == term_id))
+    apologies = [
+        dict(
+            term_id=term_id,
+            mandate_id=int(r[1]),  # type: ignore[arg-type]
+            day=unl.date(r[2]),
+            from_time=r[3],
+            to_time=r[4],
+        )
+        for data in tables["apologies"]
+        for r in unl.rows(data, 5)
+        if r[0] == str(term_id) and r[1] and int(r[1]) in mandates and r[2]
+    ]
+    insert_rows(session, models.Apology, apologies)
+    counts.add("apologies", len(apologies))
+    return counts

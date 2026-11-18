@@ -71,7 +71,7 @@
     {%- if number %}<span class="obj__index" aria-label="Zdroj {{ number }}">[{{ number }}]</span>{% endif %}
   </div>
   {%- if show_speaker %}
-  <p class="obj__who">{{ party_pill(c.speaker.party) }}{% if c.speaker.slug %}<a class="obj__name" href="{{ link('mp', slug=c.speaker.slug) }}">{{ c.speaker.name }}</a>{% else %}<span class="obj__name">{{ c.speaker.name }}</span>{% endif %}{% if c.speaker.role %}<span class="obj__role">{{ c.speaker.role|nbsp }}</span>{% endif %}{% if c.role is defined and c.role == 'chair' %}<span class="obj__role">řídí schůzi</span>{% endif %}</p>
+  <p class="obj__who">{{ party_pill(c.speaker.party) }}{% if c.speaker.slug %}<a class="obj__name" href="{{ link('mp', slug=c.speaker.slug, obdobi=c.term) }}">{{ c.speaker.name }}</a>{% else %}<span class="obj__name">{{ c.speaker.name }}</span>{% endif %}{% if c.speaker.role %}<span class="obj__role">{{ c.speaker.role|nbsp }}</span>{% endif %}{% if c.role is defined and c.role == 'chair' %}<span class="obj__role">řídí schůzi</span>{% endif %}</p>
   {%- endif %}
   <blockquote class="obj__quote obj__quote--{{ size }}" lang="cs" cite="{{ c.psp_url }}">
     <p><span aria-hidden="true">„</span>{% if cut_start %}<span class="cut" aria-hidden="true">…&nbsp;</span>{% endif %}<span class="obj__excerpt">{{ shown|highlight(terms) }}</span>{% if cut_end %}<span class="cut" aria-hidden="true">&nbsp;…</span>{% endif %}<span aria-hidden="true">“</span></p>
@@ -128,11 +128,18 @@
 {# A row of activity dots: home (chamber aggregate), MP index (dm-s) and sessions #}
 {% macro dot_strip(days, small=False, label='') -%}
 {%- set pitch = 4 if small else 12 %}{%- set r = 1.5 if small else 4 %}
-<svg class="strip{% if small %} strip--s{% endif %}" width="{{ days|length * pitch - (1 if small else 4) }}" height="{{ 3 if small else 8 }}" role="img" aria-label="{{ label }}">
+<svg class="strip{% if small %} strip--s{% endif %}" width="{{ [0, days|length * pitch - (1 if small else 4)]|max }}" height="{{ 3 if small else 8 }}" role="img" aria-label="{{ label }}">
   {%- for d in days %}
   {%- set state = d.state if d.state is defined else 'spoke' %}
-  {%- set cls = 'ac--absent' if state == 'absent' else 'ac--present' if state == 'present' or d.level == 0 else 'ac--l' ~ d.level %}
+  {%- set cls = 'ac--unknown' if state in ('unknown', 'pending', 'ineligible') else 'ac--absent' if state == 'absent' else 'ac--present' if state == 'present' or d.level == 0 else 'ac--l' ~ d.level %}
   <circle class="ac {{ cls }}" cx="{{ loop.index0 * pitch + r }}" cy="{{ r }}" r="{{ r - (0.5 if state == 'absent' else 0) }}"><title>{{ d.date|cz_date }}</title></circle>
   {%- endfor %}
 </svg>
+{%- endmacro %}
+
+{% macro term_selector(terms, selected, action) -%}
+<form class="term-selector" action="{{ action }}" method="get">
+  <label class="select">Volební období <select name="obdobi">{% for t in terms %}<option value="{{ t.value }}"{% if selected and t.value == selected.number|string %} selected{% endif %}>{{ t.label }}</option>{% endfor %}</select></label>
+  <button class="btn btn--secondary" type="submit">Zobrazit</button>
+</form>
 {%- endmacro %}

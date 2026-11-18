@@ -8,7 +8,7 @@
   const fold = s => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   const options = JSON.parse($("#filter-data").textContent);
   const page = $("[data-search-page]");
-  const live = page?.dataset.live === "true";
+  const live = document.body.dataset.live === "true";
   const objects = page ? $$(".results .obj", page) : [];
   let params = new URLSearchParams(location.search), pop = null, opener = null;
   if (page && !params.has("q")) params.set("q", page.dataset.query);
