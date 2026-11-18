@@ -46,6 +46,26 @@ PARTIES: dict[str, Party] = {
 }
 
 
+# psp.cz club abbreviations (organy.zkratka) of the 9th and 10th terms -> party keys above.
+CLUB_ABBREVIATIONS = {
+    "ANO": "ANO",
+    "ANO2011": "ANO",
+    "KDU-ČSL": "KDU-ČSL",
+    "MS": "Motoristé",
+    "ODS": "ODS",
+    "Piráti": "Piráti",
+    "SPD": "SPD",
+    "STAN": "STAN",
+    "TOP09": "TOP 09",
+    "Nezařaz": INDEPENDENT,
+}
+
+
+def party_for_club(abbr: str) -> str:
+    """The party key for a psp.cz club abbreviation; unknown clubs keep their own."""
+    return CLUB_ABBREVIATIONS.get(abbr, abbr)
+
+
 def _srgb_to_linear(c: float) -> float:
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 

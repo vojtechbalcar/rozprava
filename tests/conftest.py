@@ -65,3 +65,24 @@ def db(connection: Connection) -> Iterator[Session]:
     """A session whose work is rolled back after the test, even if the code commits."""
     with Session(bind=connection, join_transaction_mode="create_savepoint") as session:
         yield session
+
+
+@pytest.fixture
+def sessions(connection: Connection):
+    """A session factory inside the test transaction, for code that opens its own sessions."""
+    from sqlalchemy.orm import sessionmaker
+
+    return sessionmaker(bind=connection, join_transaction_mode="create_savepoint")
+
+
+@pytest.fixture
+def corpus(sessions, tmp_path: Path):
+    """Both terms' fixture pages imported and assembled; returns the fake source."""
+    from rozprava.ingest.runner import Runner
+    from tests.psp_source import TABLES, FakeSource
+
+    source = FakeSource(tmp_path)
+    runner = Runner(sessions, source)
+    runner.metadata(lambda session: TABLES)
+    runner.backfill()
+    return runner, source

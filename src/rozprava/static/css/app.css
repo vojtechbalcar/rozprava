@@ -786,3 +786,15 @@ button.chip:hover { background: var(--paper-2); }
 .histogram { touch-action: none; cursor: crosshair; }
 .histogram .is-selected { fill: var(--ink); }
 .palette__input:focus-within { outline: 2px solid var(--focus); outline-offset: -3px; }
+
+/* Live app: notices, removable active filters, date form, transcript headings */
+.notice { margin-top: 16px; padding: 12px 16px; border-left: 2px solid var(--ink); background: var(--paper-2); color: var(--ink); }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.active-filters .chip { text-decoration: none; }
+.date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.date-range label { display: grid; gap: 4px; font: var(--t-meta); color: var(--ink-3); }
+.date-range input { min-height: 40px; padding: 8px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+.date-range .btn { grid-column: 1 / -1; }
+.reader__heading { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule-strong); }
+.reader__note { margin-top: 24px; }
+.reader__state { margin-top: 48px; }

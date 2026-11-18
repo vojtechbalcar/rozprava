@@ -58,8 +58,7 @@ MONTH_NOMINATIVE = (
 
 def link(name: str, anchor: str | None = None, **params: object) -> str:
     """Map app routes onto the handful of static preview pages."""
-    if name == "methodology":
-        name = "how"
+    name = {"methodology": "how", "speech": "transcript", "sitting": "sessions"}.get(name, name)
     url = PAGES[name][0]
     if name == "transcript":
         if params.get("page") not in (None, SAMPLE_PAGE):
@@ -88,19 +87,29 @@ def alphabetical_parties(names) -> list[str]:
 
 def search_facets(search: dict) -> dict:
     results = search["results"]
-    parties = by_count(Counter(r["speaker"]["party"] for r in results if r["speaker"]["party"]))
-    speakers = by_count(
-        Counter(r["speaker"]["name"] for r in results), key=lambda n: czech_sort_key(n.split()[-1])
-    )
+    q = {"q": search["query"]}
+    parties = [
+        {"value": p, "n": n, "selected": False, "params": q | {"klub": p}}
+        for p, n in by_count(
+            Counter(r["speaker"]["party"] for r in results if r["speaker"]["party"])
+        )
+    ]
+    speakers = [
+        {"value": name, "label": name, "n": n, "selected": False, "params": q | {"poslanec": name}}
+        for name, n in by_count(
+            Counter(r["speaker"]["name"] for r in results),
+            key=lambda n: czech_sort_key(n.split()[-1]),
+        )
+    ]
     months = [
         {**m, "label": f"{MONTH_SHORT[int(m['month'][5:]) - 1]} {m['month'][:4]}"}
         for m in search["months"]
     ]
     return {
         "parties": parties,
-        "parties_max": max(n for _, n in parties),
+        "parties_max": max(p["n"] for p in parties),
         "speakers": speakers,
-        "speakers_max": max(n for _, n in speakers),
+        "speakers_max": max(p["n"] for p in speakers),
         "months": months,
         "months_max": max(m["count"] for m in months) or 1,
     }
@@ -216,6 +225,8 @@ def render(out: Path = OUT, data_path: Path = DATA) -> dict[str, Path]:
     ]
     for speech in data["transcript"]["speeches"]:
         speech.setdefault("continued_from", None)
+    for key, value in {"pinned": False, "state": None}.items():
+        data["transcript"].setdefault(key, value)
     if out.exists():
         shutil.rmtree(out)
     shutil.copytree(STATIC, out / "static")
@@ -234,7 +245,7 @@ def render(out: Path = OUT, data_path: Path = DATA) -> dict[str, Path]:
             "poslanec": sorted(
                 {r["speaker"]["name"] for r in data["search"]["results"]}, key=czech_sort_key
             ),
-            "strana": [
+            "klub": [
                 p
                 for p, _ in by_count(
                     Counter(r["speaker"]["party"] for r in data["search"]["results"])
@@ -258,7 +269,25 @@ def render(out: Path = OUT, data_path: Path = DATA) -> dict[str, Path]:
     demo_mp = next(m for m in mps if m["surname"] == "Jurečka")
     context = {
         "home": {"home": data["home"]},
-        "search": {"search": data["search"], "facets": search_facets(data["search"])},
+        "search": {
+            "search": data["search"]
+            | {
+                "scope": "v 10. volebním období",
+                "keep": {},
+                "active": [],
+                "errors": [],
+                "coverage_note": None,
+                "out_of_range": False,
+                "page": 1,
+                "pages": 1,
+                "sort": "relevance",
+                "sort_params": {
+                    "relevance": {"q": data["search"]["query"], "razeni": "relevance"},
+                    "nejnovejsi": {"q": data["search"]["query"], "razeni": "nejnovejsi"},
+                },
+            },
+            "facets": search_facets(data["search"]),
+        },
         "transcript": {"t": data["transcript"]},
         "mp": {"mp": data["mp"], "graphs": graphs, "compact": compact},
         "mps": {

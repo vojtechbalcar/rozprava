@@ -51,7 +51,7 @@
 
 {% macro agenda_line(agenda) -%}
 <p class="obj__bod">
-{%- if agenda %}<span class="label">Bod {{ agenda.number }}</span> <span>{{ agenda.short|nbsp }}</span>
+{%- if agenda %}<span class="label">{% if agenda.number %}Bod {{ agenda.number }}{% else %}Bod{% endif %}</span> <span>{{ agenda.short|nbsp }}</span>
 {%- else %}<span class="label label--gap">Bod neuveden</span>{% endif %}</p>
 {%- endmacro %}
 
@@ -66,12 +66,12 @@
 {%- set cut_end = shown|length < c.text|length or (c.trail and c.text[-1:] not in '.!?…') %}
 <article class="obj{% if size == 'quote-l' %} obj--featured{% endif %}"{% if number %} id="v{{ number }}"{% endif %} data-date="{{ c.date }}" data-party="{{ c.speaker.party or '' }}" data-speaker="{{ c.speaker.name }}" data-term="{{ c.term }}" data-bill="{{ c.agenda.tisk if c.agenda else '' }}" data-search="{{ c.text }} {{ c.speaker.name }} {{ c.agenda.short if c.agenda else '' }}">
   <div class="obj__top">
-    {{ catalog_number(c.catalog, c.psp_url) }}
+    {{ catalog_number(c.catalog, link('speech', catalog=c.catalog_slug, verze=c.revision) if c.catalog_slug is defined else c.psp_url) }}
     {%- if eyebrow %}<span class="label">{{ eyebrow }}</span>{% endif %}
     {%- if number %}<span class="obj__index" aria-label="Zdroj {{ number }}">[{{ number }}]</span>{% endif %}
   </div>
   {%- if show_speaker %}
-  <p class="obj__who">{{ party_pill(c.speaker.party) }}<a class="obj__name" href="{{ link('mp', slug=c.speaker.slug) }}">{{ c.speaker.name }}</a>{% if c.speaker.role %}<span class="obj__role">{{ c.speaker.role|nbsp }}</span>{% endif %}</p>
+  <p class="obj__who">{{ party_pill(c.speaker.party) }}{% if c.speaker.slug %}<a class="obj__name" href="{{ link('mp', slug=c.speaker.slug) }}">{{ c.speaker.name }}</a>{% else %}<span class="obj__name">{{ c.speaker.name }}</span>{% endif %}{% if c.speaker.role %}<span class="obj__role">{{ c.speaker.role|nbsp }}</span>{% endif %}{% if c.role is defined and c.role == 'chair' %}<span class="obj__role">řídí schůzi</span>{% endif %}</p>
   {%- endif %}
   <blockquote class="obj__quote obj__quote--{{ size }}" lang="cs" cite="{{ c.psp_url }}">
     <p><span aria-hidden="true">„</span>{% if cut_start %}<span class="cut" aria-hidden="true">…&nbsp;</span>{% endif %}<span class="obj__excerpt">{{ shown|highlight(terms) }}</span>{% if cut_end %}<span class="cut" aria-hidden="true">&nbsp;…</span>{% endif %}<span aria-hidden="true">“</span></p>
@@ -79,14 +79,15 @@
   {{ agenda_line(c.agenda) }}
   <div class="obj__foot">
     {{ meta_line(c) }}
-    <a class="obj__open" href="{{ link('transcript', page=c.page, anchor=c.anchor, result=number) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
+    <a class="obj__open" href="{{ link('transcript', term=c.term, sitting=c.sitting, page=c.page, anchor=c.anchor, result=number) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
   </div>
 </article>
 {%- endmacro %}
 
 {# Search bar (§7.2) #}
-{% macro search_bar(query='', placeholder='', id='q', button=True) -%}
+{% macro search_bar(query='', placeholder='', id='q', button=True, keep={}) -%}
 <form class="search-bar{% if not button %} search-bar--plain{% endif %}" action="{{ link('search') }}" role="search">
+  {%- for key, values in keep.items() %}{% for v in (values if values is not string else [values]) %}<input type="hidden" name="{{ key }}" value="{{ v }}">{% endfor %}{% endfor %}
   <label class="visually-hidden" for="{{ id }}">Hledat v&nbsp;projevech poslanců</label>
   {{ icon('search', 20) }}
   <input id="{{ id }}" name="q" type="search" value="{{ query }}" placeholder="{{ placeholder }}" autocomplete="off">
@@ -105,7 +106,7 @@
 
 {% macro filter_chips(active={}) -%}
 <div class="chips" role="group" aria-label="Filtry" data-search-filters>
-  {% for key, label in [('obdobi', 'Volební období'), ('poslanec', 'Poslanec'), ('strana', 'Strana'), ('tisk', 'Bod/tisk'), ('datum', 'Datum')] %}
+  {% for key, label in [('obdobi', 'Volební období'), ('poslanec', 'Řečník'), ('klub', 'Poslanecký klub'), ('tisk', 'Bod/tisk'), ('datum', 'Datum')] %}
   <span class="filter-chip"><button class="chip" type="button" data-filter="{{ key }}" data-label="{{ label }}" aria-haspopup="dialog" aria-expanded="false">{{ label }}{{ icon('chevron', 14) }}</button><button class="chip__x" type="button" data-filter-clear="{{ key }}" aria-label="Zrušit filtr {{ label }}" hidden>{{ icon('x', 14) }}</button></span>
   {% endfor %}
 </div>

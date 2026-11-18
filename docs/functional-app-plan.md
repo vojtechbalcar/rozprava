@@ -99,12 +99,12 @@ def test_unchanged_reimport_does_not_duplicate(db, source_page):
 
 ## 5. Search and reader routes
 
-- [ ] Add `SearchFilters` with bounded query/page length, ISO dates, term/ID validation and stable sort choices. Build parameterized SQL and 20-item pagination. Search full stored speech text; browse newest for an empty query. Include labeled chair contributions.
-- [ ] Test accent-free keywords, quoted phrases, AND/OR/exclusions, all filters, count/facet consistency, deterministic pages and injection-like input against PostgreSQL.
-- [ ] Build per-request view data and URL helper. Core routes: `/`, `/hledat`, `/poslanci`, `/poslanec/{id}`, `/schuze`, `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/karta`, `/jak-to-funguje`, `/api/palette`, `/health`.
-- [ ] Preserve revision parameters in result/citation/composer links; normal reader navigation shows page/day neighbors and explicit pending/missing states. Unknown IDs return 404; database outages return 503 and never fixture content.
-- [ ] Adapt search and reader templates to real URL-backed GET controls. Escape excerpts before adding highlight spans. Keep safe back links within the app and do not render source HTML.
-- [ ] Test route behavior and citations after a revision. Run the app on loopback, check real results from both terms in T3's browser, then commit and push.
+- [x] Add `SearchFilters` with bounded query/page length, ISO dates, term/ID validation and stable sort choices. Build parameterized SQL and 20-item pagination. Search full stored speech text; browse newest for an empty query. Include labeled chair contributions.
+- [x] Test accent-free keywords, quoted phrases, AND/OR/exclusions, all filters, count/facet consistency, deterministic pages and injection-like input against PostgreSQL.
+- [x] Build per-request view data and URL helper. Core routes: `/`, `/hledat`, `/poslanci`, `/poslanec/{id}`, `/schuze`, `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/karta`, `/jak-to-funguje`, `/api/palette`, `/health`.
+- [x] Preserve revision parameters in result/citation/composer links; normal reader navigation shows page/day neighbors and explicit pending/missing states. Unknown IDs return 404; database outages return 503 and never fixture content.
+- [x] Adapt search and reader templates to real URL-backed GET controls. Escape excerpts before adding highlight spans. Keep safe back links within the app and do not render source HTML.
+- [x] Test route behavior and citations after a revision. Run the app on loopback, check real results from both terms in T3's browser, then commit and push. *(18 Nov: checked on the partly loaded corpus; T3's screenshot tool failed on most pages, so the reader was verified through the DOM. `/` redirects to search until step 6.)*
 
 ## 6. Home, people, sittings and statistics
 

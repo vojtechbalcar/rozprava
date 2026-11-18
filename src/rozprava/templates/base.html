@@ -95,7 +95,7 @@
             <li><a href="https://github.com/vojtechbalcar/rozprava">API a&nbsp;data</a></li>
           </ul>
         </nav>
-        <p class="meta site-footer__data">Data: Poslanecká sněmovna PČR (<a href="https://www.psp.cz/">psp.cz</a>). Aktualizováno {{ updated|cz_date }} {{ updated[11:16] }}.</p>
+        <p class="meta site-footer__data">Data: Poslanecká sněmovna PČR (<a href="https://www.psp.cz/">psp.cz</a>). {% if updated %}Aktualizováno {{ updated|cz_date }} {{ updated[11:16] }}.{% else %}Data zatím nebyla načtena.{% endif %}</p>
       </div>
       <div class="site-footer__bottom">
         <div class="segmented" role="radiogroup" aria-label="Motiv">

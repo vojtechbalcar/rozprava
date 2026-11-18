@@ -40,9 +40,9 @@ Why this stack: see [[stack-decision]] in `docs/`.
   (see the module docstring). Only this job contacts psp.cz; it caches downloads in
   `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
 
-Intended, not built yet; update when they exist:
-
-- Dev: `uv run fastapi dev src/rozprava/main.py`
+- Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
+  --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/hledat`, `/prepis/{term}/{sitting}/{page}`,
+  `/projev/{catalog}`, `/health`.
 
 The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
 symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project

@@ -1,4 +1,6 @@
-/* URL-backed controls for the finite, offline design-preview collection. */
+/* URL-backed search controls. In the design preview they filter the six sample
+   objects in place; on live pages (data-live) every change is a normal navigation
+   to the server-rendered results, and links and forms work without this script. */
 (() => {
   "use strict";
   const $ = (s, root = document) => root.querySelector(s);
@@ -6,11 +8,17 @@
   const fold = s => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   const options = JSON.parse($("#filter-data").textContent);
   const page = $("[data-search-page]");
+  const live = page?.dataset.live === "true";
   const objects = page ? $$(".results .obj", page) : [];
   let params = new URLSearchParams(location.search), pop = null, opener = null;
   if (page && !params.has("q")) params.set("q", page.dataset.query);
   const values = key => params.getAll(key);
   const updateURL = () => {
+    if (live) {
+      params.delete("stranka");
+      location.assign(`${page ? location.pathname : "/hledat"}${params.size ? `?${params}` : ""}`);
+      return;
+    }
     history.pushState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}${location.hash}`);
     refresh();
   };
@@ -42,7 +50,7 @@
       b.classList.toggle("chip--active", !!chosen.length);
       b.parentElement.querySelector("[data-filter-clear]").hidden = !chosen.length;
     });
-    if (!page) return;
+    if (!page || live) return;
     const q = params.get("q") || "";
     $("#search-q").value = q;
     document.title = `${q || "Hledání"} · Rozprava`;
@@ -51,7 +59,7 @@
     const hits = objects.filter(o => {
       const d = o.dataset;
       const match = (!values("obdobi").length || values("obdobi").includes(d.term)) &&
-        (!values("strana").length || values("strana").includes(d.party)) &&
+        (!values("klub").length || values("klub").includes(d.party)) &&
         (!values("poslanec").length || values("poslanec").includes(d.speaker)) &&
         (!values("tisk").length || values("tisk").includes(d.bill)) &&
         (!params.get("od") || d.date >= params.get("od")) &&
@@ -120,7 +128,7 @@
       form.addEventListener("input", () => form.elements.do.setCustomValidity(""));
       pop.append(form);
     } else {
-      if (["poslanec", "strana"].includes(key)) {
+      if (["poslanec", "klub"].includes(key)) {
         const input = document.createElement("input");
         input.type = "search"; input.placeholder = "Hledat v seznamu"; input.setAttribute("aria-label", "Hledat v seznamu");
         input.addEventListener("input", () => $$("label", pop).forEach(l => l.hidden = !fold(l.textContent).includes(fold(input.value))));
@@ -144,13 +152,15 @@
     $("input", pop)?.focus();
   }));
   $$("[data-filter-clear]").forEach(b => b.addEventListener("click", () => { close(); clear(b.dataset.filterClear); }));
-  $$("[data-facet]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); toggle(a.dataset.facet, a.dataset.value); }));
-  $$("[data-result-sort]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); params.set("razeni", a.dataset.resultSort); updateURL(); }));
+  if (!live) {
+    $$("[data-facet]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); toggle(a.dataset.facet, a.dataset.value); }));
+    $$("[data-result-sort]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); params.set("razeni", a.dataset.resultSort); updateURL(); }));
+  }
   document.addEventListener("pointerdown", e => { if (pop && !pop.contains(e.target) && !opener.contains(e.target)) close(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && pop) { close(); opener.focus(); } });
   window.addEventListener("resize", close);
-  window.addEventListener("popstate", () => { params = new URLSearchParams(location.search); refresh(); });
-  $$(".hero .search-bar, [data-search-page] .search-bar").forEach(form => form.addEventListener("submit", e => {
+  if (!live) window.addEventListener("popstate", () => { params = new URLSearchParams(location.search); refresh(); });
+  if (!live) $$(".hero .search-bar, [data-search-page] .search-bar").forEach(form => form.addEventListener("submit", e => {
     params.set("q", $("input[name=q]", form).value.trim());
     e.preventDefault();
     if (page) updateURL(); else location.href = `${form.getAttribute("action")}?${params}`;
