@@ -79,6 +79,7 @@
   {{ agenda_line(c.agenda) }}
   <div class="obj__foot">
     {{ meta_line(c) }}
+    {% if live and c.quote_source %}<a class="obj__card" href="{{ link('card', source=c.quote_source, verze=c.revision, start=c.quote_start, end=c.quote_end) }}">Vytvořit kartu</a>{% endif %}
     <a class="obj__open" href="{{ link('transcript', term=c.term, sitting=c.sitting, page=c.page, anchor=c.anchor, result=number) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
   </div>
 </article>

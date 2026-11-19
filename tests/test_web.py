@@ -112,6 +112,9 @@ def test_database_outage_is_503_without_sample_data(client: TestClient):
     assert "Archiv je teď nedostupný." in visible(response.text)
     assert "Papajanovský" not in response.text
     assert client.get("/health").status_code == 503
+    for url in ("/api/palette?q=penze", "/api/quote"):
+        response = client.get(url)
+        assert response.status_code == 503 and response.json()["status"] == "unavailable"
 
 
 def test_home_directory_profiles_and_sittings_use_real_data(client: TestClient):

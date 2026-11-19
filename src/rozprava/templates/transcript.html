@@ -58,7 +58,7 @@
       data-speaker="{{ sp.speaker.name }}" data-party="{{ sp.speaker.party or '' }}" data-catalog="{{ sp.catalog|catalog }}" data-date="{{ t.date }}" data-page="{{ t.page }}" data-sitting="{{ t.sitting }}" data-status="{{ t.status or '' }}" data-source-url="{{ t.psp_url }}"{% if sp.revision is defined %} data-revision="{{ sp.revision }}"{% endif %}
       {% if not sp.chair and sw and sw.css %}style="--rail: {{ sw.css }}"{% endif %}>
       <p class="speech__who">
-        {% if sp.speaker.slug %}<a class="speech__name" href="{{ link('mp', slug=sp.speaker.slug) }}">{{ sp.speaker.name }}</a>{% else %}<span class="speech__name">{{ sp.speaker.name }}</span>{% endif %}{{ ui.party_pill(sp.speaker.party) }}
+        {% if sp.speaker.slug %}<a class="speech__name" href="{{ link('mp', slug=sp.speaker.slug, obdobi=t.term) }}">{{ sp.speaker.name }}</a>{% else %}<span class="speech__name">{{ sp.speaker.name }}</span>{% endif %}{{ ui.party_pill(sp.speaker.party) }}
         {%- if sp.chair %}<span class="speech__role">{% if sp.speaker.role %}{{ sp.speaker.role }}, {% endif %}řídí schůzi</span>{% elif sp.speaker.role %}<span class="speech__role">{{ sp.speaker.role|nbsp }}</span>{% endif %}
         <span class="speech__catalog">{{ ui.catalog_number(sp.catalog, link('speech', catalog=sp.catalog_slug, verze=sp.revision) if sp.catalog_slug is defined else None) }}</span>
       </p>
@@ -70,7 +70,7 @@
         <p class="label passage-label" id="pasaz">Hledaná pasáž · <a href="{{ link('search') }}#v1">výsledek [1]</a></p>
         <div class="para" id="{{ pid }}"><a class="permalink" href="#{{ pid }}" aria-label="Odkaz na odstavec">#</a><p class="speech__text">{{ p.before|nbsp }}<mark class="passage">{{ p.mark|nbsp }}</mark>{{ p.after|nbsp }}</p></div>
         {% else %}
-        <div class="para" id="{{ pid }}"><a class="permalink" href="#{{ pid }}" aria-label="Odkaz na odstavec">#</a><p class="speech__text">{{ p.text|nbsp }}</p></div>
+        <div class="para" id="{{ pid }}"><a class="permalink" href="#{{ pid }}" aria-label="Odkaz na odstavec">#</a><p class="speech__text"{% if live %} data-quote-source="{{ pid|replace('p-', 'paragraph-', 1) }}" data-citation-url="{{ link('transcript', term=t.term, sitting=t.sitting, page=t.page, revize=t.revision, anchor=pid) }}"{% endif %}>{{ p.text|nbsp }}</p></div>
         {% endif %}
       {% endfor %}
     </section>

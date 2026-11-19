@@ -122,9 +122,12 @@ so the newly enabled pages describe and query the real application.
 ## 7. Palette, quotation export and truthful copy
 
 - [x] Replace live palette fixture indexing with bounded server queries for MPs, term-qualified bills and sittings; preserve focus management and keyboard navigation, cancel stale responses, and include a normal speech-search link.
-- [ ] Quote composer loads only a selected stored revision. Validate source ID and passage offsets on the server; preserve contiguous source text with ellipses for cuts and keep share URLs revision-pinned. Retain all three PNG sizes and image/font error handling.
-- [ ] Disable fixture-only JS search/filter behavior on live pages. Preserve form filters during navigation and remove semantic-search/AI-summary claims from live home, search and methodology. Explain actual formulas and update cadence.
-- [ ] Test invalid quotation offsets, forged source text, source revisions and empty/error responses. Browser-check copy link and PNG exports with Czech characters at all sizes. Commit and push.
+- [x] Quote composer loads only a selected stored revision. Validate source ID and passage offsets on the server; preserve contiguous source text with ellipses for cuts and keep share URLs revision-pinned. Retain all three PNG sizes and image/font error handling.
+- [x] Disable fixture-only JS search/filter behavior on live pages. Preserve form filters during navigation and remove semantic-search/AI-summary claims from live home, search and methodology. Explain actual formulas and update cadence.
+- [x] Test invalid quotation offsets, forged source text, source revisions and empty/error responses. Browser-check copy link and PNG exports with Czech characters at all sizes. Commit and push.
+
+19 Nov: step 7 is verified (173 tests, desktop/mobile browser interactions and
+all three PNG exports); see [[quotation-export]].
 
 ## 8. Final verification and operation notes
 

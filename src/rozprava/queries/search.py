@@ -331,6 +331,10 @@ def results_view(session: Session, rows, highlights: Sequence[str], offset: int 
                 "term_year": term.year,
                 "sitting": speech.sitting_number,
                 "page": page_number,
+                "quote_source": f"paragraph-{slug}-{paragraph.position + 1}" if paragraph else None,
+                "quote_start": paragraph.text.find(excerpt) if paragraph else None,
+                "quote_end": paragraph.text.find(excerpt) + len(excerpt) if paragraph else None,
+                "page_revision": paragraph.page_revision_id if paragraph else None,
                 "anchor": f"p-{slug}-{paragraph.position + 1}" if paragraph else f"s-{slug}",
                 "catalog": common.catalog(
                     term.number, speech.sitting_number, speech.page, speech.anchor

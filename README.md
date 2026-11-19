@@ -26,7 +26,9 @@ uv run python -m rozprava.ingest status
 Backfill is resumable and can take hours. Coverage and incomplete statistics are
 shown in the app. Subsequent `update` runs refresh metadata/votes and fetch new or
 non-final pages. Web requests read the database only. No paid APIs or AI summaries
-are used. Server palette queries and quotation export remain in development.
+are used. Quick search finds MPs, bills and sittings. Select “Vytvořit kartu” on a result
+or select text in a transcript to export a quotation PNG. Quotation links retain
+the stored version, selection and image dimensions.
 
 ```sh
 uv run pytest

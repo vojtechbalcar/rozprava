@@ -43,8 +43,8 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
   --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
   `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`,
-  `/jak-to-funguje`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
-  Quote export and the server palette endpoint remain in step 7.
+  `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
+  Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
 The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
 symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project

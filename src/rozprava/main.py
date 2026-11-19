@@ -4,6 +4,7 @@ uv run fastapi dev src/rozprava/main.py
 """
 
 import datetime as dt
+import re
 from collections.abc import Iterator
 from typing import Annotated
 
@@ -16,7 +17,7 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 from rozprava.db import get_session_factory
-from rozprava.queries import activity, archive, common, palette, people, search, transcripts
+from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
 from rozprava.templating import STATIC
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
@@ -38,6 +39,8 @@ def not_found() -> HTTPException:
 
 @app.exception_handler(HTTPException)
 async def http_error(request: Request, exc: HTTPException) -> Response:
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"error": "Požadovaný záznam není dostupný."}, exc.status_code)
     if exc.status_code == 404:
         return render(request, "notfound.html", "notfound", {}, status=404)
     return HTMLResponse(str(exc.detail), status_code=exc.status_code)
@@ -217,6 +220,80 @@ def palette_search(request: Request, db: DB) -> Response:
     for sitting in result["sittings"]:
         sitting["url"] = link("sitting", term=sitting["term"], sitting=sitting["number"])
     return JSONResponse(result)
+
+
+def quote_view(request: Request, db: Session) -> dict:
+    def integer(name: str, required: bool = False) -> int | None:
+        value = request.query_params.get(name)
+        if value is None and not required:
+            return None
+        if value is None or not re.fullmatch(r"[0-9]{1,10}", value):
+            raise quotes.InvalidSelection("Odkaz obsahuje neplatnou verzi nebo výběr citace.")
+        return int(value)
+
+    version = integer("verze", required=True)
+    assert version is not None
+    card = quotes.selection(
+        db,
+        request.query_params.get("source", ""),
+        version,
+        integer("start"),
+        integer("end"),
+        request.query_params.get("highlight", ""),
+        request.query_params.get("format", quotes.FORMATS[0]),
+    )
+    if card is None:
+        raise not_found()
+    c = card["source"]
+    c["reader_url"] = link(
+        "transcript",
+        term=c["term"],
+        sitting=c["sitting"],
+        page=c["page"],
+        revize=c["page_revision"],
+        anchor=c["anchor"],
+    )
+    card["url"] = link(
+        "card",
+        source=card["source_key"],
+        verze=version,
+        start=card["start"],
+        end=card["end"],
+        format=card["format"],
+        highlight=card["highlight"],
+    )
+    card["validation_url"] = "/api/quote"
+    return card
+
+
+@app.get("/api/quote")
+def quote_selection(request: Request, db: DB) -> Response:
+    try:
+        return JSONResponse(quote_view(request, db))
+    except quotes.InvalidSelection as error:
+        return JSONResponse({"error": str(error)}, status_code=400)
+
+
+@app.get("/karta")
+def quote_card(request: Request, db: DB) -> Response:
+    card, error, status = None, None, 200
+    if "source" in request.query_params:
+        try:
+            card = quote_view(request, db)
+        except quotes.InvalidSelection as exc:
+            error, status = str(exc), 400
+    return render(
+        request,
+        "card.html",
+        "card",
+        {
+            "card": card,
+            "card_error": error,
+            "card_sources": {card["source_key"]: card["source"]} if card else {},
+        },
+        SHARED.get(db),
+        status=status,
+    )
 
 
 @app.get("/hledat")

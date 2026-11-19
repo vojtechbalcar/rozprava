@@ -367,13 +367,17 @@
       const text = sel.toString().trim().replace(/\u00a0/g, " ");
       if (!text) { bar.hidden = true; return; }
       const before = range.cloneRange(); before.selectNodeContents(paragraph); before.setEnd(range.startContainer, range.startOffset);
-      const start = before.toString().length + sel.toString().length - sel.toString().trimStart().length;
+      const live = document.body.dataset.live === "true";
+      const length = value => live ? Array.from(value).length : value.length;
+      const start = length(before.toString()) + length(sel.toString()) - length(sel.toString().trimStart());
       const d = paragraph.closest(".speech").dataset;
       const r = range.getBoundingClientRect();
-      quoted = `„${text}“\n${d.speaker}${d.party ? ` (${d.party})` : ""}, ${cz(d.date)}, ${d.sitting}. schůze, s. ${d.page}${d.status?.toLowerCase().includes("neautorizováno") ? ", neautorizováno" : ""}\n${d.sourceUrl}`;
+      quoted = `„${text}“\n${d.speaker}${d.party ? ` (${d.party})` : ""}, ${cz(d.date)}, ${d.sitting}. schůze, s. ${d.page}${d.status?.toLowerCase().includes("neautorizováno") ? ", neautorizováno" : ""}\n${paragraph.dataset.citationUrl ? new URL(paragraph.dataset.citationUrl, location.href).href : d.sourceUrl}`;
       const link = $("[data-card-selection]", bar);
       const key = paragraph.closest(".para").id.replace(/^p-/, "paragraph-");
-      link.href = `karta.html?${new URLSearchParams({source:key, start, end:start + text.length})}`;
+      const params = new URLSearchParams({source: paragraph.dataset.quoteSource || key, start, end:start + length(text)});
+      if (live) params.set("verze", d.revision);
+      link.href = `${live ? "/karta" : "karta.html"}?${params}`;
       bar.hidden = false;
       bar.style.left = `${Math.max(8, Math.min(r.left, innerWidth - bar.offsetWidth - 8)) + scrollX}px`;
       bar.style.top = `${Math.max(scrollY + 8, r.top + scrollY - bar.offsetHeight - 10)}px`;
