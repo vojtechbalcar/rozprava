@@ -2,7 +2,8 @@
 
 Search and read Czech parliamentary transcripts. The local app uses PostgreSQL
 for keyword/phrase search, transcript reading, MP profiles, activity and voting
-participation, and sitting archives for the 9th and 10th terms.
+participation, and sitting archives for the 9th and 10th terms. A word finds its
+other forms too ("důchod" also finds "důchodu"); quoted text matches exactly.
 
 ```sh
 uv sync
@@ -17,11 +18,17 @@ Open [the app](http://127.0.0.1:8000/). Initial setup requires Homebrew PostgreS
 in the ignored `.env`; the cluster and download cache live outside the checkout.
 
 ```sh
+uv run python scripts/fetch_morphology.py   # Czech tagger model for word forms (once)
 uv run python -m rozprava.ingest metadata
 uv run python -m rozprava.ingest votes
 uv run python -m rozprava.ingest backfill
+uv run python -m rozprava.ingest forms      # tag speeches imported without the model
 uv run python -m rozprava.ingest status
 ```
+
+Word forms come from the MorphoDiTa tagger with the MorfFlex CZ 2.1 + PDT-C 2.0
+model (ÚFAL MFF UK, CC BY-NC-SA 4.0, non-commercial); the import tags new speeches
+automatically once the model is installed. See [word forms](docs/czech-word-forms.md).
 
 Backfill is resumable and can take hours. Coverage and incomplete statistics are
 shown in the app. Subsequent `update` runs refresh metadata/votes and fetch new or

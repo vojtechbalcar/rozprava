@@ -36,9 +36,14 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
   `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
-- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|status`
+- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|forms|status`
   (see the module docstring). Only this job contacts psp.cz; it caches downloads in
   `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
+- Word forms: `uv run python scripts/fetch_morphology.py` once installs the MorphoDiTa
+  Czech model in `~/.local/share/rozprava/models`; import commands then tag new
+  speeches, `ingest forms [--rebuild]` tags the rest. See [[czech-word-forms]].
+- Run local database commands and tests with a UTF-8 locale (`LANG=en_US.UTF-8`);
+  PostgreSQL will not start a cluster under an empty locale.
 
 - Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
   --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
