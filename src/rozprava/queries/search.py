@@ -1,17 +1,20 @@
 """Full-text search over current speech revisions.
 
-Queries use PostgreSQL's websearch syntax with the accent-insensitive 'rozprava'
-configuration: words, "quoted phrases", OR and -exclusions. Everything a user
-types is a bound parameter. Facets and the date histogram count the complete
-filtered match set, not just the visible page.
+Queries use websearch syntax with the accent-insensitive 'rozprava' configuration:
+words, "quoted phrases", OR and -exclusions. An unquoted word matches as typed
+and, through the lemmas the ingest job tagged (morphology.py), in its other forms:
+"důchod" finds "důchodu". Quoted text matches exactly. Everything a user types is
+a bound parameter. Facets and the date histogram count the complete filtered match
+set, not just the visible page.
 """
 
 import datetime as dt
 import math
 import re
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from functools import reduce
 
 from sqlalchemy import (
     ColumnElement,
@@ -19,15 +22,18 @@ from sqlalchemy import (
     and_,
     cast,
     exists,
+    false,
     func,
     literal_column,
     or_,
     select,
     true,
 )
+from sqlalchemy.dialects.postgresql import TSQUERY
 from sqlalchemy.orm import Session
 
 from rozprava import models
+from rozprava.morphology import lemma_query
 from rozprava.queries import common
 from rozprava.typography import MONTHS_GENITIVE, fold
 
@@ -164,29 +170,165 @@ class SearchFilters:
         return self.params(**{key: new})
 
 
+@dataclass(frozen=True)
+class Term:
+    text: str
+    phrase: bool = False  # in quotation marks: this exact wording only
+    negated: bool = False
+
+
+def parse_query(q: str) -> list[list[Term]]:
+    """Alternatives (OR) of terms that must all match, in websearch_to_tsquery's syntax:
+    words, "quoted phrases", OR between alternatives and -exclusions."""
+    groups: list[list[Term]] = [[]]
+    for match in _QUERY_TOKEN.finditer(q):
+        if match.group("quoted") is not None:
+            phrase = match.group("quoted").strip()
+            if phrase:
+                groups[-1].append(Term(phrase, phrase=True, negated=bool(match.group("minus"))))
+            continue
+        word = match.group("word")
+        if word.casefold() == "or":
+            if groups[-1]:
+                groups.append([])
+            continue
+        negated = word.startswith("-")
+        word = word.lstrip("-").strip(PUNCTUATION)
+        if word:
+            groups[-1].append(Term(word, negated=negated))
+    return [group for group in groups if group]
+
+
+_QUERY_TOKEN = re.compile(r'(?P<minus>-?)"(?P<quoted>[^"]*)"?|(?P<word>\S+)')
+PUNCTUATION = ".,;:!?()[]„“”‚‘’\"'…–—"
+
+
 def query_terms(q: str) -> list[str]:
     """Words and phrases to highlight: what the query asks for, minus exclusions and OR."""
-    out = []
-    for match in re.finditer(r'(-?)"([^"]+)"|(-?)(\S+)', q):
-        if match.group(2):
-            if not match.group(1):
-                out.append(match.group(2).strip())
-            continue
-        word = match.group(4).strip(".,;:!?()„“\"'")
-        if match.group(3) or not word or word.casefold() == "or":
-            continue
-        out.append(word)
-    return [t for t in dict.fromkeys(out) if t]
+    return list(dict.fromkeys(t.text for group in parse_query(q) for t in group if not t.negated))
 
 
-def _tsquery(q: str):
-    return func.websearch_to_tsquery(literal_column("'rozprava'::regconfig"), q)
+# A query word stands for the lemmas behind at least this share of its uses in the
+# archive, and a written form is highlighted for a lemma it mostly stands for.
+LEMMA_SHARE = 0.2
+FORM_SHARE = 0.5
+# Without accents, "byt" is a word of its own; "duchodu" is "důchodu" typed plainly.
+EXACT_SHARE = 0.01
+MAX_LEMMAS = 3
+MAX_FORMS = 40
 
 
-def conditions(filters: SearchFilters, terms: Mapping[int, common.TermInfo], clubs: common.Clubs):
+@dataclass
+class Expansion:
+    lemmas: list[str] = field(default_factory=list)
+    forms: list[str] = field(default_factory=list)  # other written forms, for highlighting
+
+
+def expand(session: Session, words: Iterable[str]) -> dict[str, Expansion]:
+    """Lemmas and other forms for query words, from the tagged archive's statistics.
+
+    Keys are lowercase words. Words absent from the archive get no lemmas and
+    match only as typed.
+    """
+    wanted = {w.lower(): fold(w) for w in words}
+    if not wanted:
+        return {}
+    wf = models.WordForm
+    candidates: dict[str, list[tuple[str, str, int]]] = {}
+    for form, folded, lemma, count in session.execute(
+        select(wf.form, wf.folded, wf.lemma, wf.count).where(wf.folded.in_(set(wanted.values())))
+    ):
+        candidates.setdefault(folded, []).append((form, lemma, count))
+
+    out: dict[str, Expansion] = {}
+    for word, folded in wanted.items():
+        rows = candidates.get(folded, [])
+        exact = [r for r in rows if r[0] == word]
+        exact_total = sum(n for *_, n in exact)
+        if exact_total and exact_total >= EXACT_SHARE * sum(n for *_, n in rows):
+            rows = exact
+        by_lemma: Counter[str] = Counter()
+        for _, lemma, n in rows:
+            by_lemma[lemma] += n
+        total = sum(by_lemma.values())
+        out[word] = Expansion(
+            [k for k, n in by_lemma.most_common() if n >= LEMMA_SHARE * total][:MAX_LEMMAS]
+        )
+
+    lemmas = {k for e in out.values() for k in e.lemmas}
+    if lemmas:
+        total = func.sum(wf.count).over(partition_by=wf.form)
+        forms: dict[str, list[tuple[int, str]]] = {}
+        for form, lemma, count, form_total in session.execute(
+            select(wf.form, wf.lemma, wf.count, total).where(
+                wf.form.in_(select(wf.form).where(wf.lemma.in_(lemmas)))
+            )
+        ):
+            if lemma in lemmas and count >= FORM_SHARE * form_total:
+                forms.setdefault(lemma, []).append((count, form))
+        for word, expansion in out.items():
+            ranked = sorted(
+                (pair for k in expansion.lemmas for pair in forms.get(k, [])), reverse=True
+            )
+            expansion.forms = [f for _, f in ranked if f != word][:MAX_FORMS]
+    return out
+
+
+@dataclass
+class Query:
+    """A parsed query as SQL, with the terms to highlight in results."""
+
+    tsquery: ColumnElement | None = None
+    highlights: list[str] = field(default_factory=list)
+    expansions: dict[str, Expansion] = field(default_factory=dict)
+
+    @classmethod
+    def build(cls, session: Session, q: str) -> "Query":
+        groups = parse_query(q)
+        words = {t.text for group in groups for t in group if not t.phrase}
+        expansions = expand(session, words)
+        alternatives = []
+        for group in groups:
+            parts = []
+            for term in group:
+                expansion = expansions.get(term.text.lower(), Expansion())
+                part = (
+                    func.phraseto_tsquery(_CONFIG, term.text)
+                    if term.phrase
+                    else func.plainto_tsquery(_CONFIG, term.text)
+                )
+                if expansion.lemmas and not term.phrase:
+                    part = func.tsquery_or(part, cast(lemma_query(expansion.lemmas), TSQUERY))
+                parts.append(func.tsquery_not(part) if term.negated else part)
+            alternatives.append(reduce(func.tsquery_and, parts))
+        highlights, shown = [], {}
+        for term in (t for group in groups for t in group if not t.negated):
+            highlights.append(term.text)
+            expansion = expansions.get(term.text.lower())
+            if expansion and expansion.forms and not term.phrase:
+                highlights += expansion.forms
+                shown[term.text] = expansion
+        return cls(
+            tsquery=reduce(func.tsquery_or, alternatives) if alternatives else None,
+            highlights=list(dict.fromkeys(highlights)),
+            expansions=shown,
+        )
+
+
+_CONFIG = literal_column(f"'{models.SEARCH_CONFIG}'::regconfig")
+
+
+def conditions(
+    filters: SearchFilters,
+    terms: Mapping[int, common.TermInfo],
+    clubs: common.Clubs,
+    query: Query | None = None,
+):
     where: list[ColumnElement[bool]] = [SR.retired_at.is_(None)]
     if filters.q:
-        where.append(SR.search.op("@@")(_tsquery(filters.q)))
+        # A query with nothing searchable in it (only operators) matches nothing.
+        tsquery = query.tsquery if query else None
+        where.append(SR.search.op("@@")(tsquery) if tsquery is not None else false())
     if filters.terms:
         where.append(SR.term_id.in_([terms[t].id for t in filters.terms if t in terms]))
     if filters.people:
@@ -233,6 +375,7 @@ class SearchPage:
     results: list[dict] = field(default_factory=list)
     facets: dict = field(default_factory=dict)
     highlights: list[str] = field(default_factory=list)
+    expansions: dict[str, Expansion] = field(default_factory=dict)
 
     @property
     def pages(self) -> int:
@@ -246,14 +389,17 @@ class SearchPage:
 def search(session: Session, filters: SearchFilters, errors: list[str]) -> SearchPage:
     terms = common.terms(session)
     clubs = common.Clubs(session)
-    page = SearchPage(filters, list(errors), highlights=query_terms(filters.q))
-    where = conditions(filters, terms, clubs)
+    query = Query.build(session, filters.q) if filters.q else Query()
+    page = SearchPage(
+        filters, list(errors), highlights=query.highlights, expansions=query.expansions
+    )
+    where = conditions(filters, terms, clubs, query)
     page.total = session.scalar(select(func.count()).select_from(SR).where(*where)) or 0
     page.facets = _facets(session, where, clubs, filters, terms)
     if page.total == 0 or page.out_of_range:
         return page
 
-    rank = func.ts_rank_cd(SR.search, _tsquery(filters.q)) if filters.q else None
+    rank = func.ts_rank_cd(SR.search, query.tsquery) if query.tsquery is not None else None
     order = (
         [rank.desc(), SR.date.desc(), SR.id.desc()]
         if rank is not None and filters.sort == "relevance"

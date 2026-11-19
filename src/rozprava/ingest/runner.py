@@ -18,9 +18,10 @@ from sqlalchemy import Connection, func, select, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from rozprava import models
-from rozprava.ingest import metadata, store
+from rozprava.ingest import forms, metadata, store
 from rozprava.ingest.fetch import Fetched, FetchError, Forbidden, NotFound
 from rozprava.ingest.parser import ParseError, parse_page
+from rozprava.morphology import Analyzer
 
 LOCK_KEY = 0x526F7A70  # "Rozp": transcripts and metadata
 VOTES_LOCK_KEY = LOCK_KEY + 1  # votes touch separate tables and may run alongside
@@ -167,6 +168,17 @@ class Runner:
                 .values(status="pending", unavailable_reason=None)
             )
             return result.rowcount  # type: ignore[attr-defined]
+
+    def forms(self, analyzer: Analyzer, rebuild: bool = False, limit: int | None = None) -> dict:
+        """Tag current speech revisions that this model has not indexed yet."""
+
+        def progress(done: int, total: int) -> None:
+            if done % 5000 < forms.BATCH or done == total:
+                log.info("word forms: %s of %s revisions", done, total)
+
+        with self.run("forms", model=analyzer.name, rebuild=rebuild, limit=limit) as counts:
+            counts.update(forms.index_forms(self.sessions, analyzer, rebuild, limit, progress))
+        return counts
 
     def assemble_pending(self, terms: Iterable[int] = TERM_NUMBERS) -> dict:
         totals = {"sittings": 0, "speeches": 0, "new revisions": 0, "retired": 0, "unresolved": 0}

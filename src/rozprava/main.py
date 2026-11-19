@@ -19,6 +19,7 @@ from starlette.exceptions import HTTPException
 from rozprava.db import get_session_factory
 from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
 from rozprava.templating import STATIC
+from rozprava.typography import cz_number
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
 app = FastAPI(title="Rozprava", docs_url=None, redoc_url=None, openapi_url=None)
@@ -296,6 +297,9 @@ def quote_card(request: Request, db: DB) -> Response:
     )
 
 
+SHOWN_FORMS = 6  # word forms listed under the query; all of them are highlighted
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
@@ -366,7 +370,16 @@ def search_page(request: Request, db: DB) -> Response:
         | ({"q": filters.q} if filters.q else {}),
         "date_from": filters.date_from.isoformat() if filters.date_from else None,
         "date_to": filters.date_to.isoformat() if filters.date_to else None,
-        "coverage_note": None,
+        "expansions": [
+            {"word": word, "forms": e.forms[:SHOWN_FORMS], "more": len(e.forms) > SHOWN_FORMS}
+            for word, e in result.expansions.items()
+        ],
+        "coverage_note": (
+            f"U {cz_number(shared['forms_waiting'])} projevů zatím nemáme určené tvary slov; "
+            "v nich hledáme jen zadané tvary."
+            if filters.q and shared.get("forms_waiting")
+            else None
+        ),
     }
     return render(
         request, "search.html", "search", {"search": view, "facets": result.facets}, shared
