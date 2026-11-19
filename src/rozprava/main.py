@@ -300,6 +300,13 @@ def quote_card(request: Request, db: DB) -> Response:
 SHOWN_FORMS = 6  # word forms listed under the query; all of them are highlighted
 
 
+def shown_forms(word: str, forms: list[str]) -> list[str]:
+    """The forms listed under the query. They are stored lowercase; a capitalised
+    query is usually a name, so its forms are capitalised too."""
+    shown = forms[:SHOWN_FORMS]
+    return [f[:1].upper() + f[1:] for f in shown] if word[:1].isupper() else shown
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
@@ -371,7 +378,7 @@ def search_page(request: Request, db: DB) -> Response:
         "date_from": filters.date_from.isoformat() if filters.date_from else None,
         "date_to": filters.date_to.isoformat() if filters.date_to else None,
         "expansions": [
-            {"word": word, "forms": e.forms[:SHOWN_FORMS], "more": len(e.forms) > SHOWN_FORMS}
+            {"word": word, "forms": shown_forms(word, e.forms), "more": len(e.forms) > SHOWN_FORMS}
             for word, e in result.expansions.items()
         ],
         "coverage_note": (
