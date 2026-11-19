@@ -12,19 +12,6 @@ from rozprava.web import SHARED, link
 from tests.psp_source import FIXTURE_PAGES, fixture_url
 
 
-@pytest.fixture
-def client(corpus, sessions):
-    def db():
-        with sessions() as session:
-            yield session
-
-    SHARED.clear()
-    main.app.dependency_overrides[main.get_db] = db
-    yield TestClient(main.app)
-    main.app.dependency_overrides.clear()
-    SHARED.clear()
-
-
 def visible(html: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).replace("\xa0", " ")
 

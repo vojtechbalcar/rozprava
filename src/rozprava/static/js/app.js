@@ -205,20 +205,53 @@
   }
   const cz = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${d}. ${m}. ${y}`; };
 
+  let paletteController = null, paletteTimer = null, paletteRequest = 0;
+  function cancelPaletteRequest() {
+    clearTimeout(paletteTimer);
+    paletteController?.abort();
+    paletteRequest++;
+    list?.removeAttribute("aria-busy");
+  }
   function renderPalette() {
+    cancelPaletteRequest();
+    const q = input.value.trim();
+    if (!data.endpoint || !q) { drawPalette(data); return; }
+    const empty = {...data, mps: [], bills: [], sittings: []};
+    drawPalette(empty, "Hledám…");
+    list.setAttribute("aria-busy", "true");
+    const request = paletteRequest;
+    paletteTimer = setTimeout(async () => {
+      paletteController = new AbortController();
+      try {
+        const url = new URL(data.endpoint, location.href);
+        url.searchParams.set("q", q);
+        const response = await fetch(url, {signal: paletteController.signal});
+        if (!response.ok) throw new Error("lookup failed");
+        const result = await response.json();
+        if (request !== paletteRequest || palette.hidden) return;
+        drawPalette(result);
+      } catch (error) {
+        if (error.name === "AbortError" || request !== paletteRequest || palette.hidden) return;
+        drawPalette(empty, "Rychlé hledání je teď nedostupné. Můžete přejít na hledání v projevech.");
+      } finally {
+        if (request === paletteRequest) list.removeAttribute("aria-busy");
+      }
+    }, 180);
+  }
+  function drawPalette(result, notice = "") {
     const q = input.value.trim();
     const f = fold(q);
     const groups = [];
     if (q) {
-      const mps = data.mps.filter((m) => fold(m.name).includes(f) || fold(`${m.sort} ${m.name}`).includes(f));
+      const mps = data.endpoint ? result.mps : result.mps.filter((m) => fold(m.name).includes(f) || fold(`${m.sort} ${m.name}`).includes(f));
       groups.push(["Poslanci", mps, (m) => ({ url: m.url, title: m.name,
-        html: `<span class="monogram monogram--24" aria-hidden="true">${m.initials}</span><span>${mark(m.name, q)}</span><span class="party-pill"><span class="swatch swatch--pending" aria-hidden="true"></span><span>${escapeHtml(m.party)}</span></span><span class="meta">${escapeHtml(m.region)}</span>` }), "poslanci.html"]);
-      const bills = data.bills.filter((b) => fold(`tisk ${b.tisk} ${b.title}`).includes(f));
-      groups.push(["Body a tisky", bills, (b) => ({ url: b.url, title: `tisk ${b.tisk}`,
-        html: `<span class="meta">tisk ${b.tisk}</span><span>${mark(b.title, q)}</span>` }), null]);
-      const sittings = data.sittings.filter((s) => fold(`${s.number}. schuze ${s.number}`).includes(f));
-      groups.push(["Schůze", sittings, (s) => ({ url: s.url, title: `${s.number}. schůze`,
-        html: `<span>${mark(`${s.number}. schůze`, q)}</span><span class="meta">${s.from === s.to ? cz(s.from) : `${cz(s.from)} – ${cz(s.to)}`}</span>` }), "schuze.html"]);
+        html: `<span class="monogram monogram--24" aria-hidden="true">${escapeHtml(m.initials)}</span><span>${mark(m.name, q)}</span><span class="party-pill"><span class="swatch swatch--pending" aria-hidden="true"></span><span>${escapeHtml(m.party)}</span></span><span class="meta">${escapeHtml(m.region)}${m.term ? ` · ${m.term}. období` : ""}</span>` }), "poslanci.html"]);
+      const bills = data.endpoint ? result.bills : result.bills.filter((b) => fold(`tisk ${b.tisk} ${b.title}`).includes(f));
+      groups.push(["Body a tisky", bills, (b) => ({ url: b.url, title: `tisk ${b.tisk}${b.term ? ` (${b.term}. období)` : ""}`,
+        html: `<span class="meta">tisk ${b.tisk}${b.term ? ` · ${b.term}. období` : ""}</span><span>${mark(b.title, q)}</span>` }), null]);
+      const sittings = data.endpoint ? result.sittings : result.sittings.filter((s) => fold(`${s.number}. schuze ${s.number}`).includes(f));
+      groups.push(["Schůze", sittings, (s) => ({ url: s.url, title: `${s.number}. schůze${s.term ? ` (${s.term}. období)` : ""}`,
+        html: `<span>${mark(`${s.number}. schůze`, q)}</span><span class="meta">${s.term ? `${s.term}. období · ` : ""}${s.from ? (s.to && s.from !== s.to ? `${cz(s.from)} – ${cz(s.to)}` : cz(s.from)) : "Termín neuveden"}</span>` }), "schuze.html"]);
       groups.push(["Hledat v projevech", [q], () => ({ url: `${data.search}?q=${encodeURIComponent(q)}`, title: q,
         html: `<span>Hledat „${escapeHtml(q)}“ v&nbsp;projevech <span aria-hidden="true">→</span></span>` }), null]);
     } else {
@@ -227,6 +260,12 @@
     }
     items = [];
     list.innerHTML = "";
+    input.removeAttribute("aria-activedescendant");
+    if (notice) {
+      const message = document.createElement("p");
+      message.className = "palette__empty"; message.setAttribute("role", "status");
+      message.textContent = notice; list.append(message);
+    }
     for (const [title, rows, toItem, more] of groups) {
       if (!rows.length) continue;
       const head = document.createElement("p");
@@ -276,6 +315,7 @@
     input.focus();
   }
   function closePalette() {
+    cancelPaletteRequest();
     if (!palette || palette.hidden) return;
     closeOverlay();
   }
@@ -298,8 +338,8 @@
     if (e.key === "Escape") { hideCite(true); closePalette(); closeOverlay(); return; }
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "/") { e.preventDefault(); openPalette(); }
-    if (reader && e.key === "[") location.href = reader.dataset.prev;
-    if (reader && e.key === "]") location.href = reader.dataset.next;
+    if (reader?.dataset.prev && e.key === "[") location.href = reader.dataset.prev;
+    if (reader?.dataset.next && e.key === "]") location.href = reader.dataset.next;
   });
 
   /* ---------- full official title (§7.13) ---------- */

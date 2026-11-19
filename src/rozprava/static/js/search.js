@@ -22,7 +22,9 @@
     history.pushState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}${location.hash}`);
     refresh();
   };
+  let billController = null, billTimer = null;
   function close() {
+    clearTimeout(billTimer); billController?.abort();
     if (pop) pop.remove();
     if (opener) opener.setAttribute("aria-expanded", "false");
     pop = null;
@@ -101,7 +103,42 @@
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", b.dataset.label);
     const key = b.dataset.filter;
-    if (key === "datum") {
+    if (live && key === "tisk") {
+      const container = pop;
+      const input = document.createElement("input");
+      input.type = "search"; input.maxLength = 200; input.placeholder = "Číslo nebo název tisku";
+      input.setAttribute("aria-label", "Hledat tisk");
+      const list = document.createElement("div"); list.className = "filter-pop__list";
+      list.textContent = "Zadejte číslo nebo část názvu tisku.";
+      pop.append(input, list);
+      input.addEventListener("input", () => {
+        clearTimeout(billTimer); billController?.abort();
+        const q = input.value.trim();
+        list.textContent = q ? "Hledám…" : "Zadejte číslo nebo část názvu tisku.";
+        if (!q) return;
+        billTimer = setTimeout(async () => {
+          const controller = new AbortController(); billController = controller;
+          try {
+            const response = await fetch(`/api/palette?q=${encodeURIComponent(q)}`, {signal: controller.signal});
+            if (!response.ok) throw new Error("lookup failed");
+            const data = await response.json();
+            if (controller.signal.aborted || pop !== container || input.value.trim() !== q) return;
+            list.replaceChildren();
+            for (const bill of data.bills) {
+              const label = document.createElement("label"), check = document.createElement("input");
+              const value = `${bill.term}-${bill.tisk}`;
+              check.type = "checkbox"; check.checked = values("tisk").includes(value);
+              check.addEventListener("change", () => toggle("tisk", value));
+              label.append(check, document.createTextNode(`${bill.term}. období · tisk ${bill.tisk}: ${bill.title}`));
+              list.append(label);
+            }
+            if (!data.bills.length) list.textContent = "Žádný tisk neodpovídá dotazu.";
+          } catch (error) {
+            if (!controller.signal.aborted && pop === container) list.textContent = "Tisky se nepodařilo načíst. Zkuste to znovu.";
+          }
+        }, 180);
+      });
+    } else if (key === "datum") {
       const form = document.createElement("form");
       form.className = "filter-pop__dates";
       for (const [name, label] of [["od", "Od"], ["do", "Do"]]) {

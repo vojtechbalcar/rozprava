@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 from rozprava.db import get_session_factory
-from rozprava.queries import activity, archive, common, people, search, transcripts
+from rozprava.queries import activity, archive, common, palette, people, search, transcripts
 from rozprava.templating import STATIC
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
@@ -202,6 +202,21 @@ def sitting_page(request: Request, term: int, sitting: int, db: DB) -> Response:
 @app.get("/jak-to-funguje")
 def methodology(request: Request, db: DB) -> Response:
     return render(request, "how.html", "how", {}, SHARED.get(db))
+
+
+@app.get("/api/palette")
+def palette_search(request: Request, db: DB) -> Response:
+    query = request.query_params.get("q", "")
+    if len(query) > palette.MAX_QUERY:
+        return JSONResponse({"error": "Dotaz smí mít nejvýše 200 znaků."}, status_code=400)
+    result = palette.lookup(db, query)
+    for person in result["mps"]:
+        person["url"] = link("mp", slug=person["slug"], obdobi=person["term"])
+    for bill in result["bills"]:
+        bill["url"] = link("search", tisk=f"{bill['term']}-{bill['tisk']}")
+    for sitting in result["sittings"]:
+        sitting["url"] = link("sitting", term=sitting["term"], sitting=sitting["number"])
+    return JSONResponse(result)
 
 
 @app.get("/hledat")

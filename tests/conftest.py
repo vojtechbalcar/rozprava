@@ -86,3 +86,21 @@ def corpus(sessions, tmp_path: Path):
     runner.metadata(lambda session: TABLES)
     runner.backfill()
     return runner, source
+
+
+@pytest.fixture
+def client(corpus, sessions):
+    from fastapi.testclient import TestClient
+
+    from rozprava import main
+    from rozprava.web import SHARED
+
+    def db():
+        with sessions() as session:
+            yield session
+
+    SHARED.clear()
+    main.app.dependency_overrides[main.get_db] = db
+    yield TestClient(main.app)
+    main.app.dependency_overrides.clear()
+    SHARED.clear()

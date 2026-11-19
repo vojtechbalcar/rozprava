@@ -116,17 +116,8 @@ def shared_context(session: Session) -> dict:
         "terms": [{"value": str(t.number), "label": t.label} for t in terms.values()],
         "current_term": current_term,
         "palette": {
-            "mps": [
-                {
-                    "name": f"{p.forename} {p.surname}",
-                    "sort": p.surname,
-                    "party": "",
-                    "region": "",
-                    "initials": (p.forename[:1] + p.surname[:1]).upper(),
-                    "url": link("mp", slug=common.person_slug(p.id, p.forename, p.surname)),
-                }
-                for p in people
-            ],
+            "endpoint": link("palette"),
+            "mps": [],
             "bills": [],
             "sittings": [],
             "actions": [
