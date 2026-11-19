@@ -7,7 +7,10 @@
 - [[stack-decision]] — FastAPI + Jinja2 + HTMX + Postgres/pgvector, and the alternatives considered.
 - [[design-preview]] — static preview of all screens from the real templates and real psp.cz excerpts; layout and typesetting decisions made while building it.
 - [[functional-app-design]] — approved backend scope: both terms from 2021, database search before AI, local PostgreSQL.
+- [[quotation-export]] — live quick search and immutable quotation selections, Unicode offsets, PNG export validation.
+- [[archive-views]] — database-backed home, directory/profiles and sittings; voting/activity rules, validation and remaining work.
 - [[functional-app-plan]] — implementation tasks, source-accuracy checks and local delivery workflow.
+- [[local-app-verification]] — completed local database phase, final browser/check results, corpus timings and operating limits.
 
 ## Research
 
@@ -15,4 +18,5 @@
 
 ## Problems solved
 
-- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink.
+- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink. Also the local PostgreSQL 18 cluster.
+- [[transcript-import]] — source-page structure and attribution rules, completed backfill coverage and retry recovery.

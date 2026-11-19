@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Databáze není dostupná · Rozprava{% endblock %}
+
+{% block content %}
+<section class="wrap notfound">
+  <div class="notfound__number">{{ code|string|dot('xl', label='Chyba ' ~ code) }}</div>
+  <h1 class="h2">Archiv je teď nedostupný.</h1>
+  <p class="notfound__text">Nepodařilo se spojit s&nbsp;databází. Zkuste to prosím za chvíli znovu. Ukázková data místo skutečných nezobrazujeme.</p>
+</section>
+{% endblock %}

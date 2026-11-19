@@ -9,13 +9,19 @@
   <blockquote class="qcard__quote"><p>„{% if card.cut_start %}…&nbsp;{% endif %}{{ card.span|highlight([card.highlight]) }}{% if card.cut_end %}&nbsp;…{% endif %}“</p></blockquote>
   <div class="qcard__foot">
     <p class="qcard__who"><span>{{ c.speaker.name }}</span><span class="qcard__party">{{ ui.swatch(c.speaker.party) }}{{ c.speaker.party|party_label }}</span></p>
-    <p class="qcard__prov">{{ c.date|cz_date }} · {{ c.sitting }}. schůze · s. {{ c.page }}{% if 'neautorizováno' in (c.status or '')|lower %} · neautorizováno{% endif %}</p>
+    <p class="qcard__prov">{{ c.date|cz_date if c.date else 'Datum neuvedeno' }} · {{ c.sitting }}. schůze · s. {{ c.page }}{% if 'neautorizováno' in (c.status or '')|lower %} · neautorizováno{% endif %}</p>
     <p class="qcard__url">psp.cz · {{ c.catalog|catalog }}</p>
   </div>
 </div>
 {%- endmacro %}
 
 {% block content %}
+{% if not card %}
+<div class="wrap page-head"><h1 class="h1">Karta citace</h1>
+  <p class="state-empty">{{ card_error or 'Vyberte projev ve výsledcích hledání nebo označte úsek v přepisu.' }}</p>
+  <a href="{{ link('search') }}">Hledat v projevech →</a>
+</div>
+{% else %}
 {% set c = card.source %}
 <header class="wrap page-head">
   <p class="label">Sdílení</p>
@@ -25,28 +31,30 @@
 
 <div class="wrap grid composer">
   <section class="composer__controls" aria-label="Nastavení karty">
-    <p class="label">Celá citace</p>
+    {% if live %}<p class="meta"><a href="{{ c.reader_url }}">Zobrazit zdrojový odstavec →</a> · <a href="{{ c.psp_url }}">Originál na psp.cz ↗</a></p>{% endif %}
+    <p class="label">Zdrojový odstavec</p>
     <blockquote class="composer__source"><p data-card-source>{{ c.text|highlight([card.span]) }}</p></blockquote>
     <p class="meta" data-card-count aria-live="polite">Vybraný úsek: {{ card.span|length }} z&nbsp;nejvýše 280&nbsp;znaků.</p>
     <p class="meta">Označte myší nebo klávesnicí úsek v&nbsp;citaci. Text zůstává doslovný.</p>
     <label class="card-highlight"><input type="checkbox" data-card-highlight checked> Zvýraznit hledaný výraz</label>
     <div class="segmented" role="radiogroup" aria-label="Velikost">
-      <button type="button" role="radio" aria-checked="true" data-card-size="1200x630">1200 × 630</button>
-      <button type="button" role="radio" aria-checked="false" data-card-size="1080x1350">1080 × 1350</button>
-      <button type="button" role="radio" aria-checked="false" data-card-size="1080x1920">1080 × 1920</button>
+      <button type="button" role="radio" aria-checked="{{ 'true' if not live or card.format == '1200x630' else 'false' }}" data-card-size="1200x630">1200 × 630</button>
+      <button type="button" role="radio" aria-checked="{{ 'true' if live and card.format == '1080x1350' else 'false' }}" data-card-size="1080x1350">1080 × 1350</button>
+      <button type="button" role="radio" aria-checked="{{ 'true' if live and card.format == '1080x1920' else 'false' }}" data-card-size="1080x1920">1080 × 1920</button>
     </div>
     <div class="composer__actions">
       <button class="btn btn--primary" type="button" data-card-download>Stáhnout PNG</button>
-      <button class="btn btn--secondary" type="button" data-card-link data-copy="{{ c.psp_url }}">{{ ui.icon('link') }} Kopírovat odkaz</button>
+      <button class="btn btn--secondary" type="button" data-card-link>{{ ui.icon('link') }} Kopírovat odkaz</button>
     </div>
     <p class="meta" data-card-error role="status"></p>
   </section>
   <section class="composer__preview" aria-label="Náhled karty">
     {% for w, h in [(1200, 630), (1080, 1350), (1080, 1920)] %}
-    <div class="qcard-frame" data-card-panel="{{ w }}x{{ h }}"{% if w != 1200 %} hidden{% endif %}>{{ card_face(w, h, c) }}</div>
+    <div class="qcard-frame" data-card-panel="{{ w }}x{{ h }}"{% if (live and card.format != w|string ~ 'x' ~ h|string) or (not live and w != 1200) %} hidden{% endif %}>{{ card_face(w, h, c) }}</div>
     {% endfor %}
   </section>
 </div>
 <script type="application/json" id="card-sources">{{ card_sources|tojson }}</script>
 <script type="application/json" id="card-default">{{ card|tojson }}</script>
+{% endif %}
 {% endblock %}

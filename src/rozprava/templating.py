@@ -43,5 +43,6 @@ def make_env(
         catalog=lambda c: titles.catalog_number(c["term"], c["sitting"], c["page"], c["order"]),
         catalog_slug=lambda c: titles.catalog_slug(c["term"], c["sitting"], c["page"], c["order"]),
     )
-    env.globals.update(link=link, static=static, swatches=parties.swatches(), **globals)
+    env.globals.update({"live": False} | globals)
+    env.globals.update(link=link, static=static, swatches=parties.swatches())
     return env

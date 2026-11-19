@@ -83,8 +83,12 @@ def test_short_titles_prefer_psp_short_names_written_out():
     assert short_title("…", psp_short="Vl.n.z. o státním rozpočtu ČR na rok 2026") == (
         "Vládní návrh zákona o státním rozpočtu ČR na rok 2026"
     )
-    assert short_title("…", tisk=90, psp_short="Vl.n.z., kt. se mění některé z.") == (
+    assert short_title("…", tisk=90, psp_short="Vl.n.z., kt. se mění některé z.", term=10) == (
         "Změny zákonů v oblasti veřejných rozpočtů"
+    )
+    # Tisk numbers restart every term: the override belongs to the 10th term's tisk 90.
+    assert short_title("…", tisk=90, psp_short="Vl.n.z. o státním rozpočtu", term=9) == (
+        "Vládní návrh zákona o státním rozpočtu"
     )
 
 

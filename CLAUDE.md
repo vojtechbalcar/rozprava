@@ -30,16 +30,26 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Design tokens: `uv run python scripts/build_tokens.py` after editing the
   `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
+- Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db`.
+  Rozprava's own PostgreSQL 18 cluster in `~/.local/share/rozprava/postgres` on
+  `127.0.0.1:55432`; `init` writes the private `.env`. See [[dev-environment]].
+- Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
+  `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
-Intended, not built yet; update when they exist:
+- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|status`
+  (see the module docstring). Only this job contacts psp.cz; it caches downloads in
+  `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
 
-- Dev: `uv run fastapi dev src/rozprava/main.py`
-- Migrate: `uv run alembic upgrade head`
-- Ingest: `uv run python -m rozprava.ingest`
+- Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
+  --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
+  `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`,
+  `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
+  Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
-The project lives on an iCloud-synced Desktop. iCloud marks dot-folders hidden,
-and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
-`.venv` is a symlink to `~/.local/share/venvs/rozprava`. See [[dev-environment]].
+The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
+symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project
+lived on the iCloud-synced Desktop (iCloud hides dot-folders and Python 3.14 skips
+hidden `.pth` files). See [[dev-environment]].
 
 ## Hard rules
 

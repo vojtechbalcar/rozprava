@@ -21,7 +21,7 @@
   <script src="{{ static('js/search.js') }}" defer></script>
   <script src="{{ static('js/composer.js') }}" defer></script>
 </head>
-<body class="page-{{ page }}">
+<body class="page-{{ page }}" data-live="{{ 'true' if live else 'false' }}">
   {% import "_macros.html" as ui %}
   <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
 
@@ -76,6 +76,13 @@
   </div>
 
   <main id="obsah">
+    {% if live and coverage %}
+    <details class="wrap coverage">
+      <summary class="meta">Pokrytí archivu{% if coverage|rejectattr('complete')|list %} · přepisy se načítají{% endif %}</summary>
+      <ul class="meta">{% for c in coverage %}<li>{{ c.term }}. období: {{ c.imported|cz_number }} z {{ c.expected|cz_number }} stran · čeká {{ c.pending|cz_number }} · chyby {{ c.failed|cz_number }} · nedostupné {{ c.unavailable|cz_number }}</li>{% endfor %}</ul>
+      <p class="meta">{% if updated %}Poslední dokončený import: {{ updated }}.{% else %}Zatím nebyl dokončen žádný import.{% endif %} Počty vycházejí z dosud načtených přepisů.</p>
+    </details>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 
@@ -95,7 +102,7 @@
             <li><a href="https://github.com/vojtechbalcar/rozprava">API a&nbsp;data</a></li>
           </ul>
         </nav>
-        <p class="meta site-footer__data">Data: Poslanecká sněmovna PČR (<a href="https://www.psp.cz/">psp.cz</a>). Aktualizováno {{ updated|cz_date }} {{ updated[11:16] }}.</p>
+        <p class="meta site-footer__data">Data: Poslanecká sněmovna PČR (<a href="https://www.psp.cz/">psp.cz</a>). {% if updated %}Aktualizováno {{ updated|cz_date }} {{ updated[11:16] }}.{% else %}Data zatím nebyla načtena.{% endif %}</p>
       </div>
       <div class="site-footer__bottom">
         <div class="segmented" role="radiogroup" aria-label="Motiv">
@@ -114,7 +121,7 @@
     <div class="palette__box" role="dialog" aria-modal="true" aria-label="Hledat a přejít">
       <div class="palette__input">
         {{ ui.icon('search', 20) }}
-        <input type="text" placeholder="Poslanec, tisk, schůze nebo dotaz" autocomplete="off" spellcheck="false" aria-label="Hledat" aria-controls="palette-list" aria-autocomplete="list" role="combobox" aria-expanded="true">
+        <input type="text" placeholder="Poslanec, tisk, schůze nebo dotaz" maxlength="200" autocomplete="off" spellcheck="false" aria-label="Hledat" aria-controls="palette-list" aria-autocomplete="list" role="combobox" aria-expanded="true">
         <kbd class="kbd">Esc</kbd>
       </div>
       <div class="palette__list" id="palette-list" role="listbox"></div>
