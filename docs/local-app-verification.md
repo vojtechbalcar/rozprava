@@ -71,7 +71,8 @@ A private 168.4 MiB custom-format database backup was created on 19 November at
 08:27 CET. `pg_restore --list` successfully read its 163 archive entries; no
 restore into the working database was performed.
 
-Search matches whole words and phrases with accent folding, without stemming
-or semantic expansion. Unknown speakers, roles, clubs and participation remain
+Search matched whole words and phrases with accent folding, without stemming
+or semantic expansion. Since 19 November, unquoted words also match their other
+forms; see [[czech-word-forms]]. Unknown speakers, roles, clubs and participation remain
 explicitly unknown. Counts can change after source corrections or additional
 imports. Hosting, AI features and automatic scheduling remain future work.

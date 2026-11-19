@@ -23,13 +23,14 @@
     {% endfor %}
 
     <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> {{ search.scope|nbsp }}, seřazeno {{ 'podle data' if search.sort == 'nejnovejsi' or not search.query else 'podle relevance' }}</p>
+    {% if search.expansions %}<p class="meta" data-word-forms>Hledáme i&nbsp;další tvary: {% for e in search.expansions %}{{ e.word }} ({{ e.forms|join(', ') }}{% if e.more %} a&nbsp;další{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}. Přesný tvar zadejte v&nbsp;uvozovkách.</p>{% endif %}
     {% if search.coverage_note %}<p class="meta">{{ search.coverage_note|nbsp }}</p>{% endif %}
     {% if not live %}<p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>{% endif %}
 
     {% if search.out_of_range %}
     <section class="state-empty"><h2 class="h2">Tolik stránek výsledků není.</h2><p><a href="{{ link('search', **search.last_page_params) }}">Přejít na poslední stránku ({{ search.pages }})</a></p></section>
     {% else %}
-    <section class="state-empty search-empty" data-search-empty{% if not live or search.total %} hidden{% endif %}><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr. Hledáme celá slova bez ohledu na diakritiku; jiné tvary slova (důchod, důchodu) zadejte zvlášť nebo spojte pomocí OR.</p>{% if not live %}<button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button>{% endif %}</section>
+    <section class="state-empty search-empty" data-search-empty{% if not live or search.total %} hidden{% endif %}><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr. Hledáme slova ve všech tvarech a&nbsp;bez ohledu na diakritiku; v&nbsp;uvozovkách hledáme přesně zadaný tvar nebo frázi.</p>{% if not live %}<button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button>{% endif %}</section>
     {% endif %}
 
     {# AI summary (§7.8): machine-made, sans, never serif. Only in the design preview for now. #}

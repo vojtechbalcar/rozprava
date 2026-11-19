@@ -39,6 +39,8 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 SEARCH_CONFIG = "rozprava"
+# Exact words (accent-insensitive) followed by lemma lexemes, which have their own prefix.
+SEARCH_VECTOR = f"to_tsvector('{SEARCH_CONFIG}'::regconfig, text) || coalesce(forms, ''::tsvector)"
 
 PAGE_STATUSES = ("pending", "imported", "failed", "unavailable")
 ROLES = ("speaker", "chair", "unknown")
@@ -394,9 +396,10 @@ class SpeechRevision(Base):
     stage: Mapped[str] = mapped_column(String(8))  # the least final constituent page
     words: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(Text)
-    search: Mapped[str] = mapped_column(
-        TSVECTOR, Computed(f"to_tsvector('{SEARCH_CONFIG}'::regconfig, text)", persisted=True)
-    )
+    # "~lemma" lexemes from the Czech tagger (morphology.py); None until indexed.
+    forms: Mapped[str | None] = mapped_column(TSVECTOR)
+    forms_model: Mapped[str | None] = mapped_column(String(64))
+    search: Mapped[str] = mapped_column(TSVECTOR, Computed(SEARCH_VECTOR, persisted=True))
 
     paragraphs: Mapped[list["SpeechParagraph"]] = relationship(order_by="SpeechParagraph.position")
 
@@ -480,3 +483,22 @@ class Apology(Base):
     day: Mapped[dt.date] = mapped_column(Date)
     from_time: Mapped[str | None] = mapped_column(String(5))
     to_time: Mapped[str | None] = mapped_column(String(5))
+
+
+class WordForm(Base):
+    """How often a written form stood for a lemma in tagged speeches (morphology.py).
+
+    Search expands each query word to the lemmas its form usually stands for, and
+    highlights the other forms of those lemmas. Counts only grow between rebuilds.
+    """
+
+    __tablename__ = "word_form"
+
+    form: Mapped[str] = mapped_column(Text, primary_key=True)  # lowercase, with accents
+    lemma: Mapped[str] = mapped_column(Text, primary_key=True)
+    folded: Mapped[str] = mapped_column(Text, index=True)  # typography.fold(form)
+    count: Mapped[int] = mapped_column(Integer)
+
+    # Counts change after every tagging batch; migration 0004 sets fillfactor and
+    # autovacuum storage parameters so updates stay in place and dead rows go early.
+    __table_args__ = (Index("ix_word_form_lemma", "lemma"),)

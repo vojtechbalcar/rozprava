@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rozprava import models
+from rozprava.morphology import MODEL
 from rozprava.queries import common, search
 
 SR = models.SpeechRevision
@@ -43,6 +44,18 @@ def coverage(session: Session) -> list[dict]:
         t["complete"] = t["expected"] > 0 and t["imported"] == t["expected"]
         t["percent"] = 100 * t["imported"] / t["expected"] if t["expected"] else 0
     return [terms[k] for k in sorted(terms)]
+
+
+def forms_waiting(session: Session) -> int:
+    """Current speeches the word-form tagger has not processed with the current model."""
+    return (
+        session.scalar(
+            select(func.count()).where(
+                SR.retired_at.is_(None), SR.forms_model.is_distinct_from(MODEL)
+            )
+        )
+        or 0
+    )
 
 
 def home(session: Session, now: dt.datetime) -> dict:

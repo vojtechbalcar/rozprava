@@ -7,11 +7,17 @@
     uv run python -m rozprava.ingest refresh [--term …]  # re-download imported pages
     uv run python -m rozprava.ingest assemble            # re-assemble changed sittings
     uv run python -m rozprava.ingest retry [--unavailable]
+    uv run python -m rozprava.ingest forms [--rebuild] [--limit N]  # Czech word forms
     uv run python -m rozprava.ingest status
 
 Downloads are polite (one request per second) and cached outside the repository.
 Each page is committed separately, so an interrupted run can simply be repeated.
 A log is appended to <data dir>/log/ingest.log.
+
+Commands that can add speech revisions (backfill, update, refresh, assemble) tag
+them with the Czech morphology model afterwards, if it is installed
+(scripts/fetch_morphology.py). Without it, new speeches match only exact words
+until `forms` runs.
 """
 
 import argparse
@@ -22,7 +28,7 @@ from sqlalchemy import func, select
 
 from rozprava import models
 from rozprava.db import get_engine, get_session_factory
-from rozprava.ingest import metadata
+from rozprava.ingest import forms, metadata
 from rozprava.ingest.fetch import Cache, Fetcher, FetchError
 from rozprava.ingest.runner import (
     LOCK_KEY,
@@ -33,7 +39,10 @@ from rozprava.ingest.runner import (
     coverage,
     import_lock,
 )
+from rozprava.morphology import MODEL, Lemmatizer, MorphologyUnavailable, model_path
 from rozprava.settings import get_settings
+
+log = logging.getLogger("rozprava.ingest")
 
 
 def configure_logging() -> None:
@@ -60,6 +69,8 @@ def print_status() -> None:
             select(func.count()).where(models.Speech.current_revision_id.is_not(None))
         )
         print(f"speeches: {speeches}")
+        untagged = forms.pending(session, MODEL)
+        print(f"word forms: {(speeches or 0) - untagged} tagged, {untagged} waiting ({MODEL})")
         for run in session.scalars(
             select(models.ImportRun).order_by(models.ImportRun.id.desc()).limit(5)
         ):
@@ -83,6 +94,9 @@ def main(argv: list[str] | None = None) -> int:
     retry = commands.add_parser("retry", help="queue failed pages again")
     retry.add_argument("--term", type=int, choices=sorted(TERM_NUMBERS), action="append")
     retry.add_argument("--unavailable", action="store_true", help="also pages marked unavailable")
+    tag = commands.add_parser("forms", help="tag speeches with Czech lemmas for search")
+    tag.add_argument("--rebuild", action="store_true", help="tag every current speech again")
+    tag.add_argument("--limit", type=int, help="at most this many speeches")
     commands.add_parser("status", help="coverage per term and recent runs")
     args = parser.parse_args(argv)
 
@@ -94,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     settings = get_settings()
     terms = getattr(args, "term", None) or sorted(TERM_NUMBERS)
     cache = Cache(settings.cache_dir / "http")  # type: ignore[operator]
+    model = model_path(settings.data_dir)
     try:
         lock_key = VOTES_LOCK_KEY if args.command == "votes" else LOCK_KEY
         with (
@@ -117,9 +132,19 @@ def main(argv: list[str] | None = None) -> int:
                 result = runner.refresh(terms, args.limit)
             elif args.command == "assemble":
                 result = runner.assemble_pending(terms)
+            elif args.command == "forms":
+                result = runner.forms(Lemmatizer(model), args.rebuild, args.limit)
             else:
                 result = {"queued again": runner.retry(terms, args.unavailable)}
+            if args.command in ("backfill", "update", "refresh", "assemble"):
+                try:
+                    result = {**result, "forms": runner.forms(Lemmatizer(model))}
+                except MorphologyUnavailable as error:  # the import itself succeeded
+                    log.warning("word forms not tagged: %s", error)
             print(result)
+    except MorphologyUnavailable as error:
+        print(error, file=sys.stderr)
+        return 1
     except ImportLocked as error:
         print(error, file=sys.stderr)
         return 2
