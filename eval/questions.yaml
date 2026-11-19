@@ -1,0 +1,516 @@
+# Rozprava retrieval and summary evaluation set. See eval/README.md.
+#
+# Each question has graded judgments for speeches in the local archive,
+# identified by catalog number (term-sitting-page-order, as in /projev/...).
+#   grade 2: the speech answers the question directly
+#   grade 1: related or partial; useful context for an answer
+#   grade 0: judged NOT relevant although it looks relevant (a hard negative);
+#            `note` says why, e.g. the speaker quotes or rebuts someone else
+# `evidence` is a verbatim excerpt of the speech; scripts/evaluate.py check
+# verifies it against the database. `filters` uses the /hledat URL parameters.
+# `keywords` is what a person would type into today's keyword search.
+# Judgments come from pooled keyword searches and are incomplete: an
+# unjudged speech is unknown, not irrelevant.
+
+version: 1
+judged_on: 2026-11-19
+
+questions:
+  - id: q01
+    question: Proč opozice v únoru 2026 navrhla vyslovit nedůvěru vládě Andreje Babiše?
+    kind: event
+    filters: {obdobi: [10], od: "2026-02-01", do: "2026-02-28"}
+    keywords: nedůvěra vládě Macinka
+    judgments:
+      - speech: 10-008-0001-2
+        grade: 2
+        evidence: "Vydírání Petra Macinky je ta příčina, která nás přivedla dnes k jednání o nedůvěře vládě"
+      - speech: 10-008-0055-4
+        grade: 2
+        evidence: "Jednání členů vlády vůči prezidentu republiky, ať už šlo o nátlak, vydírání nebo nepřijatelné politické hry, není nějakým osobním selháním jednoho ministra."
+      - speech: 10-008-0053-2
+        grade: 2
+        evidence: "vláda se dopustila značné devalvace – a konkrétně tedy místopředseda vlády Macinka – značné devalvace toho, jak má fungovat ústavní činitel"
+      - speech: 10-008-0115-2
+        grade: 1
+        evidence: "Tváří v tvář téhle situaci pan Macinka doslova píše:"
+        note: Quotes Macinka's message; the quoted words are not the speaker's own.
+      - speech: 10-008-0072-1
+        grade: 1
+        evidence: "situace, která se vyvinula mezi Hradem a panem ministrem Macinkou"
+      - speech: 10-008-0009-2
+        grade: 0
+        evidence: "ten důvod dnešní schůze o nedůvěře tak, jak ho formulovala současná opozice, tedy bývalá Fialova vládní koalice, ten z mého pohledu nemá vůbec žádnou logiku"
+        note: Coalition rebuttal by Tomio Okamura; characterises the opposition's reasons rather than giving them.
+      - speech: 10-008-0045-1
+        grade: 0
+        evidence: "za mě je to devalvace toho institutu, návrh na vyslovení nedů"
+        note: Coalition (ANO) rebuttal; argues the motion devalues the institution.
+
+  - id: q02
+    question: Z jakých důvodů opozice na podzim 2026 znovu navrhla vyslovit vládě nedůvěru?
+    kind: event
+    filters: {obdobi: [10], od: "2026-09-01", do: "2026-10-31"}
+    keywords: nedůvěra vládě
+    judgments:
+      - speech: 10-033-0062-2
+        grade: 2
+        evidence: "To je ten hlavní důvod, kvůli kterému jsme svolali tuto schůzi a pokoušíme se vyslovit nedůvěru vládě."
+      - speech: 10-033-0059-2
+        grade: 2
+        evidence: "kvůli budoucnosti našich dětí, kvůli svobodě médií a kvůli zásadě, že zákony mají platit stejně pro předsedu vlády i pro člověka, který žádnou politickou protekci nemá"
+      - speech: 10-033-0123-2
+        grade: 1
+        evidence: "Pro letošní rok je schodek schválený ve výši 310 miliard korun."
+      - speech: 10-033-0166-6
+        grade: 1
+        evidence: "Co se týče důvodů k vyslovení nedůvěry té vládě, my jsme to tady zmiňovali."
+      - speech: 10-033-0058-4
+        grade: 0
+        evidence: "To je zajímavé, takže tam vlastně nás vybízíte, ať to nedodržujeme."
+        note: Coalition (ANO) reply about licence fees, not a reason for the motion.
+
+  - id: q03
+    question: Jak vláda v roce 2026 zdůvodňovala návrat elektronické evidence tržeb?
+    kind: stance
+    filters: {obdobi: [10]}
+    keywords: EET
+    judgments:
+      - speech: 10-025-0008-2
+        grade: 2
+        evidence: "aby ti, kteří své povinnosti řádně plní, nebyli znevýhodňováni vůči těm, kteří své tržby zatajují a daně neodvádějí"
+      - speech: 10-030-0090-4
+        grade: 1
+        evidence: "zákonem o evidenci tržeb, který je jednou z hlavních priorit naší vlády"
+      - speech: 10-020-0234-6
+        grade: 1
+        evidence: "Motoristé sobě neměli ve svém programu znovuzavedení povinného systému, takzvané elektronické evidence tržeb"
+        note: Coalition partner explaining why it supports a measure it did not campaign for.
+      - speech: 10-020-0241-4
+        grade: 0
+        evidence: "Po 10 letech debaty o elektronické evidenci tržeb se dnes vrací návrh, který v mnoha věcech opakuje staré chyby."
+        note: Opposition (ODS) criticism, not the government's justification.
+      - speech: 10-025-0014-2
+        grade: 0
+        evidence: "předložený návrh zákona o elektronické evidenci tržeb je důkazem vládní schizofrenní politiky"
+        note: Opposition (STAN) speaker paraphrasing the government's aim in order to criticise it.
+
+  - id: q04
+    question: Jaké výhrady měla opozice k EET 2.0?
+    kind: stance
+    filters: {obdobi: [10], od: "2026-06-01"}
+    keywords: EET živnostníci
+    judgments:
+      - speech: 10-020-0241-4
+        grade: 2
+        evidence: "Ignoruje část závěrů Ústavního soudu tím, že rozšiřuje evidenci i na bezhotovostní platby a znovu dopadá především na ty nejmenší podnikatele."
+      - speech: 10-020-0234-2
+        grade: 2
+        evidence: "A pro ty jednotlivé řemeslníky a živnostníky to je obrovská zátěž."
+      - speech: 10-025-0025-4
+        grade: 2
+        evidence: "Proto mi nestačí slyšet, že data budou chráněna obecně, nestačí mi říct, že stát to nějak zabezpečí."
+      - speech: 10-020-0240-2
+        grade: 2
+        evidence: "Zejména malé provozovny na venkově nemají vlastní ekonomické oddělení."
+      - speech: 10-025-0014-2
+        grade: 2
+        evidence: "předložený návrh zákona o elektronické evidenci tržeb je důkazem vládní schizofrenní politiky"
+      - speech: 10-025-0013-4
+        grade: 1
+        evidence: "Stát má vybírat daně spravedlivě a má chránit poctivé podnikatele před neférovou konkurencí."
+      - speech: 10-020-0235-2
+        grade: 1
+        evidence: "Motoristé zásadně odmítají EET."
+        note: An ODS speaker quoting the Motoristé's campaign position; not his own words.
+      - speech: 10-025-0008-2
+        grade: 0
+        evidence: "V posledních dnech jsem zaznamenala výroky pana poslance Munzara, který vede korektní debatu"
+        note: The minister citing the opposition's criticism in order to rebut it.
+
+  - id: q05
+    question: Proč vláda Petra Fialy v roce 2022 rušila elektronickou evidenci tržeb?
+    kind: stance
+    filters: {obdobi: [9]}
+    keywords: zrušení EET
+    judgments:
+      - speech: 9-027-0033-6
+        grade: 2
+        evidence: "plníme jeden ze svých klíčových předvolebních slibů"
+      - speech: 9-046-0023-10
+        grade: 2
+        evidence: "Byli jsme proti EET, napadali jsme to u Ústavního soudu, tam jsme byli poměrně úspěšní."
+      - speech: 9-027-0034-2
+        grade: 1
+        evidence: "Fakticky, ale právně je pouze odloženo EET do konce tohoto roku."
+      - speech: 9-046-0002-7
+        grade: 0
+        evidence: "Přesně v tomto vidím jeden z hlavních důvodů té zcela nelogické a hloupé snahy zrušit EET."
+        note: Opposition (ANO) speculating about the government's motive.
+
+  - id: q06
+    question: Jak hnutí ANO hájilo EET, když ji vláda Petra Fialy rušila, a jak ji později samo zavádělo znovu?
+    kind: cross-term
+    filters: {klub: [ANO]}
+    keywords: EET
+    judgments:
+      - speech: 9-041-0035-1
+        grade: 2
+        evidence: "Za dobu svého fungování EET vytvořila téměř 60 miliard dodatečných příjmů"
+      - speech: 9-046-0016-3
+        grade: 2
+        evidence: "je jasné, že elektronická evidence tržeb výrazně zlepšila přehled o podnikatelském prostředí"
+      - speech: 9-027-0035-2
+        grade: 1
+        evidence: "Není vypnuto EET. EET je dobrovolné."
+      - speech: 9-041-0043-6
+        grade: 1
+        evidence: "všechno smysluplné a funkční vláda ruší"
+      - speech: 10-025-0008-2
+        grade: 2
+        evidence: "EET 2.0 není návratem ke starému systému."
+      - speech: 10-030-0103-4
+        grade: 1
+        evidence: "s EET 2.0 jsem tu počtvrté"
+      - speech: 9-027-0033-6
+        grade: 0
+        evidence: "plníme jeden ze svých klíčových předvolebních slibů"
+        note: The ODS finance minister explaining the abolition; not ANO's position (outside the club filter).
+
+  - id: q07
+    question: Jaké argumenty zazněly ve sněmovně ke sjezdu sudetských Němců v Brně?
+    kind: event
+    filters: {obdobi: [10]}
+    keywords: sjezd sudetských Němců Brno
+    judgments:
+      - speech: 10-018-0002-4
+        grade: 2
+        evidence: "konání (sjezdu) Sudetoněmeckého landsmanšaftu na českém území je přinejmenším problematické a nevhodné"
+      - speech: 10-016-0020-2
+        grade: 2
+        evidence: "jsem připravila protiusnesení ke konání sjezdu Sudetoněmeckého landsmanšaftu v Brně, které je doplněno, a podpoře procesů usmíření"
+      - speech: 10-018-0003-4
+        grade: 2
+        evidence: "tento hlas lidí, kteří se právem cítí zraněni konáním sjezdu sudetoněmeckého landsmanšaftu v České republice, by měl být slyšen"
+      - speech: 10-018-0006-2
+        grade: 2
+        evidence: "ještě navíc v Brně, kousek od Kounicových kolejí – tak je to naprostá arogance moci"
+      - speech: 10-016-0049-3
+        grade: 1
+        evidence: "jednáme tedy o návrhu usnesení ke sjezdu Sudetoněmeckého landsmanšaftu v Brně"
+      - speech: 10-016-0035-10
+        grade: 1
+        evidence: "součástí Sudetoněmeckého landsmanšaftu je sdružení, které se jmenuje Witikobund"
+      - speech: 10-017-0026-2
+        grade: 0
+        evidence: "včera při projednávání tématu k sudetoněmeckému landsmanšaftu"
+        note: A passing reference in a different debate the next day.
+
+  - id: q08
+    question: Stěžoval si někdo ve sněmovně, že se na Karlovarsku těží nerosty příliš blízko domů?
+    kind: paraphrase
+    filters: {}
+    keywords: těžba blízko domů
+    judgments:
+      - speech: 10-032-0001-2
+        grade: 2
+        evidence: "se těží kaolin místy jen desítky metrů od domů"
+      - speech: 10-005-0366-6
+        grade: 0
+        evidence: "například při lomové či povrchové těžbě uhlí a kaolinu nebo při geologicko-průzkumných pracích"
+        note: Reads out general legal provisions on mining; no complaint about a place.
+      - speech: 9-074-0269-7
+        grade: 0
+        evidence: "Rwanda má také řadu minerálů, jako jsou křemičité písky, kaolin, vermikulit"
+        note: About Rwanda's mineral resources.
+
+  - id: q09
+    question: Jaké argumenty zazněly pro a proti tomu, aby vláda mohla regulovat ceny benzinu a nafty?
+    kind: paraphrase
+    filters: {obdobi: [10]}
+    keywords: regulace cen benzinu
+    judgments:
+      - speech: 10-014-0339-7
+        grade: 2
+        evidence: "čelí důsledkům konfliktu na Blízkém východě, který se hlavně promítá do ceny ropy a pohonných hmot"
+      - speech: 10-014-0040-5
+        grade: 2
+        evidence: "dává vládě pravomoc administrativně zasahovat do cen, dává jí možnost rozhodovat, kdy je trh v uvozovkách mimořádný"
+      - speech: 10-014-0348-2
+        grade: 2
+        evidence: "Regulace cen může znít líbivě, ale je mnohokrát prokázáno, že dlouhodobě nefunguje."
+      - speech: 10-014-0042-2
+        grade: 2
+        evidence: "čerpací stanice provozovaná Dopravním podnikem v Děčíně přestala prodávat naftu"
+      - speech: 10-014-0055-2
+        grade: 2
+        evidence: "návrat do centrálně plánované ekonomiky nemáme realizovat"
+      - speech: 10-014-0350-8
+        grade: 1
+        evidence: "Přišli jsme s tím návrhem na snížení spotřební daně"
+      - speech: 10-014-0345-2
+        grade: 1
+        evidence: "Je to stejný princip jako u regulace cen energií."
+        note: The speaker (ODS) quotes the minister's claim in order to dispute it.
+
+  - id: q10
+    question: Čím vláda v dubnu 2026 zdůvodnila stav legislativní nouze a proč s ním opozice nesouhlasila?
+    kind: event
+    filters: {obdobi: [10], od: "2026-04-01", do: "2026-04-30"}
+    keywords: legislativní nouze
+    judgments:
+      - speech: 10-014-0001-6
+        grade: 2
+        evidence: "Zákon jasně říká, že legislativní nouzi lze využít tehdy, kdy jsou zásadním způsobem ohrožena práva občanů, bezpečnost státu nebo kdy hrozí značné hospodářské škody."
+      - speech: 10-014-0013-2
+        grade: 2
+        evidence: "za mě osobně není důvod, aby byly naplněny důvody pro legislativní nouzi"
+      - speech: 10-014-0014-2
+        grade: 2
+        evidence: "to je nástroj, který by měl být výjimečným nástrojem, nikoli nějakou běžnou pracovní metodou"
+      - speech: 10-014-0015-2
+        grade: 2
+        evidence: "zda jsou, nebo nejsou splněny podmínky pro potvrzení trvání stavu legislativní nouze podle § 99 odst. 1 jednacího řádu"
+      - speech: 10-014-0006-8
+        grade: 1
+        evidence: "teď vlastně přicházíte se stavem, kdy už v téhle zemi chcete vládnout dekret"
+      - speech: 10-014-0012-3
+        grade: 1
+        evidence: "když docházelo k legislativní nouzi, dělala se ta opatření proti vysokým cenám energie, tak byla inflace 13 procent"
+        note: Answers the minister's comparison with the 2022 energy-price emergency.
+      - speech: 10-014-0019-2
+        grade: 0
+        evidence: "bytová nouze některých skupin obyvatelstva není problémem"
+        note: '"nouze" in the sense of housing need, during a speech on other policy priorities.'
+
+  - id: q11
+    question: Proč koalice v roce 2026 měnila jednací řád sněmovny a čeho se obávala opozice?
+    kind: event
+    filters: {obdobi: [10]}
+    keywords: změna jednacího řádu
+    judgments:
+      - speech: 10-007-0029-2
+        grade: 2
+        evidence: "soutěžili v tom, kdo déle vydrží u tohoto pultíku stát, řečnit"
+      - speech: 10-007-0040-11
+        grade: 2
+        evidence: "Je to novela, která usnadní Andreji Babišovi protlačit spoustu věcí, umožní omezit práva parlamentní menšiny"
+      - speech: 10-007-0049-3
+        grade: 2
+        evidence: "mediální a společenská poptávka po úpravě jednacího řádu díky nekonečným obstrukcím"
+      - speech: 10-020-0055-2
+        grade: 2
+        evidence: "tu změnu jednacího řádu nějakou určitě potřebujeme"
+      - speech: 10-024-0355-1
+        grade: 1
+        evidence: "obstrukce v některých chvílích tak přestávaly být nějakým legitimním parlamentním nástrojem"
+      - speech: 10-007-0188-2
+        grade: 1
+        evidence: "sice došlo na závěr toho jednání k omezení toho vystupujícího práva, tenkrát tady stál u pultíku poslanec Petr Fiala"
+        note: Mentions Petr Fiala as a past example; he is not the speaker.
+
+  - id: q12
+    question: Jak poslanci ANO kritizovali zvyšování věku odchodu do důchodu v důchodové reformě?
+    kind: stance
+    filters: {obdobi: [9], klub: [ANO]}
+    keywords: věk odchodu do důchodu
+    judgments:
+      - speech: 9-104-0005-2
+        grade: 2
+        evidence: "není nic jiného než prachsprosté snižování valorizace důchodů a zvyšování odchodu věku do důchodu"
+      - speech: 9-104-0061-2
+        grade: 2
+        evidence: "Ministerstvo zdravotnictví, které v tomto dalo námitku k posunování odchodu věku do důchodu"
+      - speech: 9-104-0061-4
+        grade: 2
+        evidence: "když se podíváme na odchod do důchodu a věk dožití, tak to skutečně vůbec nesedí"
+      - speech: 9-104-0017-2
+        grade: 1
+        evidence: "Nesáhneme na odchody do důchodu, nezměníme věk odchodu do důchodu, do toho mechanismu nesáhneme."
+        note: Quotes an earlier promise by Petr Fiala; the quoted words are Fiala's, not the speaker's.
+      - speech: 9-104-0028-3
+        grade: 1
+        evidence: "motivujme je, vždyť je to v pořádku, nikdo jim v tom nesmí bránit"
+      - speech: 9-104-0062-14
+        grade: 0
+        evidence: "jakým způsobem můžeme tu hranici věku odchodu do důchodu nastavit"
+        note: The minister (KDU-ČSL) defending the reform; outside the ANO filter.
+
+  - id: q13
+    question: Jak Marian Jurečka obhajoval důchodovou reformu?
+    kind: person
+    filters: {obdobi: [9], poslanec: [6205]}
+    keywords: důchodová reforma
+    judgments:
+      - speech: 9-104-0062-14
+        grade: 2
+        evidence: "jakým způsobem můžeme tu hranici věku odchodu do důchodu nastavit, aby byla v rámci možností předvídatelná, s dostatečným předstihem a i na základě dat"
+      - speech: 9-113-0035-2
+        grade: 2
+        evidence: "rozumný člověk se nemusí přít o to, jestli důchodovou reformu potřebujeme nebo ne"
+      - speech: 9-104-0011-2
+        grade: 2
+        evidence: "jak nastal posun v porodnosti v České republice. To je fakt."
+      - speech: 9-117-0017-4
+        grade: 1
+        evidence: "Upravujeme nároky vdov a vdovců na získání vdovského a vdoveckého důchodu."
+      - speech: 9-104-0005-2
+        grade: 0
+        evidence: "není nic jiného než prachsprosté snižování valorizace důchodů a zvyšování odchodu věku do důchodu"
+        note: Andrej Babiš attacking the reform; not Jurečka (outside the speaker filter).
+
+  - id: q14
+    question: Proč opozice odmítala zvýšení poplatků za Českou televizi a Český rozhlas?
+    kind: stance
+    filters: {obdobi: [9]}
+    keywords: koncesionářské poplatky
+    judgments:
+      - speech: 9-111-0003-2
+        grade: 2
+        evidence: "my jako hnutí s tímto návrhem zásadně nesouhlasíme"
+      - speech: 9-111-0043-6
+        grade: 2
+        evidence: "je ve skutečnosti plošnou daní z televizních přístrojů, rádií, ale i telefonů, tabletů a počítačů"
+      - speech: 9-111-0091-6
+        grade: 2
+        evidence: "aby to byli pouze vládě poplatní a zavázaní televizní a rozhlasoví radní"
+        note: Speaker is Radim Fiala (SPD), not Prime Minister Petr Fiala.
+      - speech: 9-111-0072-2
+        grade: 2
+        evidence: "sliboval, že se nebudou zvyšovat koncesionářské poplatky"
+      - speech: 9-124-0032-2
+        grade: 1
+        evidence: "když se nepovede zvýšit koncesionářský poplatek o 11 procent, tak se zruší 50 procent těch kanálů"
+      - speech: 9-111-0050-3
+        grade: 0
+        evidence: "za zhruba rok, nebo možná ještě za kratší dobu jsem názor změnil"
+        note: The culture minister (ODS) explaining why he now proposes the increase; government side.
+
+  - id: q15
+    question: Jak opozice popisovala konsolidační balíček z roku 2023 a jak ho hájil ministr financí?
+    kind: event
+    filters: {obdobi: [9]}
+    keywords: konsolidační balíček
+    judgments:
+      - speech: 9-074-0119-2
+        grade: 2
+        evidence: "který je ve skutečnosti nejrozsáhlejším zvýšením daní v historii samostatné České republiky"
+      - speech: 9-071-0073-4
+        grade: 2
+        evidence: "Většina snížení schodku státního rozpočtu se děje na straně výdajů"
+      - speech: 9-071-0150-2
+        grade: 1
+        evidence: "vedlejším produktem inflace je to, že jsou vyšší daňové příjmy státního rozpočtu"
+      - speech: 9-077-0042-2
+        grade: 1
+        evidence: "Hnutí ANO spolu se svými kolegy předložilo pozměňovací návrh na zrušení daňové výjimky na dary pro politické strany."
+      - speech: 9-071-0223-5
+        grade: 1
+        evidence: "pan ministr financí včera říkal, jestli je nutné konsolidovat veřejné finance"
+        note: Paraphrases the minister's question from the previous day.
+      - speech: 9-071-0214-2
+        grade: 1
+        evidence: "detailně se řešila jednotlivá navyšování daní"
+
+  - id: q16
+    question: Jaké změny pravidel pro držení zbraní se projednávaly po útoku na Filozofické fakultě?
+    kind: event
+    filters: {obdobi: [9]}
+    keywords: zákon o zbraních Filozofická fakulta
+    judgments:
+      - speech: 9-103-0157-2
+        grade: 2
+        evidence: "jako dílčí opatření v návaznosti na tragický útok na půdě Filozofické fakulty Univerzity Karlovy z prosince loňského roku"
+      - speech: 9-105-0033-6
+        grade: 2
+        evidence: "upravující zajištění zbraně se totiž vztahuje pouze na zbraně podléhající registraci a ohlášení současné kategorie A až C1"
+      - speech: 9-112-0084-8
+        grade: 1
+        evidence: "když ta policie, vojenská policie, GIBS nebo služby budou mít důvod jít k držiteli zbraní"
+      - speech: 9-112-0080-4
+        grade: 1
+        evidence: "Příslušný útvar policie může vydat rozhodnutí, jímž nevyhoví žádosti o vydání zbrojního průkazu, jestliže je žadatelem cizinec"
+      - speech: 9-105-0034-2
+        grade: 1
+        evidence: "Tyto podmínky jsou bezúhonnost, spolehlivost, zdravotní způsobilost."
+
+  - id: q17
+    question: Jak se měnila pomoc uprchlíkům z Ukrajiny, například humanitární dávka?
+    kind: event
+    filters: {obdobi: [9]}
+    keywords: humanitární dávka uprchlíci
+    judgments:
+      - speech: 9-052-0118-1
+        grade: 2
+        evidence: "Humanitární dávka bude napříště dávkou testovanou."
+      - speech: 9-052-0024-6
+        grade: 2
+        evidence: "Cílem návrhu je také balancovat vyšší adresnost dávkové podpory a schopnost úřadů práce zajistit administraci dávkových nároků v reálném čase"
+      - speech: 9-108-0034-2
+        grade: 1
+        evidence: "jak počítáme přínosy a odvody ukrajinských uprchlíků s dočasnou ochranou"
+      - speech: 9-025-0031-2
+        grade: 1
+        evidence: "Uzavírá se humanitární městečko na Hlavním nádraží."
+      - speech: 9-119-0071-5
+        grade: 1
+        evidence: "byla velká sounáležitost, velká solidarita českých rodin, municipalit, obcí"
+
+  - id: q18
+    question: Proč vláda na jaře 2023 snížila mimořádnou valorizaci důchodů a jak reagovala opozice?
+    kind: event
+    filters: {obdobi: [9], od: "2023-02-15", do: "2023-03-31"}
+    keywords: valorizace důchodů
+    judgments:
+      - speech: 9-055-0137-14
+        grade: 2
+        evidence: "ten ale nezvedal základnu pro další valorizace, takže to byl jiný příběh s jinými ekonomickými dopady"
+      - speech: 9-055-0024-2
+        grade: 2
+        evidence: "pan místopředseda Havlíček se mýlí v tom, že ta valorizace má dopad pouze na letošní rok"
+      - speech: 9-055-0089-5
+        grade: 2
+        evidence: "pokud se mimořádná valorizace provede jednou, tak se nepochybně - to je jednoduchá aritmetika - projevuje ve všech letech do budoucna"
+      - speech: 9-055-0157-2
+        grade: 2
+        evidence: "Toto asociální rozhodnutí vlády Petra Fialy o zásadním snížení valorizací důchodů, na které již jejich příjemcům vznikl právní nárok, je svévolné, chybné a hanebné."
+        note: Speaker is Radim Fiala (SPD), criticising the government of Petr Fiala.
+      - speech: 9-055-0338-4
+        grade: 2
+        evidence: "ve věci plánovaného razantního snížení zákonné mimořádné valorizace všech důchodů"
+      - speech: 9-055-0211-10
+        grade: 2
+        evidence: "Rozdíl valorizace pro české důchodce mezi 750 korunami a 1 750 korunami je zcela zásadní."
+      - speech: 9-055-0222-2
+        grade: 1
+        evidence: "jakým způsobem vlastně ten vládní návrh upravuje tu mimořádnou valorizaci"
+      - speech: 9-055-0281-6
+        grade: 1
+        evidence: "Důvodem je inflace, tedy zdražování jednotlivých položek takzvané v spotřebním koši"
+      - speech: 9-055-0353-2
+        grade: 1
+        evidence: "Normálně lže a říká, že pokud by proběhla valorizace podle zákonů"
+        note: Attributes a claim to a government minister in order to dispute it.
+
+  - id: q19
+    question: Proč se v únoru 2022 prodlužoval pandemický zákon a kdo byl proti?
+    kind: event
+    filters: {obdobi: [9], do: "2022-03-31"}
+    keywords: pandemický zákon
+    judgments:
+      - speech: 9-009-0125-4
+        grade: 2
+        evidence: "Nouzový stav je těžká zbraň a není vhodné ji používat."
+      - speech: 9-009-0127-4
+        grade: 2
+        evidence: "Tento zákon, pandemický zákon, neboli jinak pojmenovaný nouzový stav, co vláda předkládá, tak způsobil i rozkol ve vládní koalici."
+      - speech: 9-009-0139-2
+        grade: 1
+        evidence: "kontroverzní záležitost, kterou prodloužení pandemického zákona nepochybně je"
+      - speech: 9-009-0146-8
+        grade: 1
+        evidence: "pandemie covid je prostě a jednoduše fascinující fenomén"
+      - speech: 9-006-0209-2
+        grade: 0
+        evidence: "Způsob dosažení imunity představuje očkování nebo prodělaná nemoc."
+        note: A different bill (extraordinary school leave) in January 2022.
