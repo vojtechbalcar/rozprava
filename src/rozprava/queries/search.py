@@ -77,13 +77,13 @@ class SearchFilters:
 
         terms = []
         for value in values("obdobi"):
-            if value.isdigit() and int(value) in known_terms:
+            if re.fullmatch(r"[0-9]{1,2}", value) and int(value) in known_terms:
                 terms.append(int(value))
             else:
                 errors.append(f"Volební období „{value}“ neznáme; filtr jsme vynechali.")
         people = []
         for value in values("poslanec"):
-            if value.isdigit() and len(value) <= 7:
+            if re.fullmatch(r"[0-9]{1,7}", value):
                 people.append(int(value))
             else:
                 errors.append(f"Řečníka „{value}“ jsme nepoznali; filtr jsme vynechali.")
@@ -115,7 +115,7 @@ class SearchFilters:
             errors.append("Neznámé řazení; řadíme podle relevance.")
             sort = "relevance"
         page_text = one("stranka") or "1"
-        page = int(page_text) if page_text.isdigit() else 0
+        page = int(page_text) if re.fullmatch(r"[0-9]{1,3}", page_text) else 0
         if not 1 <= page <= MAX_PAGE:
             errors.append(f"Stránka „{page_text}“ neexistuje; zobrazujeme první.")
             page = 1

@@ -35,6 +35,9 @@ def selection(
     if not match:
         return None
     slug, number = match.groups()
+    # PostgreSQL stores revision IDs as integer and paragraph positions as smallint.
+    if not 1 <= version <= 2_147_483_647 or int(number) - 1 > 32_767:
+        return None
     revision = session.get(models.SpeechRevision, version)
     if revision is None:
         return None

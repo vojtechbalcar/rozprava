@@ -90,9 +90,12 @@ def test_missing_version_or_half_selection_is_rejected(client, quote_link):
     "change",
     [
         {"source": "paragraph-10-034-0644-2-999999"},
+        {"source": "paragraph-10-034-0642-2-32769"},
         {"source": "invalid"},
         {"source": "paragraph-9-034-0642-2-1"},
         {"verze": "99999999"},
+        {"verze": "2147483648"},
+        {"verze": "9999999999"},
     ],
 )
 def test_unknown_or_mismatched_source_is_404(client, quote_link, change):

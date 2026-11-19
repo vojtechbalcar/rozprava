@@ -145,6 +145,15 @@ def test_invalid_parameters_are_explained_in_czech():
     assert notes
 
 
+@pytest.mark.parametrize("value", ["²", "９", "9" * 5000])
+def test_numeric_filters_reject_non_ascii_and_oversized_input(value):
+    filters, errors = SearchFilters.parse(
+        {"obdobi": [value], "poslanec": [value], "stranka": [value]}
+    )
+    assert filters.terms == () and filters.people == () and filters.page == 1
+    assert len(errors) == 3
+
+
 def test_highlight_terms_follow_the_query_syntax():
     assert query_terms('"penzijní spoření" OR důchod -reforma') == ["penzijní spoření", "důchod"]
     assert query_terms('-"celá fráze" slovo,') == ["slovo"]

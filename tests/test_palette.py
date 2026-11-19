@@ -60,7 +60,15 @@ def test_palette_bounds_empty_queries_and_literal_wildcards(client):
         "sittings": [],
     }
     assert client.get("/api/palette", params={"q": "a" * 201}).status_code == 400
-    for query in ("a", "%", "_", "' OR 1=1 --", "<script>alert(1)</script>"):
+    for query in (
+        "a",
+        "%",
+        "_",
+        "' OR 1=1 --",
+        "<script>alert(1)</script>",
+        "999999",
+        "schuze 32768",
+    ):
         result = client.get("/api/palette", params={"q": query}).json()
         assert all(len(result[key]) <= palette.LIMIT for key in ("mps", "bills", "sittings"))
         if query != "a":

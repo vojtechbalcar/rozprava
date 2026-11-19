@@ -32,6 +32,9 @@ def _time(revision: models.PageRevision | None, page: models.SourcePage) -> str 
 def reader(
     session: Session, term_number: int, sitting: int, page_number: int, revision_id: int | None
 ) -> dict | None:
+    # Reject edited links outside the stored smallint range before binding SQL.
+    if not (1 <= sitting <= 32_767 and 1 <= page_number <= 32_767):
+        return None
     term = common.terms(session).get(term_number)
     if term is None:
         return None

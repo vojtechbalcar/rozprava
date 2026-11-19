@@ -67,7 +67,16 @@ def test_pending_and_unavailable_pages_say_so(client: TestClient):
 
 
 def test_unknown_ids_are_404(client: TestClient):
-    for url in ("/prepis/10/34/999", "/prepis/11/1/1", "/projev/10-034-0644-9", "/projev/x"):
+    for url in (
+        "/prepis/10/34/999",
+        "/prepis/11/1/1",
+        "/prepis/10/32768/1",
+        "/prepis/10/34/32768",
+        "/prepis/10/9999999999/1",
+        "/prepis/10/34/9999999999",
+        "/projev/10-034-0644-9",
+        "/projev/x",
+    ):
         response = client.get(url, follow_redirects=False)
         assert response.status_code == 404, url
         assert "Tahle strana v" in response.text

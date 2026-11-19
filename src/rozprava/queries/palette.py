@@ -86,7 +86,7 @@ def lookup(session: Session, query: str) -> dict:
                     ),
                 }
             )
-    if number and number[1] != "tisk":
+    if number and number[1] != "tisk" and 1 <= int(number[2]) <= 32_767:
         s = models.Sitting
         for sitting, term_number in session.execute(
             select(s, t.number)
