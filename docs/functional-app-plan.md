@@ -131,8 +131,12 @@ all three PNG exports); see [[quotation-export]].
 
 ## 8. Final verification and operation notes
 
-- [ ] Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, token freshness and JavaScript syntax checks. Re-render the static preview to protect design review mode.
-- [ ] Review spec compliance and code quality, fix findings, rerun affected checks. Measure representative PostgreSQL query timings against the imported corpus.
-- [ ] Exercise browser history, direct deep links, both terms, facets/date controls, directory/profile navigation, another sitting/day, quote exports, keyboard controls, responsive layouts and unavailable-data states.
-- [ ] Inspect the full backfill: report exact term coverage and unresolved source failures, do not claim the archive is complete while pending work remains. Reconcile expected pages after a fresh metadata update.
-- [ ] Update README, CLAUDE commands and Obsidian notes with actual setup/start/update/stop/backup behavior, data directories and known limitations. Keep credentials and caches ignored. Commit and push verified changes, leaving the working local app available.
+- [x] Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, token freshness and JavaScript syntax checks. Re-render the static preview to protect design review mode.
+- [x] Review spec compliance and code quality, fix findings, rerun affected checks. Measure representative PostgreSQL query timings against the imported corpus.
+- [x] Exercise browser history, direct deep links, both terms, facets/date controls, directory/profile navigation, another sitting/day, quote exports, keyboard controls, responsive layouts and unavailable-data states.
+- [x] Inspect the full backfill: report exact term coverage and unresolved source failures, do not claim the archive is complete while pending work remains. Reconcile expected pages after a fresh metadata update.
+- [x] Update README, CLAUDE commands and Obsidian notes with actual setup/start/update/stop/backup behavior, data directories and known limitations. Keep credentials and caches ignored. Commit and push verified changes, leaving the working local app available.
+
+19 Nov: step 8 verified with 181 passing tests. Full backfill plus recovery loaded
+18 496 of 18 500 pages; four empty upstream responses remain explicitly failed.
+See [[local-app-verification]] for browser checks, timings and operation notes.

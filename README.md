@@ -30,6 +30,25 @@ are used. Quick search finds MPs, bills and sittings. Select “Vytvořit kartu�
 or select text in a transcript to export a quotation PNG. Quotation links retain
 the stored version, selection and image dimensions.
 
+For later refreshes and backups:
+
+```sh
+uv run python -m rozprava.ingest update
+uv run python -m rozprava.ingest backfill  # also retries failed pages
+uv run python scripts/local_db.py backup
+```
+
+Stop the dev server with Ctrl-C, then stop PostgreSQL with
+`uv run python scripts/local_db.py stop`. Start the database and server again with
+the commands above; imported data survives restarts. Updates are manual; there
+is no background scheduler. `refresh --term 9` or `refresh --term 10` re-downloads
+already imported pages to check later corrections, retaining old versions.
+
+As of 19 November 2026, the local archive contains 93,738 speeches and 18,496 of
+18,500 expected pages: term 10 is loaded, while four term-9 pages in sitting 901
+still return empty responses. See [import status](docs/transcript-import.md) and
+[verification notes](docs/local-app-verification.md).
+
 ```sh
 uv run pytest
 uv run ruff check .

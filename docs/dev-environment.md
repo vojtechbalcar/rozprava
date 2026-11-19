@@ -1,6 +1,6 @@
 ---
 type: problem
-updated: 2026-11-17
+updated: 2026-11-19
 status: current
 ---
 
@@ -49,4 +49,22 @@ Repeated initialization retains credentials and data. Backups go to the private
 `rozprava_test` database; integration tests refuse to reset a database whose name
 does not end in `_test`.
 
-The app runtime and import commands are being implemented in [[functional-app-plan]].
+The local app is implemented; see [[local-app-verification]] and
+[[functional-app-plan]]. Start the database first, then run:
+
+```sh
+uv run uvicorn rozprava.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Open `http://127.0.0.1:8000/`. Stop the server with Ctrl-C before stopping the
+database. No launch agent or background update scheduler is installed. Run
+`uv run python -m rozprava.ingest update` manually for fresh metadata/votes and
+new or non-final transcript pages. Run `backfill` to resume or retry failures,
+and `refresh --term 9|10` to check final pages for later corrections (choose one
+term number). All source fetching happens in these commands, never web requests.
+
+Runtime directories under `~/.local/share/rozprava/`: `postgres/` holds the
+cluster, `cache/http/` holds downloaded response bodies and metadata, `log/`
+holds ingestion logs, and `backups/` holds private PostgreSQL custom-format
+dumps. The download cache is not a database backup. Keep the ignored `.env` and
+local credentials private; neither is needed in Git.
