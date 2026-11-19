@@ -16,7 +16,7 @@ from rozprava import models
 from rozprava.morphology import Analyzer, forms_vector
 from rozprava.typography import fold
 
-BATCH = 200
+BATCH = 500  # revisions per transaction; common forms are recounted once per batch
 UPSERT_ROWS = 7500  # four parameters per row, below psycopg's 65,535 limit
 SR = models.SpeechRevision
 

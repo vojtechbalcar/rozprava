@@ -499,4 +499,6 @@ class WordForm(Base):
     folded: Mapped[str] = mapped_column(Text, index=True)  # typography.fold(form)
     count: Mapped[int] = mapped_column(Integer)
 
+    # Counts change after every tagging batch; migration 0004 sets fillfactor and
+    # autovacuum storage parameters so updates stay in place and dead rows go early.
     __table_args__ = (Index("ix_word_form_lemma", "lemma"),)
