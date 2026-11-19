@@ -1,6 +1,6 @@
 ---
 type: problem
-updated: 2026-11-18
+updated: 2026-11-19
 status: current
 ---
 
@@ -59,3 +59,25 @@ its source page, 32 speeches spanning pages.
 - Tried first and rejected: rebuilding a sitting after every page (quadratic on
   700-page sittings). Now a sitting is assembled once its pages in the run are
   done, and `source_page.assembled_revision_id` marks what still needs it.
+
+## Completed backfill and retry recovery (19 November)
+
+The full run finished at 08:20 CET. Forty pages had failed during network/DNS
+interruptions; a subsequent backfill recovered all forty. A fresh metadata import
+at 08:24 confirmed the same 18 500 expected pages and no pending reassembly.
+
+| Term | Imported / expected | Unresolved |
+| --- | --- | --- |
+| 9 | 13 922 / 13 926 | Sitting 901, pages 1–4: HTTP 200 with an empty body |
+| 10 | 4 574 / 4 574 | None |
+
+There are 93 738 current assembled speeches. The four empty responses remain
+retryable failures; term 9 is explicitly incomplete in the app.
+
+**Retry bug:** a failed parse could leave an empty/error body in the download
+cache. Backfill previously read that body again indefinitely, including after
+`retry` reset the page to pending. It now forces a fresh download whenever the
+page retains a previous error. Offline regression tests cover both direct
+backfill and explicit requeue. Re-downloading the four special-sitting pages
+still returned empty bodies, so the app does not invent content or classify a
+temporary source error as permanent absence.

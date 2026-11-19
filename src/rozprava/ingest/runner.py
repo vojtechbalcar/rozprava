@@ -252,7 +252,9 @@ class Runner:
             url = store.page_url(term.year, page.sitting_number, page.page)
             previous = page.current_revision_id
             try:
-                fetched = self.source.get(url, refresh=refresh)
+                # A failed parse may have cached an empty/error body. Retry the
+                # source, including after `retry` changes the status to pending.
+                fetched = self.source.get(url, refresh=refresh or bool(page.last_error))
                 parsed = parse_page(fetched.read())
             except NotFound as error:
                 store.record_failure(session, page, str(error), unavailable=True)

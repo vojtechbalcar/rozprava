@@ -243,3 +243,30 @@ def test_only_one_import_runs_at_a_time(engine):
                     pass
         with import_lock(second):
             pass
+
+
+@pytest.mark.parametrize("requeue", [False, True])
+def test_retry_downloads_again_after_a_cached_parse_failure(sessions, tmp_path, requeue):
+    class CachedSource(FakeSource):
+        def get(self, url, refresh=False):
+            cached = self.cache.latest(url)
+            return cached if cached and not refresh else super().get(url, refresh)
+
+    source = CachedSource(tmp_path)
+    url = fixture_url("2025ps-s034643")
+    source.pages[url] = b""
+    runner = Runner(sessions, source)
+    runner.metadata(lambda db: TABLES)
+    runner.backfill(terms=[10])
+    with sessions() as db:
+        page = db.get_one(models.SourcePage, 33715)
+        assert page.status == "failed" and "ParseError" in (page.last_error or "")
+    source.pages[url] = FIXTURE_PAGES[url]
+    if requeue:
+        runner.retry(terms=[10])
+    runner.backfill(terms=[10])
+    with sessions() as db:
+        page = db.get_one(models.SourcePage, 33715)
+        assert page.status == "imported" and page.last_error is None
+        _, joined = current(db, 174, 34, 642, 2)
+        assert joined.last_page == 644
