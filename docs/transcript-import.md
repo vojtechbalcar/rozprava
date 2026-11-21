@@ -92,3 +92,7 @@ backfill started at 15:39 as PID 99263 (term 10 first, then term 9, then `status
 logging to `~/.local/share/rozprava/log/backfill-20261121-1539.out`. It downloads
 about one page a second; the first sitting assembled after a minute with 254
 speeches. Check progress with `uv run python -m rozprava.ingest status`.
+
+Term 10 finished at 16:56: 4 574 of 4 574 pages imported, none failed or
+unavailable, 22 063 current speeches. Term 9 (13 926 pages) started straight after
+in the same process and should take about four more hours at this rate.
