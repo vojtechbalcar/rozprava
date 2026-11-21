@@ -98,7 +98,7 @@
     {% if t.day and t.day.speeches %}
     <div class="minimap">
       <h2 class="label">Celý den · s.&nbsp;{{ t.day.first_page }}–{{ t.day.last_page }}</h2>
-      <div class="minimap__track" role="list" aria-label="Projevy dne {{ t.day.date|cz_date }}">
+      <div class="minimap__track{% if t.day.speeches|length > 80 %} minimap__track--dense{% endif %}" role="list" aria-label="Projevy dne {{ t.day.date|cz_date }}">
         {% for s in t.day.speeches %}
         {% set sw = swatches.get(s.party) %}
         <a class="minimap__seg{% if s.chair %} minimap__seg--chair{% endif %}{% if s.on_page %} minimap__seg--here{% endif %}" role="listitem"

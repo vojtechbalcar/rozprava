@@ -5,7 +5,8 @@
 {% macro graph_svg(cal, verb) -%}
 <svg class="graph" width="{{ cal.width }}" height="{{ cal.height }}" viewBox="0 0 {{ cal.width }} {{ cal.height }}" role="img"
   aria-label="{{ mp.title }} vystoupil{{ 'a' if mp.title == 'Poslankyně' else '' }} v {{ mp.stats.days_spoke }} z {{ mp.stats.sitting_days }} jednacích dnů {{ term.number if live else 10 }}. volebního období.">
-  {%- for x, label in cal.months %}<text class="graph__month" x="{{ x }}" y="10">{{ label }}</text>{% endfor %}
+  {%- for x, label in cal.years %}<text class="graph__year" x="{{ x }}" y="{{ cal.year_y }}">{{ label }}</text>{% endfor %}
+  {%- for x, label in cal.months %}<text class="graph__month" x="{{ x }}" y="{{ cal.month_y }}">{{ label }}</text>{% endfor %}
   {%- for y, label in cal.weekdays %}<text class="graph__weekday" x="0" y="{{ y + 3 }}">{{ label }}</text>{% endfor %}
   {%- for c in cal.cells %}
   {%- if c.info %}{% set i = c.info %}

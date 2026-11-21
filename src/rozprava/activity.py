@@ -13,7 +13,9 @@ from datetime import date, timedelta
 PITCH = 12  # 8px dot + 4px gap
 DOT = 8
 LEFT = 28  # room for the weekday labels
-TOP = 18  # room for the month labels
+TOP = 30  # room for two label rows: years above, months below
+YEAR_Y = 9  # baselines of the label rows
+MONTH_Y = 21
 MONTHS = ("led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro")
 WEEKDAY_LABELS = {0: "Po", 2: "St", 4: "Pá"}
 
@@ -32,7 +34,10 @@ class Calendar:
     height: int
     cells: list[Cell] = field(default_factory=list)
     months: list[tuple[float, str]] = field(default_factory=list)
+    years: list[tuple[float, str]] = field(default_factory=list)  # first month and each January
     weekdays: list[tuple[float, str]] = field(default_factory=list)
+    year_y: int = YEAR_Y
+    month_y: int = MONTH_Y
 
 
 def _monday(d: date) -> date:
@@ -58,10 +63,10 @@ def calendar(days: Iterable[dict], start: date, end: date) -> Calendar:
                 continue
             if (day.year, day.month) not in seen_months and (day.day <= 7 or day == start):
                 seen_months.add((day.year, day.month))
-                label = MONTHS[day.month - 1] + (
-                    f" {day.year}" if day.month == 1 or day == start else ""
-                )
-                cal.months.append((LEFT + week * PITCH, label))
+                cal.months.append((LEFT + week * PITCH, MONTHS[day.month - 1]))
+                # Years get their own row: "lis 2025" is wider than the four weeks to "pro".
+                if day.month == 1 or not cal.years:
+                    cal.years.append((LEFT + week * PITCH, str(day.year)))
             if offset < 5:
                 cal.cells.append(Cell(x, TOP + offset * PITCH + DOT / 2, day, in_range.get(day)))
             elif both:

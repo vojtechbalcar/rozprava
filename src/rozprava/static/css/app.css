@@ -353,8 +353,10 @@ button.chip:hover { background: var(--paper-2); }
 .toc__role { font: var(--t-meta); color: var(--ink-3); }
 .toc a:hover .toc__name { text-decoration: underline 2px; text-underline-offset: 3px; }
 .minimap .label { margin-bottom: 8px; }
-.minimap__track { display: flex; flex-direction: column; gap: 1px; width: 8px; height: 320px; }
-.minimap__seg { flex-basis: 0; min-height: 1px; background: var(--seg, var(--ink-4)); }
+.minimap__track { display: flex; flex-direction: column; gap: 1px; width: 8px; height: 320px; overflow: hidden; }
+/* A full day can hold 250+ speeches: 1px gaps alone would overflow the 320px bar. */
+.minimap__track--dense { gap: 0; }
+.minimap__seg { flex-basis: 0; min-height: 0; background: var(--seg, var(--ink-4)); }
 .minimap__seg--chair { background: var(--rule); }
 .minimap__seg--here { outline: 1px solid var(--ink); outline-offset: 1px; }
 .minimap__seg:hover { background: var(--ink); }
@@ -405,6 +407,7 @@ button.chip:hover { background: var(--paper-2); }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .graph__month, .graph__weekday { font: 500 10px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--ink-3); }
+.graph__year { font: 500 10px var(--font-mono); letter-spacing: 0.06em; fill: var(--ink); }
 .ac { fill: var(--ink); }
 .ac--none { fill: var(--ink-4); opacity: 0.4; }
 .ac--absent { fill: none; stroke: var(--ink-3); stroke-width: 1; }
