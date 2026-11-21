@@ -46,10 +46,11 @@ Why this stack: see [[stack-decision]] in `docs/`.
   `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
   Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
-The checkout in `~/Users/vojtechbalcar/WebstormProjects/rozprava` uses a `.venv`
-symlink to `~/.local/share/venvs/rozprava`, a workaround from when the project
-lived on the iCloud-synced Desktop (iCloud hides dot-folders and Python 3.14 skips
-hidden `.pth` files). See [[dev-environment]].
+Checkouts of `feature/functional-local-app` live outside iCloud: on this Mac in
+the worktree `~/.local/share/rozprava-worktrees/functional-app`; the 18–19 Nov work
+ran on another machine and was pushed from there. Before resuming in any checkout,
+`git fetch` and compare with `origin` (see [[parallel-worktree-divergence]]). The
+iCloud Desktop checkout needs the `.venv` symlink workaround in [[dev-environment]].
 
 ## Hard rules
 

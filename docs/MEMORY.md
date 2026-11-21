@@ -20,3 +20,4 @@
 
 - [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink. Also the local PostgreSQL 18 cluster.
 - [[transcript-import]] — source-page structure and attribution rules, completed backfill coverage and retry recovery.
+- [[parallel-worktree-divergence]] — a stale worktree rebuilt finished work in parallel; how it was parked, the database set aside and the archive rebuilt; fetch before resuming.

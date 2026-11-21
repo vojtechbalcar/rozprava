@@ -44,9 +44,11 @@ the commands above; imported data survives restarts. Updates are manual; there
 is no background scheduler. `refresh --term 9` or `refresh --term 10` re-downloads
 already imported pages to check later corrections, retaining old versions.
 
-As of 19 November 2026, the local archive contains 93,738 speeches and 18,496 of
-18,500 expected pages: term 10 is loaded, while four term-9 pages in sitting 901
-still return empty responses. See [import status](docs/transcript-import.md) and
+Each machine builds its own archive; the database is not in Git. On the machine
+where the app was verified (19 November 2026) the archive held 93,738 speeches and
+18,496 of 18,500 expected pages: term 10 complete, four term-9 pages in sitting 901
+returning empty responses. A full backfill there took about 23 hours including
+retries. See [import status](docs/transcript-import.md) and
 [verification notes](docs/local-app-verification.md).
 
 ```sh

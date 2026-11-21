@@ -26,10 +26,24 @@ Also on this machine: `uv` came from Homebrew (`brew install uv`) on 17 Nov 2026
 
 ## Functional application checkout and PostgreSQL
 
-The functional build is on `feature/functional-local-app`. It started on 17 Nov in a
-worktree at `~/.local/share/rozprava-worktrees/functional-app`, which no longer
-exists; since 18 Nov it continues in `~/Users/vojtechbalcar/WebstormProjects/rozprava`.
-That folder isn't iCloud-synced, but it still uses the venv symlink above.
+The functional build is on `feature/functional-local-app`. It started on 17 Nov in the
+worktree `~/.local/share/rozprava-worktrees/functional-app` on this Mac. The 18–19 Nov
+implementation and its verified archive were built on another machine (checkout
+`~/WebstormProjects/rozprava` there) and pushed; that database never existed here.
+On 21 Nov this Mac's worktree was realigned with `origin` and its archive rebuilt
+from scratch; see [[parallel-worktree-divergence]] and [[transcript-import]].
+
+On this Mac the dev server and backfill run detached so they outlive a terminal or
+agent session. Their PIDs are in `~/.local/share/rozprava/server.pid` and
+`backfill.pid`, their output in `~/.local/share/rozprava/log/`. Stop them with
+`kill "$(cat ~/.local/share/rozprava/server.pid)"` (likewise `backfill.pid`; the
+backfill resumes safely). Start the server detached with:
+
+```sh
+nohup uv run uvicorn rozprava.main:app --host 127.0.0.1 --port 8000 \
+  > ~/.local/share/rozprava/log/server.out 2>&1 < /dev/null &
+echo $! > ~/.local/share/rozprava/server.pid
+```
 
 PostgreSQL 18 is installed through Homebrew. Rozprava uses its own cluster at
 `~/.local/share/rozprava/postgres` and loopback port 55432; it does not use the

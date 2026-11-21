@@ -1,6 +1,6 @@
 ---
 type: problem
-updated: 2026-11-19
+updated: 2026-11-21
 status: current
 ---
 
@@ -81,3 +81,14 @@ page retains a previous error. Offline regression tests cover both direct
 backfill and explicit requeue. Re-downloading the four special-sitting pages
 still returned empty bodies, so the app does not invent content or classify a
 temporary source error as permanent absence.
+
+## Rebuilding the archive on a second machine (21 November)
+
+The verified archive lives only on the machine that built it, so this Mac
+imported its own after [[parallel-worktree-divergence]]. Fresh metadata at 15:37
+again listed 18 500 expected pages (13 926 + 4 574), 184 sittings and 92 767 index
+entries; votes brought 11 718 roll calls with 2 343 600 individual records. The
+backfill started at 15:39 as PID 99263 (term 10 first, then term 9, then `status`),
+logging to `~/.local/share/rozprava/log/backfill-20261121-1539.out`. It downloads
+about one page a second; the first sitting assembled after a minute with 254
+speeches. Check progress with `uv run python -m rozprava.ingest status`.
