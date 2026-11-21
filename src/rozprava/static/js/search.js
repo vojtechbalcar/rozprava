@@ -235,4 +235,6 @@
     });
   }
   refresh();
+  // The chips now name every active filter; the server's plain list is the no-script fallback.
+  if ($("[data-search-filters]")) $$(".active-filters").forEach(list => (list.hidden = true));
 })();
