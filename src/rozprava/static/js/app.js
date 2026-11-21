@@ -414,6 +414,8 @@
           node.textContent = value.slice(0, Math.max(0, length - used));
           used += value.length;
         }
+        // A highlight emptied by the cut would still show its padding as a sliver.
+        el.querySelectorAll("mark").forEach((mark) => { if (!mark.textContent.trim()) mark.replaceWith(mark.textContent); });
       }
       let low = 0, high = words.length;
       while (low < high) {
