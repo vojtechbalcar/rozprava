@@ -222,3 +222,11 @@ def test_empty_archive_renders_without_fake_dates(sessions):
     finally:
         main.app.dependency_overrides.clear()
         SHARED.clear()
+
+
+def test_pages_link_a_served_favicon(client: TestClient):
+    """Browsers fetch /favicon.ico on every page unless the page names an icon."""
+    page = client.get("/hledat").text
+    href = page.split('rel="icon" href="', 1)[1].split('"', 1)[0]
+    icon = client.get(href)
+    assert icon.status_code == 200 and icon.headers["content-type"].startswith("image/svg")
