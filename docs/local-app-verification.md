@@ -1,6 +1,6 @@
 ---
 type: verification
-updated: 2026-11-19
+updated: 2026-11-25
 status: current
 ---
 
@@ -9,7 +9,7 @@ status: current
 Related: [[functional-app-plan]], [[dev-environment]], [[transcript-import]],
 [[archive-views]], [[quotation-export]]
 
-The approved database-backed phase runs locally on `feature/functional-local-app`.
+The approved database-backed phase runs locally from `main` (PR #1, merged 25 Nov).
 Search, home, MP directory/profiles, sitting archives, transcript reading, quick
 navigation and quotation export use stored data from both terms. No paid APIs,
 embeddings or AI summaries are enabled.

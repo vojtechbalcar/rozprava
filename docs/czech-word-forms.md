@@ -1,6 +1,6 @@
 ---
 type: decision
-updated: 2026-11-19
+updated: 2026-11-25
 status: current
 ---
 
@@ -189,3 +189,25 @@ forget to update `search`.
 queries were already slow before; this made them slower. Possible fixes,
 not done: a RUM index (ranking from the index), capping the ranked candidate
 set, or a larger `shared_buffers` (default 128 MB) so vectors stay cached.
+
+## Applied on the second Mac (25 Nov 2026)
+
+After PR #2 was merged, this Mac's archive (rebuilt on 21 Nov, see
+[[transcript-import]]) was migrated and tagged. A custom-format backup was taken
+first, the server stopped, and `alembic upgrade head` ran 0003 and 0004. Then
+`fetch_morphology.py` installed the model.
+
+Installing the model changes what imports do: the next `backfill` (here only
+retrying four pages) started a `forms` run over **every** untagged speech in the
+same process. Run it detached (`nohup caffeinate -i …`, PID in `forms.pid`), not in
+a shell or agent session with a time limit. Run 6 was stopped with SIGINT after
+11,000 revisions and recorded as interrupted; run 7 tagged the remaining 82,738
+(17.8 M words) in 24 min 47 s. The tagger process sat at about 89 % CPU while
+PostgreSQL was idle, so throughput depends on speech length, not database bloat.
+Migration 0004's fillfactor kept `word_form` healthy.
+
+`VACUUM (FULL, ANALYZE)` then shrank `speech_revision` from 1,060 to 808 MB (22 s)
+and `word_form` from 210 to 45 MB; the database is 1,471 MB. Live searches on this
+Mac return exactly the counts in the Results table (důchod 2,613, `"důchod"` 867,
+Ukrajina 2,490, penze 423, Babiš 4,033, rozpočet 6,889) in 47–101 ms per page over
+HTTP. All 204 tests, Ruff, formatting and Pyright pass.
