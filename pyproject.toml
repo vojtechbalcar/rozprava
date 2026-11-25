@@ -4,7 +4,14 @@ version = "0.1.0"
 description = "Search what Czech MPs said in parliament."
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.14",
+    "beautifulsoup4>=4.12",
     "fastapi[standard]>=0.115",
+    "httpx>=0.28",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2",
+    "sqlalchemy>=2.0,<2.1",
+    "ufal-morphodita>=1.11.3.3,<1.12",
 ]
 
 [dependency-groups]
@@ -34,3 +41,11 @@ pythonVersion = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["alembic"]  # not the local migrations folder
+
+[tool.uv.extra-build-variables]
+# ufal.morphodita has no Python 3.15 wheel, and this Mac's Command Line Tools lack
+# libc++ headers outside the SDK. The path is ignored where it does not exist.
+ufal-morphodita = { CPLUS_INCLUDE_PATH = "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1" }

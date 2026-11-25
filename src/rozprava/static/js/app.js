@@ -205,20 +205,53 @@
   }
   const cz = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${d}. ${m}. ${y}`; };
 
+  let paletteController = null, paletteTimer = null, paletteRequest = 0;
+  function cancelPaletteRequest() {
+    clearTimeout(paletteTimer);
+    paletteController?.abort();
+    paletteRequest++;
+    list?.removeAttribute("aria-busy");
+  }
   function renderPalette() {
+    cancelPaletteRequest();
+    const q = input.value.trim();
+    if (!data.endpoint || !q) { drawPalette(data); return; }
+    const empty = {...data, mps: [], bills: [], sittings: []};
+    drawPalette(empty, "Hledám…");
+    list.setAttribute("aria-busy", "true");
+    const request = paletteRequest;
+    paletteTimer = setTimeout(async () => {
+      paletteController = new AbortController();
+      try {
+        const url = new URL(data.endpoint, location.href);
+        url.searchParams.set("q", q);
+        const response = await fetch(url, {signal: paletteController.signal});
+        if (!response.ok) throw new Error("lookup failed");
+        const result = await response.json();
+        if (request !== paletteRequest || palette.hidden) return;
+        drawPalette(result);
+      } catch (error) {
+        if (error.name === "AbortError" || request !== paletteRequest || palette.hidden) return;
+        drawPalette(empty, "Rychlé hledání je teď nedostupné. Můžete přejít na hledání v projevech.");
+      } finally {
+        if (request === paletteRequest) list.removeAttribute("aria-busy");
+      }
+    }, 180);
+  }
+  function drawPalette(result, notice = "") {
     const q = input.value.trim();
     const f = fold(q);
     const groups = [];
     if (q) {
-      const mps = data.mps.filter((m) => fold(m.name).includes(f) || fold(`${m.sort} ${m.name}`).includes(f));
+      const mps = data.endpoint ? result.mps : result.mps.filter((m) => fold(m.name).includes(f) || fold(`${m.sort} ${m.name}`).includes(f));
       groups.push(["Poslanci", mps, (m) => ({ url: m.url, title: m.name,
-        html: `<span class="monogram monogram--24" aria-hidden="true">${m.initials}</span><span>${mark(m.name, q)}</span><span class="party-pill"><span class="swatch swatch--pending" aria-hidden="true"></span><span>${escapeHtml(m.party)}</span></span><span class="meta">${escapeHtml(m.region)}</span>` }), "poslanci.html"]);
-      const bills = data.bills.filter((b) => fold(`tisk ${b.tisk} ${b.title}`).includes(f));
-      groups.push(["Body a tisky", bills, (b) => ({ url: b.url, title: `tisk ${b.tisk}`,
-        html: `<span class="meta">tisk ${b.tisk}</span><span>${mark(b.title, q)}</span>` }), null]);
-      const sittings = data.sittings.filter((s) => fold(`${s.number}. schuze ${s.number}`).includes(f));
-      groups.push(["Schůze", sittings, (s) => ({ url: s.url, title: `${s.number}. schůze`,
-        html: `<span>${mark(`${s.number}. schůze`, q)}</span><span class="meta">${s.from === s.to ? cz(s.from) : `${cz(s.from)} – ${cz(s.to)}`}</span>` }), "schuze.html"]);
+        html: `<span class="monogram monogram--24" aria-hidden="true">${escapeHtml(m.initials)}</span><span>${mark(m.name, q)}</span><span class="party-pill"><span class="swatch swatch--pending" aria-hidden="true"></span><span>${escapeHtml(m.party)}</span></span><span class="meta">${escapeHtml(m.region)}${m.term ? ` · ${m.term}. období` : ""}</span>` }), "poslanci.html"]);
+      const bills = data.endpoint ? result.bills : result.bills.filter((b) => fold(`tisk ${b.tisk} ${b.title}`).includes(f));
+      groups.push(["Body a tisky", bills, (b) => ({ url: b.url, title: `tisk ${b.tisk}${b.term ? ` (${b.term}. období)` : ""}`,
+        html: `<span class="meta">tisk ${b.tisk}${b.term ? ` · ${b.term}. období` : ""}</span><span>${mark(b.title, q)}</span>` }), null]);
+      const sittings = data.endpoint ? result.sittings : result.sittings.filter((s) => fold(`${s.number}. schuze ${s.number}`).includes(f));
+      groups.push(["Schůze", sittings, (s) => ({ url: s.url, title: `${s.number}. schůze${s.term ? ` (${s.term}. období)` : ""}`,
+        html: `<span>${mark(`${s.number}. schůze`, q)}</span><span class="meta">${s.term ? `${s.term}. období · ` : ""}${s.from ? (s.to && s.from !== s.to ? `${cz(s.from)} – ${cz(s.to)}` : cz(s.from)) : "Termín neuveden"}</span>` }), "schuze.html"]);
       groups.push(["Hledat v projevech", [q], () => ({ url: `${data.search}?q=${encodeURIComponent(q)}`, title: q,
         html: `<span>Hledat „${escapeHtml(q)}“ v&nbsp;projevech <span aria-hidden="true">→</span></span>` }), null]);
     } else {
@@ -227,6 +260,12 @@
     }
     items = [];
     list.innerHTML = "";
+    input.removeAttribute("aria-activedescendant");
+    if (notice) {
+      const message = document.createElement("p");
+      message.className = "palette__empty"; message.setAttribute("role", "status");
+      message.textContent = notice; list.append(message);
+    }
     for (const [title, rows, toItem, more] of groups) {
       if (!rows.length) continue;
       const head = document.createElement("p");
@@ -276,6 +315,7 @@
     input.focus();
   }
   function closePalette() {
+    cancelPaletteRequest();
     if (!palette || palette.hidden) return;
     closeOverlay();
   }
@@ -298,8 +338,8 @@
     if (e.key === "Escape") { hideCite(true); closePalette(); closeOverlay(); return; }
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "/") { e.preventDefault(); openPalette(); }
-    if (reader && e.key === "[") location.href = reader.dataset.prev;
-    if (reader && e.key === "]") location.href = reader.dataset.next;
+    if (reader?.dataset.prev && e.key === "[") location.href = reader.dataset.prev;
+    if (reader?.dataset.next && e.key === "]") location.href = reader.dataset.next;
   });
 
   /* ---------- full official title (§7.13) ---------- */
@@ -327,13 +367,17 @@
       const text = sel.toString().trim().replace(/\u00a0/g, " ");
       if (!text) { bar.hidden = true; return; }
       const before = range.cloneRange(); before.selectNodeContents(paragraph); before.setEnd(range.startContainer, range.startOffset);
-      const start = before.toString().length + sel.toString().length - sel.toString().trimStart().length;
+      const live = document.body.dataset.live === "true";
+      const length = value => live ? Array.from(value).length : value.length;
+      const start = length(before.toString()) + length(sel.toString()) - length(sel.toString().trimStart());
       const d = paragraph.closest(".speech").dataset;
       const r = range.getBoundingClientRect();
-      quoted = `„${text}“\n${d.speaker}${d.party ? ` (${d.party})` : ""}, ${cz(d.date)}, ${d.sitting}. schůze, s. ${d.page}${d.status?.toLowerCase().includes("neautorizováno") ? ", neautorizováno" : ""}\n${d.sourceUrl}`;
+      quoted = `„${text}“\n${d.speaker}${d.party ? ` (${d.party})` : ""}, ${cz(d.date)}, ${d.sitting}. schůze, s. ${d.page}${d.status?.toLowerCase().includes("neautorizováno") ? ", neautorizováno" : ""}\n${paragraph.dataset.citationUrl ? new URL(paragraph.dataset.citationUrl, location.href).href : d.sourceUrl}`;
       const link = $("[data-card-selection]", bar);
       const key = paragraph.closest(".para").id.replace(/^p-/, "paragraph-");
-      link.href = `karta.html?${new URLSearchParams({source:key, start, end:start + text.length})}`;
+      const params = new URLSearchParams({source: paragraph.dataset.quoteSource || key, start, end:start + length(text)});
+      if (live) params.set("verze", d.revision);
+      link.href = `${live ? "/karta" : "karta.html"}?${params}`;
       bar.hidden = false;
       bar.style.left = `${Math.max(8, Math.min(r.left, innerWidth - bar.offsetWidth - 8)) + scrollX}px`;
       bar.style.top = `${Math.max(scrollY + 8, r.top + scrollY - bar.offsetHeight - 10)}px`;
@@ -370,6 +414,8 @@
           node.textContent = value.slice(0, Math.max(0, length - used));
           used += value.length;
         }
+        // A highlight emptied by the cut would still show its padding as a sliver.
+        el.querySelectorAll("mark").forEach((mark) => { if (!mark.textContent.trim()) mark.replaceWith(mark.textContent); });
       }
       let low = 0, high = words.length;
       while (low < high) {
@@ -411,37 +457,39 @@
       toggle.setAttribute("aria-expanded", String(!hidden));
       toggle.lastChild.textContent = hidden ? " Zobrazit jako tabulku" : " Skrýt tabulku";
     });
-    const filter = $("[data-day-filter]");
-    const objects = $$(".profile__main .obj");
-    const search = $("#mp-q");
-    const state = new URLSearchParams(location.search);
-    let chosenDay = state.get("den") || "";
-    search.value = state.get("q") || "";
-    function applyProfile() {
-      const query = fold(search.value.trim());
-      let shown = 0;
-      objects.forEach(o => {
-        const hit = (!chosenDay || o.dataset.date === chosenDay) && (!query || fold(o.dataset.search).includes(query));
-        o.closest("li").hidden = !hit; shown += hit;
+    if (document.body.dataset.live !== "true") {
+      const filter = $("[data-day-filter]");
+      const objects = $$(".profile__main .obj");
+      const search = $("#mp-q");
+      const state = new URLSearchParams(location.search);
+      let chosenDay = state.get("den") || "";
+      search.value = state.get("q") || "";
+      function applyProfile() {
+        const query = fold(search.value.trim());
+        let shown = 0;
+        objects.forEach(o => {
+          const hit = (!chosenDay || o.dataset.date === chosenDay) && (!query || fold(o.dataset.search).includes(query));
+          o.closest("li").hidden = !hit; shown += hit;
+        });
+        $("[data-day-filter-label]", filter).textContent = `${chosenDay ? cz(chosenDay) + ": " : ""}${shown} z ukázkových projevů`;
+        filter.hidden = !chosenDay && !query;
+        state.delete("den"); state.delete("q");
+        if (chosenDay) state.set("den", chosenDay);
+        if (search.value) state.set("q", search.value);
+        history.replaceState(null, "", `${location.pathname}${state.size ? `?${state}` : ""}${location.hash}`);
+      }
+      activity.addEventListener("click", e => {
+        const day = e.target.closest("[data-day]");
+        if (!day || !filter) return;
+        chosenDay = day.dataset.day; applyProfile();
       });
-      $("[data-day-filter-label]", filter).textContent = `${chosenDay ? cz(chosenDay) + ": " : ""}${shown} z ukázkových projevů`;
-      filter.hidden = !chosenDay && !query;
-      state.delete("den"); state.delete("q");
-      if (chosenDay) state.set("den", chosenDay);
-      if (search.value) state.set("q", search.value);
-      history.replaceState(null, "", `${location.pathname}${state.size ? `?${state}` : ""}${location.hash}`);
+      search.addEventListener("input", applyProfile);
+      search.closest("form").addEventListener("submit", e => { e.preventDefault(); applyProfile(); });
+      $("[data-day-filter-clear]", filter).addEventListener("click", () => {
+        chosenDay = ""; search.value = ""; applyProfile();
+      });
+      applyProfile();
     }
-    activity.addEventListener("click", e => {
-      const day = e.target.closest("[data-day]");
-      if (!day || !filter) return;
-      chosenDay = day.dataset.day; applyProfile();
-    });
-    search.addEventListener("input", applyProfile);
-    search.closest("form").addEventListener("submit", e => { e.preventDefault(); applyProfile(); });
-    $("[data-day-filter-clear]", filter).addEventListener("click", () => {
-      chosenDay = ""; search.value = ""; applyProfile();
-    });
-    applyProfile();
   }
 
   /* ---------- MP directory (§11.5) ---------- */

@@ -1,0 +1,15 @@
+<form class="directory__filters" action="{{ link('mps') }}" method="get">
+  {% if term %}<input type="hidden" name="obdobi" value="{{ term.number }}">{% endif %}
+  <input type="hidden" name="razeni" value="{{ directory.sort }}">
+  <fieldset class="chips"><legend class="label">Poslanecký klub</legend>
+    {% for party, n in parties %}<label class="chip"><input type="checkbox" name="klub" value="{{ party }}"{% if party in directory.clubs %} checked{% endif %}>{{ ui.swatch(party) }}{{ party|party_label }} <span class="meta">{{ n }}</span></label>{% endfor %}
+    {% if unknown_club %}<label class="chip"><input type="checkbox" name="klub" value="unknown"{% if 'unknown' in directory.clubs %} checked{% endif %}>Klub neznámý <span class="meta">{{ unknown_club }}</span></label>{% endif %}
+  </fieldset>
+  <div class="directory__row">
+    <label class="select"><span class="visually-hidden">Kraj</span><select name="kraj"><option value="">Všechny kraje</option>{% for region in regions %}<option{% if region == directory.region %} selected{% endif %}>{{ region }}</option>{% endfor %}</select></label>
+    <label class="field"><span class="visually-hidden">Najít podle jména</span>{{ ui.icon('search') }}<input type="search" name="q" value="{{ directory.query }}" placeholder="Najít podle jména" maxlength="200"></label>
+    <button class="btn btn--secondary" type="submit">Filtrovat</button>
+    <a href="{{ link('mps', obdobi=term.number if term else None) }}">Zrušit filtry</a>
+    <p class="meta">{{ mps|length }} z {{ total_mps }}</p>
+  </div>
+</form>

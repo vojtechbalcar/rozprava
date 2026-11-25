@@ -8,9 +8,9 @@
 {% set f = home.featured %}
 <section class="hero wrap grid">
   <div class="hero__main">
-    <p class="label">Stenozáznamy Poslanecké sněmovny · {{ archive.from[:4] }}–{{ archive.to[:4] }}</p>
+    <p class="label">Stenozáznamy Poslanecké sněmovny · {% if archive %}{{ archive.from[:4] }}–{{ archive.to[:4] }}{% else %}Archiv se připravuje{% endif %}</p>
     <h1 class="hero__title">Co ve Sněmovně opravdu zaznělo</h1>
-    <p class="hero__lede">Hledejte v&nbsp;projevech poslanců podle smyslu, ne jen podle slov. Každý výsledek je doslovná citace s&nbsp;odkazem na stenozáznam.</p>
+    <p class="hero__lede">Hledejte slova a&nbsp;fráze v&nbsp;projevech poslanců. Každý výsledek je doslovná citace s&nbsp;odkazem na stenozáznam.</p>
     <div class="hero__search">
       {{ ui.search_bar(placeholder='Co zaznělo k automatické účasti v penzijním spoření?', id='home-q') }}
       {{ ui.filter_chips() }}
@@ -23,9 +23,10 @@
   </div>
 
   <aside class="last-day" aria-labelledby="last-day-title">
-    <h2 class="label" id="last-day-title">Poslední jednací den</h2>
+    <h2 class="label" id="last-day-title">{% if live %}Poslední načtený jednací den{% else %}Poslední jednací den{% endif %}</h2>
+    {% if day %}
     <p class="last-day__date"><time datetime="{{ day.date }}">{{ day.date|cz_date_long(weekday=True) }}</time></p>
-    <p class="meta">{{ day.sitting }}.&nbsp;schůze · {{ day.pages }}&nbsp;stran přepisu</p>
+    <p class="meta">{% if live %}{{ day.imported_pages }} z {{ day.pages }} stran přepisu · <a href="{{ link('transcript', term=day.term, sitting=day.sitting, page=day.first_page) }}">Otevřít přepis →</a>{% else %}{{ day.sitting }}.&nbsp;schůze · {{ day.pages }}&nbsp;stran přepisu{% endif %}</p>
     <div class="last-day__figure">
       {{ (day.speeches|string)|dot('l', label=day.speeches|count('projev', 'projevy', 'projevů'), animate=True) }}
       <p class="label">{{ day.speeches|plural('projev', 'projevy', 'projevů') }}</p>
@@ -35,19 +36,22 @@
       <p class="label">slov</p>
     </div>
     <div class="last-day__strip">
-      <p class="label">Posledních 20 jednacích dnů</p>
+      <p class="label">Posledních 20 {{ 'načtených ' if live else '' }}jednacích dnů</p>
       {{ ui.dot_strip(day.strip, label='Počet projevů v posledních 20 jednacích dnech') }}
       <p class="meta last-day__range">{{ day.strip[0].date|cz_date }} – {{ day.strip[-1].date|cz_date }}</p>
     </div>
+  <p class="meta">{% if live and day.imported_pages < day.pages %}Průběžné počty; část přepisů dne ještě chybí.{% endif %}</p>
+    {% else %}<p class="state-empty">Zatím nejsou načtené žádné projevy.</p>{% endif %}
   </aside>
 </section>
 
+{% if f %}
 <section class="section wrap grid" aria-labelledby="latest-title">
   <div class="latest__aside">
-    <h2 class="h2" id="latest-title">Z&nbsp;posledního jednání</h2>
+    <h2 class="h2" id="latest-title">Z&nbsp;posledního {{ 'načteného ' if live else '' }}jednání</h2>
     <p class="meta"><time datetime="{{ f.date }}">{{ f.date|cz_date_long(weekday=True) }}</time><br>{{ f.sitting }}.&nbsp;schůze{% if f.agenda %} · bod&nbsp;{{ f.agenda.number }}{% endif %}</p>
     {% if f.agenda %}<p class="latest__title">{{ f.agenda.short|nbsp }}{% if f.agenda.tisk %} <span class="meta">tisk&nbsp;{{ f.agenda.tisk }}</span>{% endif %}</p>{% endif %}
-    <a href="{{ link('transcript', page=f.page) }}">Celý den v&nbsp;přepisu <span aria-hidden="true">→</span></a>
+    <a href="{{ link('transcript', term=f.term, sitting=f.sitting, page=f.page) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a>
   </div>
   <div class="latest__main">
     {{ ui.result_object(f, size='quote-l', limit=None, eyebrow='Náhodný výběr z posledního jednacího dne') }}
@@ -55,6 +59,8 @@
   </div>
 </section>
 
+{% endif %}
+{% if home.browse %}
 <section class="section wrap" aria-labelledby="browse-title">
   <h2 class="label section__eyebrow" id="browse-title">Procházet</h2>
   <ul class="browse">
@@ -64,4 +70,5 @@
     <li><a href="{{ link('sessions') }}"><span>Podle schůze</span><span class="meta">{{ home.browse.sittings }}</span></a></li>
   </ul>
 </section>
+{% endif %}
 {% endblock %}

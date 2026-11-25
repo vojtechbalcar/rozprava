@@ -24,10 +24,10 @@ Related: [[functional-app-design]], [[dev-environment]], [[feasibility-research]
 
 ## 1. Workspace, dependencies and local database
 
-- [ ] Create `feature/functional-local-app` in a worktree outside iCloud using T3's worktree handoff; preserve the existing preview checkout. Run `uv sync` and `uv run pytest` there; baseline is 32 passing tests.
-- [ ] Add `sqlalchemy>=2.0,<2.1`, `alembic>=1.14`, `psycopg[binary]>=3.2`, `httpx>=0.28`, `beautifulsoup4>=4.12` and `pydantic-settings>=2` through uv. Use the standard library for CLI and archive extraction.
-- [ ] Add ignored `.env` and `.env.example` with `DATABASE_URL`, `ROZPRAVA_DATA_DIR`, `ROZPRAVA_CACHE_DIR`. Defaults live under `~/.local/share/rozprava`, not Desktop. No credentials in tracked files.
-- [ ] Write configuration tests before implementing settings; reject non-PostgreSQL URLs and keep configuration import free of network/process side effects.
+- [x] Create `feature/functional-local-app` in a worktree outside iCloud using T3's worktree handoff; preserve the existing preview checkout. Run `uv sync` and `uv run pytest` there; baseline is 32 passing tests. *(Done 17 Nov in `~/.local/share/rozprava-worktrees/functional-app`; from 18 Nov work continues on the same branch in `~/Users/vojtechbalcar/WebstormProjects/rozprava`, which is not iCloud-synced.)*
+- [x] Add `sqlalchemy>=2.0,<2.1`, `alembic>=1.14`, `psycopg[binary]>=3.2`, `httpx>=0.28`, `beautifulsoup4>=4.12` and `pydantic-settings>=2` through uv. Use the standard library for CLI and archive extraction.
+- [x] Add ignored `.env` and `.env.example` with `DATABASE_URL`, `ROZPRAVA_DATA_DIR`, `ROZPRAVA_CACHE_DIR`. Defaults live under `~/.local/share/rozprava`, not Desktop. No credentials in tracked files.
+- [x] Write configuration tests before implementing settings; reject non-PostgreSQL URLs and keep configuration import free of network/process side effects.
 
 ```python
 def test_configuration_is_postgresql_only():
@@ -35,53 +35,57 @@ def test_configuration_is_postgresql_only():
         Settings(database_url="sqlite:///example.db")
 ```
 
-- [ ] Install Homebrew PostgreSQL 18. Implement `uv run python scripts/local_db.py init|start|stop|status|backup`. Initialize a dedicated UTF-8 cluster with peer/local administration and SCRAM host authentication, listen on `127.0.0.1:55432`, create a non-superuser app role, and write generated credentials to a private `.env` without printing them. Repeated init preserves existing data and credentials.
-- [ ] Verify start, readiness, stop/start persistence and application connection. Create a separate test database; it must be identified explicitly before any test cleanup. Commit and push the verified foundation.
+- [x] Install Homebrew PostgreSQL 18. Implement `uv run python scripts/local_db.py init|start|stop|status|backup`. Initialize a dedicated UTF-8 cluster with peer/local administration and SCRAM host authentication, listen on `127.0.0.1:55432`, create a non-superuser app role, and write generated credentials to a private `.env` without printing them. Repeated init preserves existing data and credentials.
+- [x] Verify start, readiness, stop/start persistence and application connection. Create a separate test database; it must be identified explicitly before any test cleanup. Commit and push the verified foundation.
 
 ## 2. Schema and database tests
 
-- [ ] Define SQLAlchemy tables with upstream/composite keys: term, person, mandate, organization, membership, sitting/day, bill/agenda, source page, page revision, speech revision/paragraphs, vote/per-person vote, import run. Allow unknown speaker, agenda, club and vote states.
-- [ ] Store current source-page revision separately from immutable revision content. An assembled speech revision records its constituent source revisions and original paragraph positions. Retired versions remain addressable for citations.
-- [ ] Add Alembic configuration and initial migration. Create `unaccent`, a `simple`-based search configuration with `unaccent,simple` mappings, and a GIN search-vector index. Keep migration operations explicit and repeatable.
-- [ ] Add an integration fixture that only resets a dedicated `_test` database. Test migration from empty, duplicate source keys, cross-term bill keys and normalized search.
+- [x] Define SQLAlchemy tables with upstream/composite keys: term, person, mandate, organization, membership, sitting/day, bill/agenda, source page, page revision, speech revision/paragraphs, vote/per-person vote, import run. Allow unknown speaker, agenda, club and vote states.
+- [x] Store current source-page revision separately from immutable revision content. An assembled speech revision records its constituent source revisions and original paragraph positions. Retired versions remain addressable for citations.
+- [x] Add Alembic configuration and initial migration. Create `unaccent`, a `simple`-based search configuration with `unaccent,simple` mappings, and a GIN search-vector index. Keep migration operations explicit and repeatable.
+- [x] Add an integration fixture that only resets a dedicated `_test` database. Test migration from empty, duplicate source keys, cross-term bill keys and normalized search.
 
 ```python
 def test_search_dictionary_preserves_phrase_positions(db):
-    row = db.execute(text("""
+    row = db.execute(
+        text("""
         SELECT to_tsvector('rozprava', 'důchodová reforma')
           @@ websearch_to_tsquery('rozprava', '"duchodova reforma"')
-    """)).scalar_one()
+    """)
+    ).scalar_one()
     assert row is True
 ```
 
-- [ ] Run `uv run alembic upgrade head`, database tests and lint/type checks. Commit and push the schema.
+- [x] Run `uv run alembic upgrade head`, database tests and lint/type checks. Commit and push the schema.
 
 ## 3. Source parsing and identity
 
-- [ ] Capture small representative HTML/UNL fixtures from existing cached sources in both terms, preserving provenance in a fixture README. Include stale `rec` attribution, a headerless continuation and unknown agenda. Tests never fetch live sources.
-- [ ] Write tests for Windows-1250 decoding, paragraph preservation, role recognition, actual person links, publication status, empty/private pages and cross-page gaps before implementing `ingest/parser.py`.
+- [x] Capture small representative HTML/UNL fixtures from existing cached sources in both terms, preserving provenance in a fixture README. Include stale `rec` attribution, a headerless continuation and unknown agenda. Tests never fetch live sources. *(18 Nov: the research cache was gone, so pages were fetched again through `ingest/fetch.py`; see `tests/fixtures/psp/README.md`.)*
+- [x] Write tests for Windows-1250 decoding, paragraph preservation, role recognition, actual person links, publication status, empty/private pages and cross-page gaps before implementing `ingest/parser.py`.
 
 ```python
 def test_missing_page_breaks_speech_continuation():
-    pages = [page(1, speaker="Jan Novák", text="První část."),
-             page(3, speaker=None, text="Neznámý začátek.")]
+    pages = [
+        page(1, speaker="Jan Novák", text="První část."),
+        page(3, speaker=None, text="Neznámý začátek."),
+    ]
     speeches = assemble(pages)
     assert speeches[0].text == "První část."
     assert speeches[1].speaker_id is None
     assert speeches[1].incomplete is True
 ```
 
-- [ ] Implement pure parser dataclasses and UNL helpers. Match names with whole normalized name boundaries and unique source evidence; never choose the first ambiguous person. Check HTML IDs/labels before accepting metadata IDs.
-- [ ] Add dated membership lookup tests around a club change; keep unknown distinct from independent. Change `titles.short_title` overrides to term-qualified keys and update preview callers/tests.
-- [ ] Run parser/title tests, review against real fixture paragraphs, lint and typecheck. Commit and push.
+- [x] Implement pure parser dataclasses and UNL helpers. Match names with whole normalized name boundaries and unique source evidence; never choose the first ambiguous person. Check HTML IDs/labels before accepting metadata IDs.
+- [x] Add dated membership lookup tests around a club change; keep unknown distinct from independent. Change `titles.short_title` overrides to term-qualified keys and update preview callers/tests.
+- [x] Run parser/title tests, review against real fixture paragraphs, lint and typecheck. Commit and push.
 
 ## 4. Metadata and resumable transcript ingestion
 
-- [ ] Implement `fetch.py` with allowlisted PSP source URLs, robots checks, at least one second between request starts, bounded timeout/retry/backoff, cache files written atomically and SHA-256 provenance. Validate ZIP paths rather than using unrestricted extraction. Do not classify transient errors as permanent unavailability.
-- [ ] Import people/organizations/mandates/dated memberships, sittings/agendas/bills, transcript pages and speech metadata from official dumps for organizations 173 and 174. Retain metadata-only pages as pending; record dump retrieval times separately from transcript import times.
-- [ ] Implement per-page persistence and an import lock. Atomically publish a parsed revision; source failure leaves the last good revision readable. Rebuild affected speech boundaries when neighboring pages arrive.
-- [ ] Implement `uv run python -m rozprava.ingest metadata`, `backfill --term 9|10 --limit N`, `update`, `refresh`, `status` and explicit retry controls. Default backfill covers both terms, can resume, reports counts/errors and never fetches from web routes.
-- [ ] Test the same fixture imported twice, changed source revision, interrupted/resumed import and repaired missing page.
+- [x] Implement `fetch.py` with allowlisted PSP source URLs, robots checks, at least one second between request starts, bounded timeout/retry/backoff, cache files written atomically and SHA-256 provenance. Validate ZIP paths rather than using unrestricted extraction. Do not classify transient errors as permanent unavailability.
+- [x] Import people/organizations/mandates/dated memberships, sittings/agendas/bills, transcript pages and speech metadata from official dumps for organizations 173 and 174. Retain metadata-only pages as pending; record dump retrieval times separately from transcript import times.
+- [x] Implement per-page persistence and an import lock. Atomically publish a parsed revision; source failure leaves the last good revision readable. Rebuild affected speech boundaries when neighboring pages arrive.
+- [x] Implement `uv run python -m rozprava.ingest metadata`, `backfill --term 9|10 --limit N`, `update`, `refresh`, `status` and explicit retry controls. Default backfill covers both terms, can resume, reports counts/errors and never fetches from web routes.
+- [x] Test the same fixture imported twice, changed source revision, interrupted/resumed import and repaired missing page.
 
 ```python
 def test_unchanged_reimport_does_not_duplicate(db, source_page):
@@ -91,37 +95,48 @@ def test_unchanged_reimport_does_not_duplicate(db, source_page):
     assert revision_count(db, source_page.id) == 1
 ```
 
-- [ ] Import consecutive real pages from both terms, verify speaker/source links and quotations, then start the full backfill with a durable log and recorded process ID. Continue application work while the polite crawler runs. Commit and push importer code once checks pass.
+- [x] Import consecutive real pages from both terms, verify speaker/source links and quotations, then start the full backfill with a durable log and recorded process ID. Continue application work while the polite crawler runs. Commit and push importer code once checks pass. *(Started 18 Nov 09:01, PID 26257; see [[transcript-import]].)*
 
 ## 5. Search and reader routes
 
-- [ ] Add `SearchFilters` with bounded query/page length, ISO dates, term/ID validation and stable sort choices. Build parameterized SQL and 20-item pagination. Search full stored speech text; browse newest for an empty query. Include labeled chair contributions.
-- [ ] Test accent-free keywords, quoted phrases, AND/OR/exclusions, all filters, count/facet consistency, deterministic pages and injection-like input against PostgreSQL.
-- [ ] Build per-request view data and URL helper. Core routes: `/`, `/hledat`, `/poslanci`, `/poslanec/{id}`, `/schuze`, `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/karta`, `/jak-to-funguje`, `/api/palette`, `/health`.
-- [ ] Preserve revision parameters in result/citation/composer links; normal reader navigation shows page/day neighbors and explicit pending/missing states. Unknown IDs return 404; database outages return 503 and never fixture content.
-- [ ] Adapt search and reader templates to real URL-backed GET controls. Escape excerpts before adding highlight spans. Keep safe back links within the app and do not render source HTML.
-- [ ] Test route behavior and citations after a revision. Run the app on loopback, check real results from both terms in T3's browser, then commit and push.
+- [x] Add `SearchFilters` with bounded query/page length, ISO dates, term/ID validation and stable sort choices. Build parameterized SQL and 20-item pagination. Search full stored speech text; browse newest for an empty query. Include labeled chair contributions.
+- [x] Test accent-free keywords, quoted phrases, AND/OR/exclusions, all filters, count/facet consistency, deterministic pages and injection-like input against PostgreSQL.
+- [x] Build per-request view data and URL helper. Search/reader routes: `/hledat`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`, `/health`. Home, people, sittings and methodology are implemented in step 6; `/karta` and `/api/palette` remain in step 7.
+- [x] Preserve revision parameters in result/citation/composer links; normal reader navigation shows page/day neighbors and explicit pending/missing states. Unknown IDs return 404; database outages return 503 and never fixture content.
+- [x] Adapt search and reader templates to real URL-backed GET controls. Escape excerpts before adding highlight spans. Keep safe back links within the app and do not render source HTML.
+- [x] Test route behavior and citations after a revision. Run the app on loopback, check real results from both terms in T3's browser, then commit and push. *(18 Nov: checked on the partly loaded corpus; T3's screenshot tool failed on most pages, so the reader was verified through the DOM. `/` redirects to search until step 6.)*
 
 ## 6. Home, people, sittings and statistics
 
-- [ ] Build common coverage context with expected/imported/pending/failed/unavailable counts per term and last successful import time. Represent no imported data with an empty state, never a fake latest day.
-- [ ] Home uses imported data and a deterministic hourly sample of source speeches with at least 60 words. Directory and sessions default to term 10, search to both; every card/link carries real IDs.
-- [ ] Build paginated MP profiles, dated club and mandate display, region/club filters, term-specific bill links and counts from assembled speeches. Extend activity rendering to unknown/missing data and two weekend sittings without cell overlap.
-- [ ] Import vote and apology metadata for both terms. Test A/B/N/C/F/K registration, @/M absence, W ineligibility, invalidated/manual/technical votes, mandate dates and missing records. Suppress unsupported percentages and exclude unknown values from medians.
-- [ ] Compute word-count activity quartiles across positive MP-days in the same term excluding known chair roles. Mark incomplete coverage and provisional aggregates on profile/calendar/table views.
-- [ ] Test actual MP distinctions, identical bill numbers across terms, pending days and unknown attendance; check desktop/mobile pages. Commit and push.
+- [x] Build common coverage context with expected/imported/pending/failed/unavailable counts per term and last successful import time. Represent no imported data with an empty state, never a fake latest day.
+- [x] Home uses imported data and a deterministic hourly sample of source speeches with at least 60 words. Directory and sessions default to term 10, search to both; every card/link carries real IDs.
+- [x] Build paginated MP profiles, dated club and mandate display, region/club filters, term-specific bill links and counts from assembled speeches. Extend activity rendering to unknown/missing data and two weekend sittings without cell overlap.
+- [x] Import vote and apology metadata for both terms. Test A/B/N/C/F/K registration, @/M absence, W ineligibility, invalidated/manual/technical votes, mandate dates and missing records. Suppress unsupported percentages and exclude unknown values from medians.
+- [x] Compute word-count activity quartiles across positive MP-days in the same term excluding known chair roles. Mark incomplete coverage and provisional aggregates on profile/calendar/table views.
+- [x] Test actual MP distinctions, identical bill numbers across terms, pending days and unknown attendance; check desktop/mobile pages. Commit and push.
+
+18 Nov: step 6 is implemented and verified (143 tests); see [[archive-views]].
+Live home/methodology copy and profile filtering from step 7 were adapted here
+so the newly enabled pages describe and query the real application.
 
 ## 7. Palette, quotation export and truthful copy
 
-- [ ] Replace live palette fixture indexing with bounded server queries for MPs, term-qualified bills and sittings; preserve focus management and keyboard navigation, cancel stale responses, and include a normal speech-search link.
-- [ ] Quote composer loads only a selected stored revision. Validate source ID and passage offsets on the server; preserve contiguous source text with ellipses for cuts and keep share URLs revision-pinned. Retain all three PNG sizes and image/font error handling.
-- [ ] Disable fixture-only JS search/filter behavior on live pages. Preserve form filters during navigation and remove semantic-search/AI-summary claims from live home, search and methodology. Explain actual formulas and update cadence.
-- [ ] Test invalid quotation offsets, forged source text, source revisions and empty/error responses. Browser-check copy link and PNG exports with Czech characters at all sizes. Commit and push.
+- [x] Replace live palette fixture indexing with bounded server queries for MPs, term-qualified bills and sittings; preserve focus management and keyboard navigation, cancel stale responses, and include a normal speech-search link.
+- [x] Quote composer loads only a selected stored revision. Validate source ID and passage offsets on the server; preserve contiguous source text with ellipses for cuts and keep share URLs revision-pinned. Retain all three PNG sizes and image/font error handling.
+- [x] Disable fixture-only JS search/filter behavior on live pages. Preserve form filters during navigation and remove semantic-search/AI-summary claims from live home, search and methodology. Explain actual formulas and update cadence.
+- [x] Test invalid quotation offsets, forged source text, source revisions and empty/error responses. Browser-check copy link and PNG exports with Czech characters at all sizes. Commit and push.
+
+19 Nov: step 7 is verified (173 tests, desktop/mobile browser interactions and
+all three PNG exports); see [[quotation-export]].
 
 ## 8. Final verification and operation notes
 
-- [ ] Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, token freshness and JavaScript syntax checks. Re-render the static preview to protect design review mode.
-- [ ] Review spec compliance and code quality, fix findings, rerun affected checks. Measure representative PostgreSQL query timings against the imported corpus.
-- [ ] Exercise browser history, direct deep links, both terms, facets/date controls, directory/profile navigation, another sitting/day, quote exports, keyboard controls, responsive layouts and unavailable-data states.
-- [ ] Inspect the full backfill: report exact term coverage and unresolved source failures, do not claim the archive is complete while pending work remains. Reconcile expected pages after a fresh metadata update.
-- [ ] Update README, CLAUDE commands and Obsidian notes with actual setup/start/update/stop/backup behavior, data directories and known limitations. Keep credentials and caches ignored. Commit and push verified changes, leaving the working local app available.
+- [x] Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, token freshness and JavaScript syntax checks. Re-render the static preview to protect design review mode.
+- [x] Review spec compliance and code quality, fix findings, rerun affected checks. Measure representative PostgreSQL query timings against the imported corpus.
+- [x] Exercise browser history, direct deep links, both terms, facets/date controls, directory/profile navigation, another sitting/day, quote exports, keyboard controls, responsive layouts and unavailable-data states.
+- [x] Inspect the full backfill: report exact term coverage and unresolved source failures, do not claim the archive is complete while pending work remains. Reconcile expected pages after a fresh metadata update.
+- [x] Update README, CLAUDE commands and Obsidian notes with actual setup/start/update/stop/backup behavior, data directories and known limitations. Keep credentials and caches ignored. Commit and push verified changes, leaving the working local app available.
+
+19 Nov: step 8 verified with 181 passing tests. Full backfill plus recovery loaded
+18 496 of 18 500 pages; four empty upstream responses remain explicitly failed.
+See [[local-app-verification]] for browser checks, timings and operation notes.

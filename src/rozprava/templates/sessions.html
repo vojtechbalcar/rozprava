@@ -5,7 +5,8 @@
 {% block content %}
 <header class="wrap page-head">
   <h1 class="h1">Schůze</h1>
-  <p class="page-head__lede">{{ sessions|length|count('schůze', 'schůze', 'schůzí') }} 10.&nbsp;volebního období, od nejnovější. Schůze může trvat několik týdnů a&nbsp;jednat se může souběžně o&nbsp;více schůzích.</p>
+  <p class="page-head__lede">{{ sessions|length|count('schůze', 'schůze', 'schůzí') }} {{ term.number if live and term else 10 }}.&nbsp;volebního období, od nejnovější. Schůze může trvat několik týdnů a&nbsp;jednat se může souběžně o&nbsp;více schůzích.</p>
+{% if live %}{{ ui.term_selector(terms, term, link('sessions')) }}{% endif %}
 </header>
 
 <div class="wrap">
@@ -13,10 +14,10 @@
   <ol class="sessions">
     {% for s in sessions %}
     <li>
-      <details class="session">
+      <details class="session"{% if live and selected_sitting %} open{% endif %}>
         <summary>
           <span class="session__number">{{ s.number }}</span>
-          <span class="session__dates meta">{% if s.from == s.to %}{{ s.from|cz_date }}{% else %}{{ s.from|cz_date }} – {{ s.to|cz_date }}{% endif %}</span>
+          <span class="session__dates meta">{% if not s.from %}Termín neuveden{% elif s.from == s.to %}{{ s.from|cz_date }}{% else %}{{ s.from|cz_date }} – {{ s.to|cz_date }}{% endif %}</span>
           <span class="session__top">
             {%- for b in s.top %}<span>{% if b.tisk %}<span class="meta">tisk&nbsp;{{ b.tisk }}</span> {% endif %}{{ b.short|nbsp }} <span class="meta">({{ b.speeches }})</span></span>
             {%- else %}<span class="label label--gap">Body zatím neuvedeny</span>{% endfor %}
@@ -26,17 +27,17 @@
           {{ ui.icon('chevron') }}
         </summary>
         <div class="session__body">
-          <p class="label">Jednací dny</p>
+          <p class="label">Jednací dny</p>{% if live %}<p class="meta"><a href="{{ link('sitting', term=s.term, sitting=s.number) }}">Odkaz na {{ s.number }}. schůzi</a>{% if s.pending %} · {{ s.pending }} dnů s neúplnými přepisy{% endif %}</p>{% endif %}
           <ul class="session__strip">
             {% for d in s.day_levels %}
-            <li><a href="{{ link('transcript') }}" data-tip="{{ d.date|cz_date_long(weekday=True) }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}">{{ ui.dot_strip([d], label=d.date|cz_date) }}<span class="meta">{{ d.date|cz_date }}</span></a></li>
-            {% endfor %}
+            <li>{% if not live or d.page %}<a href="{{ link('transcript', term=s.term if live else None, sitting=s.number, page=d.page if live else None) }}" data-tip="{{ d.date|cz_date_long(weekday=True) }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}{% if live and d.imported_pages < d.pages %} · neúplný přepis{% endif %}">{{ ui.dot_strip([d], label=d.date|cz_date) }}<span class="meta">{{ d.date|cz_date }}</span></a>{% else %}<span class="meta">{{ d.date|cz_date }} · přepis čeká na načtení</span>{% endif %}</li>
+            {% else %}<li class="meta">Jednací dny a přepisy zatím nejsou načtené.</li>{% endfor %}
           </ul>
         </div>
       </details>
     </li>
-    {% endfor %}
+    {% else %}<li class="state-empty">Zatím nejsou načtené žádné schůze.</li>{% endfor %}
   </ol>
-  <p class="meta sessions__note">Počty slov přibudou po prvním plném načtení přepisů; zatím ukazujeme počty projevů. U&nbsp;36.&nbsp;schůze ještě chybí rozpis podle bodů, Sněmovna ho do otevřených dat zatím nedoplnila.</p>
+  <p class="meta sessions__note">{% if live %}Počítáme dosud načtené projevy včetně řízení schůze. Neúplné přepisy mohou počty změnit.{% else %}Počty slov přibudou po prvním plném načtení přepisů; zatím ukazujeme počty projevů. U&nbsp;36.&nbsp;schůze ještě chybí rozpis podle bodů, Sněmovna ho do otevřených dat zatím nedoplnila.{% endif %}</p>
 </div>
 {% endblock %}

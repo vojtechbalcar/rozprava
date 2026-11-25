@@ -30,16 +30,32 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Design tokens: `uv run python scripts/build_tokens.py` after editing the
   `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
+- Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db`.
+  Rozprava's own PostgreSQL 18 cluster in `~/.local/share/rozprava/postgres` on
+  `127.0.0.1:55432`; `init` writes the private `.env`. See [[dev-environment]].
+- Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
+  `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
-Intended, not built yet; update when they exist:
+- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|forms|status`
+  (see the module docstring). Only this job contacts psp.cz; it caches downloads in
+  `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
+- Word forms: `uv run python scripts/fetch_morphology.py` once installs the MorphoDiTa
+  Czech model in `~/.local/share/rozprava/models`; import commands then tag new
+  speeches, `ingest forms [--rebuild]` tags the rest. See [[czech-word-forms]].
+- Run local database commands and tests with a UTF-8 locale (`LANG=en_US.UTF-8`);
+  PostgreSQL will not start a cluster under an empty locale.
 
-- Dev: `uv run fastapi dev src/rozprava/main.py`
-- Migrate: `uv run alembic upgrade head`
-- Ingest: `uv run python -m rozprava.ingest`
+- Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
+  --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
+  `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`,
+  `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
+  Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
-The project lives on an iCloud-synced Desktop. iCloud marks dot-folders hidden,
-and Python 3.14 skips hidden `.pth` files, which breaks the editable install. So
-`.venv` is a symlink to `~/.local/share/venvs/rozprava`. See [[dev-environment]].
+Checkouts of `feature/functional-local-app` live outside iCloud: on this Mac in
+the worktree `~/.local/share/rozprava-worktrees/functional-app`; the 18–19 Nov work
+ran on another machine and was pushed from there. Before resuming in any checkout,
+`git fetch` and compare with `origin` (see [[parallel-worktree-divergence]]). The
+iCloud Desktop checkout needs the `.venv` symlink workaround in [[dev-environment]].
 
 ## Hard rules
 

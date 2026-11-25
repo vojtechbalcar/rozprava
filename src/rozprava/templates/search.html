@@ -1,21 +1,39 @@
 {% extends "base.html" %}
 {% import "_macros.html" as ui %}
-{% block title %}{{ search.query }} · Rozprava{% endblock %}
+{% block title %}{{ search.query or 'Hledání' }} · Rozprava{% endblock %}
 
 {% block content %}
-<div class="wrap grid search-page" data-search-page data-query="{{ search.query }}">
+<div class="wrap grid search-page" data-search-page data-query="{{ search.query }}"{% if live %} data-live="true"{% endif %}>
   <div class="search-page__main">
     <section class="query">
-      {{ ui.search_bar(query=search.query, id='search-q') }}
-      {{ ui.filter_chips({'Volební období': '10. (2025–)'}) }}
+      {{ ui.search_bar(query=search.query, id='search-q', keep=search.keep or {}) }}
+      {{ ui.filter_chips() }}
       <button class="btn btn--secondary filters-toggle" type="button" data-drawer-open="facets">{{ ui.icon('filter') }} Filtry</button>
+      {% if search.active %}
+      <ul class="active-filters" aria-label="Použité filtry">
+        {% for f in search.active %}
+        <li><a class="chip chip--active" href="{{ link('search', **f.params) }}"><span>{{ f.label }}: {{ f.value }}</span><span class="chip__x" aria-hidden="true">{{ ui.icon('x', 14) }}</span><span class="visually-hidden"> (zrušit filtr)</span></a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
     </section>
 
-    <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> v&nbsp;10. volebním období, seřazeno podle relevance</p>
-    <p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>
-    <section class="state-empty search-empty" data-search-empty hidden><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr.</p><button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button></section>
+    {% for message in search.errors or [] %}
+    <p class="notice" role="alert">{{ message|nbsp }}</p>
+    {% endfor %}
 
-    {# AI summary (§7.8): machine-made, sans, never serif #}
+    <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> {{ search.scope|nbsp }}, seřazeno {{ 'podle data' if search.sort == 'nejnovejsi' or not search.query else 'podle relevance' }}</p>
+    {% if search.expansions %}<p class="meta" data-word-forms>Hledáme i&nbsp;další tvary: {% for e in search.expansions %}{{ e.word }} ({{ e.forms|join(', ') }}{% if e.more %} a&nbsp;další{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}. Přesný tvar zadejte v&nbsp;uvozovkách.</p>{% endif %}
+    {% if search.coverage_note %}<p class="meta">{{ search.coverage_note|nbsp }}</p>{% endif %}
+    {% if not live %}<p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>{% endif %}
+
+    {% if search.out_of_range %}
+    <section class="state-empty"><h2 class="h2">Tolik stránek výsledků není.</h2><p><a href="{{ link('search', **search.last_page_params) }}">Přejít na poslední stránku ({{ search.pages }})</a></p></section>
+    {% else %}
+    <section class="state-empty search-empty" data-search-empty{% if not live or search.total %} hidden{% endif %}><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr. Hledáme slova ve všech tvarech a&nbsp;bez ohledu na diakritiku; v&nbsp;uvozovkách hledáme přesně zadaný tvar nebo frázi.</p>{% if not live %}<button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button>{% endif %}</section>
+    {% endif %}
+
+    {# AI summary (§7.8): machine-made, sans, never serif. Only in the design preview for now. #}
     {% if search.answer %}
     <section class="summary" aria-labelledby="summary-title">
       <header class="summary__head">
@@ -35,19 +53,27 @@
       <div class="cite-pop" id="cite-{{ c.n }}" role="tooltip">
         <p class="cite-pop__who">{{ ui.party_pill(c.speaker.party) }}<span>{{ c.speaker.name }}</span></p>
         <p class="cite-pop__quote">„{{ c.text|clip(220)|highlight(search.highlights) }}{% if (c.text|clip(220))|length < c.text|length %}&nbsp;…{% endif %}“</p>
-        <p class="cite-pop__foot"><span class="meta">{{ c.catalog|catalog }}</span><a href="{{ link('transcript', page=c.page, anchor=c.anchor, result=c.n) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a></p>
+        <p class="cite-pop__foot"><span class="meta">{{ c.catalog|catalog }}</span><a href="{{ link('transcript', term=c.term, sitting=c.sitting, page=c.page, anchor=c.anchor, result=c.n) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a></p>
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
     <h2 class="visually-hidden">Projevy</h2>
-    <ol class="results">
+    <ol class="results" start="{{ search.results[0].n if search.results else 1 }}">
       {% for c in search.results %}
       <li>{{ ui.result_object(c, terms=search.highlights, number=c.n) }}</li>
       {% endfor %}
     </ol>
-    <p class="results__end meta">Konec ukázkových projevů.</p>
+    {% if live and search.pages > 1 and not search.out_of_range %}
+    <nav class="pager" aria-label="Stránky výsledků">
+      {% if search.page > 1 %}<a href="{{ link('search', **search.prev_params) }}" rel="prev"><span aria-hidden="true">←</span> Předchozí</a>{% else %}<span></span>{% endif %}
+      <span class="meta">Stránka {{ search.page }} z&nbsp;{{ search.pages }}</span>
+      {% if search.page < search.pages %}<a href="{{ link('search', **search.next_params) }}" rel="next">Další <span aria-hidden="true">→</span></a>{% else %}<span></span>{% endif %}
+    </nav>
+    {% elif search.results %}
+    <p class="results__end meta">{{ 'Konec výsledků.' if live else 'Konec ukázkových projevů.' }}</p>
+    {% endif %}
   </div>
 
   {# Facets (§7.9): counts with bars, sorted by count, ties alphabetical (§10.4) #}
@@ -59,26 +85,31 @@
     <section class="facet">
       <h2 class="label">Řazení</h2>
       <ul class="facet__sort">
-        <li><a href="{{ link('search', razeni='relevance') }}" data-result-sort="relevance" aria-current="true">Relevance</a></li>
-        <li><a href="{{ link('search', razeni='nejnovejsi') }}" data-result-sort="nejnovejsi">Nejnovější</a></li>
+        <li><a href="{{ link('search', **search.sort_params.relevance) }}" data-result-sort="relevance"{% if search.sort != 'nejnovejsi' %} aria-current="true"{% endif %}>Relevance</a></li>
+        <li><a href="{{ link('search', **search.sort_params.nejnovejsi) }}" data-result-sort="nejnovejsi"{% if search.sort == 'nejnovejsi' %} aria-current="true"{% endif %}>Nejnovější</a></li>
       </ul>
     </section>
+    {% if facets.parties %}
     <section class="facet">
-      <h2 class="label">Strana</h2>
+      <h2 class="label">Poslanecký klub</h2>
       <ul>
-        {% for party, n in facets.parties %}
-        <li><a class="facet__row" href="{{ link('search', strana=party) }}" data-facet="strana" data-value="{{ party }}" style="--share: {{ n / facets.parties_max }}"><span>{{ ui.swatch(party) }}{{ party|party_label }}</span><span class="meta">{{ n }}</span></a></li>
+        {% for row in facets.parties %}
+        <li><a class="facet__row" href="{{ link('search', **row.params) }}" data-facet="klub" data-value="{{ row.value }}"{% if row.selected %} aria-current="true"{% endif %} style="--share: {{ row.n / facets.parties_max }}"><span>{{ ui.swatch(row.value) }}{{ row.value|party_label }}</span><span class="meta">{{ row.n }}</span></a></li>
         {% endfor %}
       </ul>
     </section>
+    {% endif %}
+    {% if facets.speakers %}
     <section class="facet">
       <h2 class="label">Řečník</h2>
       <ul>
-        {% for name, n in facets.speakers %}
-        <li><a class="facet__row" href="{{ link('search', poslanec=name) }}" data-facet="poslanec" data-value="{{ name }}" style="--share: {{ n / facets.speakers_max }}"><span>{{ name }}</span><span class="meta">{{ n }}</span></a></li>
+        {% for row in facets.speakers %}
+        <li><a class="facet__row" href="{{ link('search', **row.params) }}" data-facet="poslanec" data-value="{{ row.value }}"{% if row.selected %} aria-current="true"{% endif %} style="--share: {{ row.n / facets.speakers_max }}"><span>{{ row.label }}</span><span class="meta">{{ row.n }}</span></a></li>
         {% endfor %}
       </ul>
     </section>
+    {% endif %}
+    {% if facets.months %}
     <section class="facet">
       <h2 class="label">Datum</h2>
       <svg class="histogram" data-date-histogram viewBox="0 0 {{ facets.months|length * 12 }} 48" width="100%" height="48" preserveAspectRatio="none" role="img" aria-label="Výsledky podle měsíců: {% for m in facets.months if m.count %}{{ m.label }} {{ m.count }}{% if not loop.last %}, {% endif %}{% endfor %}">
@@ -89,7 +120,16 @@
       </svg>
       <button class="btn btn--ghost" type="button" data-date-picker>Zvolit období</button>
       <p class="meta histogram__axis"><span>{{ facets.months[0].label }}</span><span>{{ facets.months[-1].label }}</span></p>
+      {% if live %}
+      <form class="date-range" action="{{ link('search') }}">
+        {% for key, values in (search.keep_without_dates or {}).items() %}{% for v in (values if values is not string else [values]) %}<input type="hidden" name="{{ key }}" value="{{ v }}">{% endfor %}{% endfor %}
+        <label>Od <input type="date" name="od" value="{{ search.date_from or '' }}"></label>
+        <label>Do <input type="date" name="do" value="{{ search.date_to or '' }}"></label>
+        <button class="btn btn--secondary" type="submit">Použít</button>
+      </form>
+      {% endif %}
     </section>
+    {% endif %}
   </aside>
 </div>
 {% endblock %}

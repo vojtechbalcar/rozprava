@@ -75,6 +75,12 @@ def test_highlight_marks_terms_without_changing_the_text():
     assert plain.replace(NBSP, " ") == text
 
 
+def test_highlight_ignores_accents_like_the_search_and_matches_whole_words():
+    text = "Důchodová reforma a reformy důchodů"
+    html = str(highlight(text, ["duchodova reforma", "duchod"]))
+    assert html.count("<mark") == 1 and "Důchodová reforma</mark>" in html
+
+
 def test_highlight_is_case_insensitive_and_escapes_html():
     html = str(highlight("Automaticky <b>enrollment</b>", ["automaticky"]))
     assert html.startswith('<mark class="term">Automaticky</mark>')

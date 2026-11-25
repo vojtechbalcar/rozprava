@@ -4,14 +4,17 @@
 
 {% macro graph_svg(cal, verb) -%}
 <svg class="graph" width="{{ cal.width }}" height="{{ cal.height }}" viewBox="0 0 {{ cal.width }} {{ cal.height }}" role="img"
-  aria-label="{{ mp.title }} vystoupil{{ 'a' if mp.title == 'Poslankyně' else '' }} v {{ mp.stats.days_spoke }} z {{ mp.stats.sitting_days }} jednacích dnů 10. volebního období.">
-  {%- for x, label in cal.months %}<text class="graph__month" x="{{ x }}" y="10">{{ label }}</text>{% endfor %}
+  aria-label="{{ mp.title }} vystoupil{{ 'a' if mp.title == 'Poslankyně' else '' }} v {{ mp.stats.days_spoke }} z {{ mp.stats.sitting_days }} jednacích dnů {{ term.number if live else 10 }}. volebního období.">
+  {%- for x, label in cal.years %}<text class="graph__year" x="{{ x }}" y="{{ cal.year_y }}">{{ label }}</text>{% endfor %}
+  {%- for x, label in cal.months %}<text class="graph__month" x="{{ x }}" y="{{ cal.month_y }}">{{ label }}</text>{% endfor %}
   {%- for y, label in cal.weekdays %}<text class="graph__weekday" x="0" y="{{ y + 3 }}">{{ label }}</text>{% endfor %}
   {%- for c in cal.cells %}
   {%- if c.info %}{% set i = c.info %}
-  <circle class="ac {{ 'ac--absent' if i.state == 'absent' else 'ac--present' if i.state == 'present' else 'ac--l' ~ i.level }}" cx="{{ c.x }}" cy="{{ c.y }}" r="{{ 3.5 if i.state == 'absent' else 4 }}"
+  {% if live %}<a href="{{ link('search', obdobi=term.number, poslanec=mp.id, od=i.date, do=i.date) }}" aria-label="Projevy dne {{ i.date|cz_date }}">{% endif %}
+  <circle class="ac {{ 'ac--unknown' if i.state == 'unknown' else 'ac--absent' if i.state == 'absent' else 'ac--present' if i.state == 'present' else 'ac--l' ~ i.level }}" cx="{{ c.x }}" cy="{{ c.y }}" r="{{ 3.5 if i.state == 'absent' else 4 }}"
     data-day="{{ i.date }}"
-    data-tip="{{ i.date|cz_date_long(weekday=True) }} · {% for s in i.sittings %}{{ s }}. schůze{% if not loop.last %}, {% endif %}{% endfor %}&#10;{% if i.speeches %}{{ i.speeches|count('projev', 'projevy', 'projevů') }}{% if i.words %} · {{ i.words|count('slovo', 'slova', 'slov') }}{% endif %}{% elif i.state == 'absent' %}nepřítom{{ 'na' if mp.title == 'Poslankyně' else 'en' }}{% else %}bez projevu{% endif %}{% if i.votes_total %}&#10;{{ verb }}: {{ i.votes_cast }} z {{ i.votes_total }}{% endif %}"/>
+    data-tip="{{ i.date|cz_date_long(weekday=True) }} · {% for s in i.sittings %}{{ s }}. schůze{% if not loop.last %}, {% endif %}{% endfor %}&#10;{% if i.speeches %}{{ i.speeches|count('projev', 'projevy', 'projevů') }}{% if i.words %} · {{ i.words|count('slovo', 'slova', 'slov') }}{% endif %}{% elif i.state == 'absent' %}nepřítom{{ 'na' if mp.title == 'Poslankyně' else 'en' }}{% elif i.state == 'unknown' %}účast neznámá{% else %}bez projevu{% endif %}{% if live and not i.complete %} · neúplný přepis{% endif %}{% if i.votes_total %}&#10;{{ verb }}: {{ i.votes_cast }} z {{ i.votes_total }}{% if live and i.votes_unknown %} · {{ i.votes_unknown }} neznámých{% endif %}{% endif %}"/>
+  {% if live %}</a>{% endif %}
   {%- else %}
   <circle class="ac ac--none" cx="{{ c.x }}" cy="{{ c.y }}" r="1"/>
   {%- endif %}
@@ -21,38 +24,41 @@
 
 {% block content %}
 {% set s = mp.stats %}
-{% set verb = 'Hlasovala' if mp.title == 'Poslankyně' else 'Hlasoval' %}
+{% set verb = 'Přihlášení k hlasování' if live else ('Hlasovala' if mp.title == 'Poslankyně' else 'Hlasoval') %}
 <header class="wrap mp-head">
-  <a class="back" href="{{ link('mps') }}"><span aria-hidden="true">←</span> Všichni poslanci</a>
+  <a class="back" href="{{ link('mps', obdobi=term.number if live else None) }}"><span aria-hidden="true">←</span> Všichni poslanci</a>
   <div class="mp-head__row">
     {{ ui.monogram(mp.initials, 96) }}
     <div class="mp-head__id">
       <h1 class="mp-head__name">{{ mp.name }}</h1>
-      <p class="mp-head__facts">{{ ui.party_pill(mp.party) }}<span>{{ mp.title }} za {{ mp.region }} kraj</span><span class="meta">{{ mp.terms[0].number }}.&nbsp;volební období, od {{ mp.terms[0].from }}</span></p>
+      <p class="mp-head__facts">{{ ui.party_pill(mp.party) }}<span>{{ mp.title }}{% if mp.region %} · {{ mp.region }}{% endif %}</span><span class="meta">{{ mp.terms[0].number }}.&nbsp;volební období, {% if mp.terms[0].from %}od {{ mp.terms[0].from|cz_date if live else mp.terms[0].from }}{% else %}začátek mandátu neuveden{% endif %}{% if mp.terms[0].to is defined and mp.terms[0].to %} do {{ mp.terms[0].to|cz_date if live else mp.terms[0].to }}{% endif %}</span></p>
     </div>
     <div class="mp-head__actions">
       <a href="{{ mp.psp_url }}">Originál na psp.cz <span aria-hidden="true">↗</span></a>
-      <button class="btn btn--secondary" type="button" data-copy="{{ link('mp') }}">{{ ui.icon('share') }} Sdílet</button>
+      <button class="btn btn--secondary" type="button" data-copy="{{ link('mp', slug=mp.slug, obdobi=term.number if live else None) }}">{{ ui.icon('share') }} Sdílet</button>
     </div>
   </div>
+{% if live %}{{ ui.term_selector(terms, term, link('mp', slug=mp.slug)) }}
+  {% if s.provisional %}<p class="meta">Průběžné statistiky: část přepisů zatím chybí. Počty i hranice aktivity se mohou změnit.</p>{% endif %}
+  {% if mp.party %}<p class="meta">Klub k {{ mp.party_date|cz_date }}.</p>{% else %}<p class="meta">Poslanecký klub k {{ mp.party_date|cz_date }} není znám.</p>{% endif %}{% endif %}
 </header>
 
 <section class="wrap tiles" aria-label="V číslech">
   {{ ui.stat_tile('Projevy', s.speeches|string, comparison='medián poslanců: ' ~ s.median_speeches|cz_number(1 if s.median_speeches % 1 else 0)) }}
   {{ ui.stat_tile('Jednací dny s projevem', s.days_spoke|string, unit='z ' ~ s.sitting_days, comparison='medián poslanců: ' ~ s.median_days_spoke|cz_number(1 if s.median_days_spoke % 1 else 0), aria=s.days_spoke ~ ' z ' ~ s.sitting_days) }}
-  {{ ui.stat_tile('Účast na hlasování', s.attendance|cz_percent(1), comparison='medián poslanců: ' ~ s.median_attendance|cz_percent(1)) }}
-  {% set top = mp.topics[0] %}
-  {{ ui.stat_tile('Nejčastější bod', text=top.short, comparison='tisk ' ~ top.tisk ~ ' · ' ~ top.speeches|count('projev', 'projevy', 'projevů')) }}
+  {{ ui.stat_tile('Účast na hlasování', s.attendance|cz_percent(1) if s.attendance is not none else '–', comparison=('medián poslanců: ' ~ s.median_attendance|cz_percent(1)) if s.median_attendance is not none else 'Účast není doložena') }}
+  {% if mp.topics %}{% set top = mp.topics[0] %}
+  {{ ui.stat_tile('Nejčastější bod', text=top.short, comparison=('tisk ' ~ top.tisk ~ ' · ' if top.tisk else '') ~ top.speeches|count('projev', 'projevy', 'projevů')) }}
+  {% else %}{{ ui.stat_tile('Nejčastější bod', text='Zatím bez údajů') }}{% endif %}
 </section>
 
+{% if live and s.attendance is none %}<p class="wrap meta">Účast nelze spolehlivě určit: {{ s.attendance_registered }} přihlášení z {{ s.attendance_known }} známých záznamů, {{ s.attendance_unknown }} neznámých. Chybějící záznam není nepřítomnost.</p>{% endif %}
 {# Session-day activity graph (§7.11) #}
 <section class="wrap activity" aria-labelledby="activity-title" data-activity>
   <div class="activity__head">
     <h2 class="h3" id="activity-title">Aktivita v&nbsp;jednacích dnech</h2>
     <div class="segmented" role="radiogroup" aria-label="Období">
-      <button type="button" role="radio" aria-checked="true" data-period="term">10. období</button>
-      <button type="button" role="radio" aria-checked="false" data-period="2026">2026</button>
-      <button type="button" role="radio" aria-checked="false" data-period="2025">2025</button>
+      {% for key in graphs %}<button type="button" role="radio" aria-checked="{{ 'true' if key == 'term' else 'false' }}" data-period="{{ key }}">{{ (term.number if live else 10)|string ~ '. období' if key == 'term' else key }}</button>{% endfor %}
     </div>
   </div>
   <div class="activity__calendar">
@@ -66,7 +72,7 @@
       <p class="label">{{ month }}</p>
       {% for row in days|batch(20) %}
       <svg class="strip" width="{{ row|length * 12 }}" height="8" role="img" aria-label="{{ month }}">
-        {% for d in row %}<circle class="ac {{ 'ac--absent' if d.state == 'absent' else 'ac--present' if d.state == 'present' else 'ac--l' ~ d.level }}" cx="{{ 4 + loop.index0 * 12 }}" cy="4" r="{{ 3.5 if d.state == 'absent' else 4 }}" data-day="{{ d.date }}" data-tip="{{ d.date|cz_date }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}"/>{% endfor %}
+        {% for d in row %}{% if live %}<a href="{{ link('search', obdobi=term.number, poslanec=mp.id, od=d.date, do=d.date) }}" aria-label="Projevy dne {{ d.date|cz_date }}">{% endif %}<circle class="ac {{ 'ac--unknown' if d.state == 'unknown' else 'ac--absent' if d.state == 'absent' else 'ac--present' if d.state == 'present' else 'ac--l' ~ d.level }}" cx="{{ 4 + loop.index0 * 12 }}" cy="4" r="{{ 3.5 if d.state == 'absent' else 4 }}" data-day="{{ d.date }}" data-tip="{{ d.date|cz_date }} · {{ d.speeches|count('projev', 'projevy', 'projevů') }}{% if live and d.state == 'unknown' %} · účast neznámá{% endif %}"/>{% if live %}</a>{% endif %}{% endfor %}
       </svg>
       {% endfor %}
     </div>
@@ -75,16 +81,17 @@
   <div class="activity__foot">
     <p class="meta legend">Méně <svg width="56" height="8" aria-hidden="true">{% for l in range(1, 5) %}<circle class="ac ac--l{{ l }}" cx="{{ 4 + (l - 1) * 12 + 8 }}" cy="4" r="4"/>{% endfor %}<circle class="ac ac--present" cx="4" cy="4" r="4"/></svg> Více
       <span><svg width="8" height="8" aria-hidden="true"><circle class="ac ac--absent" cx="4" cy="4" r="3.5"/></svg> nepřítom{{ 'na' if mp.title == 'Poslankyně' else 'en' }}</span>
+      <span><svg width="8" height="8" aria-hidden="true"><circle class="ac ac--unknown" cx="4" cy="4" r="3.5"/></svg> neznámá účast</span>
       <span><svg width="8" height="8" aria-hidden="true"><circle class="ac ac--none" cx="4" cy="4" r="1"/></svg> nejednalo se</span></p>
     <button class="btn btn--ghost" type="button" data-table-toggle aria-expanded="false" aria-controls="activity-table">{{ ui.icon('table') }} Zobrazit jako tabulku</button>
   </div>
-  <p class="meta activity__note">Úroveň podle počtu projevů v&nbsp;jednací den, na stejné škále pro všechny poslance. <a href="{{ link('how') }}#aktivita">Jak počítáme aktivitu</a></p>
+  <p class="meta activity__note">Úroveň podle počtu {{ 'slov' if live else 'projevů' }} v&nbsp;jednací den, na stejné škále pro všechny poslance. <a href="{{ link('how') }}#aktivita">Jak počítáme aktivitu</a></p>
   <div class="table-scroll"><table class="data-table visually-hidden" id="activity-table">
-    <caption class="visually-hidden">Jednací dny 10. volebního období</caption>
+    <caption class="visually-hidden">Jednací dny {{ term.number if live else 10 }}. volebního období</caption>
     <thead><tr><th scope="col">Den</th><th scope="col">Schůze</th><th scope="col">Stav</th><th scope="col">Projevy</th><th scope="col">Slova</th><th scope="col">Hlasování</th></tr></thead>
     <tbody>
       {% for d in mp.activity %}
-      <tr data-year="{{ d.date[:4] }}"><td><button class="table-day" type="button" data-day="{{ d.date }}">{{ d.date|cz_date }}</button></td><td>{{ d.sittings|join(', ') }}</td><td>{{ {'spoke': 'vystoupil' ~ ('a' if mp.title == 'Poslankyně' else ''), 'present': 'přítom' ~ ('na' if mp.title == 'Poslankyně' else 'en'), 'absent': 'nepřítom' ~ ('na' if mp.title == 'Poslankyně' else 'en')}[d.state] }}</td><td>{{ d.speeches }}</td><td>{{ d.words|cz_number if d.words else '–' }}</td><td>{{ d.votes_cast }} z {{ d.votes_total }}</td></tr>
+      <tr data-year="{{ d.date[:4] }}"><td>{% if live %}<a href="{{ link('search', obdobi=term.number, poslanec=mp.id, od=d.date, do=d.date) }}">{{ d.date|cz_date }}</a>{% else %}<button class="table-day" type="button" data-day="{{ d.date }}">{{ d.date|cz_date }}</button>{% endif %}</td><td>{{ d.sittings|join(', ') }}</td><td>{{ {'unknown': 'účast neznámá', 'spoke': 'vystoupil' ~ ('a' if mp.title == 'Poslankyně' else ''), 'present': 'přítom' ~ ('na' if mp.title == 'Poslankyně' else 'en'), 'absent': 'nepřítom' ~ ('na' if mp.title == 'Poslankyně' else 'en')}[d.state] }}{% if live and not d.complete %} · neúplný přepis{% endif %}</td><td>{{ d.speeches }}</td><td>{{ d.words|cz_number if d.words else '–' }}</td><td>{% if d.votes_total %}{{ d.votes_cast }} z {{ d.votes_total }}{% if live and d.votes_unknown %} · {{ d.votes_unknown }} neznámých{% endif %}{% else %}–{% endif %}</td></tr>
       {% endfor %}
     </tbody>
   </table></div>
@@ -94,21 +101,28 @@
   <section class="profile__main" aria-labelledby="speeches-title">
     <div class="section-head">
       <h2 class="h2" id="speeches-title">Projevy</h2>
-      <p class="meta">od nejnovějších · {{ mp.speeches|length }} z&nbsp;{{ s.speeches }}</p>
+      <p class="meta">od nejnovějších · {{ mp.speeches|length }} z&nbsp;{{ mp.speech_total if live else s.speeches }}{% if live %} · včetně řízení schůze{% endif %}</p>
     </div>
-    {{ ui.search_bar(placeholder='Hledat v projevech poslance', id='mp-q', button=False) }}
+    {{ ui.search_bar(placeholder='Hledat v projevech poslance', id='mp-q', button=False, keep={'poslanec': [mp.id|string], 'obdobi': [term.number|string]} if live else {}) }}
     <p class="day-filter" data-day-filter hidden><span class="meta" data-day-filter-label></span> <button class="btn btn--ghost" type="button" data-day-filter-clear>Zrušit filtr</button></p>
     <ol class="results">
-      {% for c in mp.speeches %}<li>{{ ui.result_object(c, show_speaker=False) }}</li>{% endfor %}
+      {% for c in mp.speeches %}<li>{{ ui.result_object(c, show_speaker=False) }}</li>{% else %}<li class="state-empty">Na této straně nejsou žádné projevy.</li>{% endfor %}
     </ol>
-    <p class="meta sample-note">V&nbsp;náhledu jsou čtyři ukázkové projevy. <a href="{{ mp.psp_url }}">Další projevy na psp.cz ↗</a></p>
+    {% if live %}
+    <nav class="pagination" aria-label="Strany projevů">
+      {% if mp.page > 1 %}<a href="{{ link('mp', slug=mp.slug, obdobi=term.number, stranka=mp.page - 1, anchor='speeches-title') }}">← Předchozí</a>{% endif %}
+      <span class="meta">Strana {{ mp.page }} z {{ mp.pages }}</span>
+      {% if mp.page < mp.pages %}<a href="{{ link('mp', slug=mp.slug, obdobi=term.number, stranka=mp.page + 1, anchor='speeches-title') }}">Další →</a>{% endif %}
+      {% if mp.page > mp.pages %}<a href="{{ link('mp', slug=mp.slug, obdobi=term.number, anchor='speeches-title') }}">První strana</a>{% endif %}
+    </nav>
+    {% else %}<p class="meta sample-note">V&nbsp;náhledu jsou čtyři ukázkové projevy. <a href="{{ mp.psp_url }}">Další projevy na psp.cz ↗</a></p>{% endif %}
   </section>
 
   <aside class="profile__aside">
     <h2 class="label">Nejčastější body</h2>
     <ol class="topics">
       {% for topic in mp.topics %}
-      <li><a href="{{ link('search') }}"><span class="meta">tisk&nbsp;{{ topic.tisk }}</span><span class="topics__title">{{ topic.short|nbsp }}</span><span class="meta">{{ topic.speeches|count('projev', 'projevy', 'projevů') }}</span></a></li>
+      <li><a href="{{ link('search', poslanec=mp.id if live else None, obdobi=term.number if live else None, tisk=(topic.term|string ~ '-' ~ topic.tisk) if live and topic.tisk else None) }}">{% if topic.tisk %}<span class="meta">tisk&nbsp;{{ topic.tisk }}</span>{% endif %}<span class="topics__title">{{ topic.short|nbsp }}</span><span class="meta">{{ topic.speeches|count('projev', 'projevy', 'projevů') }}</span></a></li>
       {% endfor %}
     </ol>
   </aside>

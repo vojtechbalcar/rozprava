@@ -117,7 +117,7 @@ def agenda_of(bod_id, reading=None):
     tisk = tisk_ct.get(b[2])
     return {
         "id": bod_id, "number": int(b[4]) if b[4] else None, "title": b[5].strip(),
-        "short": short_title(b[5], tisk, tisk_short.get(b[2])), "tisk": tisk, "reading": reading,
+        "short": short_title(b[5], tisk, tisk_short.get(b[2]), term=10), "tisk": tisk, "reading": reading,
     }
 
 

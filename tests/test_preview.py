@@ -127,10 +127,10 @@ def test_filter_links_preserve_czech_query_and_anchor():
     from urllib.parse import parse_qs, urlparse
 
     url = load_script("render_preview").link(
-        "search", q="lékařská fakulta", strana="STAN", anchor="v1"
+        "search", q="lékařská fakulta", klub="STAN", anchor="v1"
     )
     parts = urlparse(url)
-    assert parse_qs(parts.query) == {"q": ["lékařská fakulta"], "strana": ["STAN"]}
+    assert parse_qs(parts.query) == {"q": ["lékařská fakulta"], "klub": ["STAN"]}
     assert parts.fragment == "v1"
 
 

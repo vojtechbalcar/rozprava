@@ -6,6 +6,7 @@ space), so offsets into the original text stay valid.
 """
 
 import re
+import unicodedata
 from collections.abc import Iterable
 from datetime import date
 
@@ -104,20 +105,28 @@ def clip(text: str, limit: int = 280) -> str:
     return cut.rstrip(",;:–- ")
 
 
+def fold(text: str) -> str:
+    """Lowercase without accents, one character for one character (offsets stay valid)."""
+    return "".join(unicodedata.normalize("NFD", ch)[0] for ch in text.lower())
+
+
 def highlight(text: str, terms: Iterable[str] = ()) -> Markup:
     """Typeset text and wrap each matched search term in <mark class="term">.
 
-    Matching is case-insensitive and prefers the longest term. The text itself
-    is never altered: highlighting only adds markup around existing characters.
+    Matching ignores case and accents, like the search itself, works on whole
+    words and prefers the longest term. The text is escaped first and never
+    altered: highlighting only adds markup around existing characters.
     """
     set_text = nbsp(text)
-    wanted = sorted({t for t in terms if t.strip()}, key=len, reverse=True)
+    wanted = sorted({fold(t) for t in terms if t.strip()}, key=len, reverse=True)
     if not wanted:
         return Markup(escape(set_text))
-    # Match against the original spacing; nbsp() keeps every offset the same.
-    pattern = re.compile("|".join(re.escape(t) for t in wanted), re.IGNORECASE)
+    # Match against the folded original; fold() and nbsp() keep every offset the same.
+    pattern = re.compile(
+        r"(?<!\w)(?:" + "|".join(re.escape(t).replace(r"\ ", r"\s+") for t in wanted) + r")(?!\w)"
+    )
     out, last = [], 0
-    for m in pattern.finditer(text):
+    for m in pattern.finditer(fold(text)):
         out.append(escape(set_text[last : m.start()]))
         out.append(Markup('<mark class="term">%s</mark>') % set_text[m.start() : m.end()])
         last = m.end()

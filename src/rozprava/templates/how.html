@@ -9,7 +9,7 @@
     <ol>
       <li><a href="#zdroje">Zdroje dat</a></li>
       <li><a href="#vyhledavani">Jak funguje vyhledávání</a></li>
-      <li><a href="#shrnuti">Jak vznikají shrnutí</a></li>
+      {% if not live %}<li><a href="#shrnuti">Jak vznikají shrnutí</a></li>{% endif %}
       <li><a href="#neautorizovano">Co znamená „neautorizováno“</a></li>
       <li><a href="#aktivita">Jak počítáme aktivitu a účast</a></li>
       <li><a href="#barvy">Barvy stran</a></li>
@@ -25,21 +25,22 @@
     <section id="zdroje">
       <h2 class="h2">Zdroje dat</h2>
       <p>Všechna data pocházejí od Poslanecké sněmovny z&nbsp;webu psp.cz. Texty projevů bereme ze stenozáznamů, které Sněmovna zveřejňuje obvykle do dvou dnů od jednání. Kdo mluvil, ke kterému bodu a&nbsp;jak hlasoval, bereme z&nbsp;otevřených dat Sněmovny, která se obnovují každou noc.</p>
-      <p>Nové přepisy načítáme jednou denně. Přepisy, které ještě nejsou konečné, stahujeme znovu, dokud je Sněmovna neautorizuje, a&nbsp;každou verzi si ukládáme.</p>
+      <p>{% if live %}Archiv se doplňuje místním importem; automatický denní běh zatím není nastaven. Přepisy se ukládají po verzích. Stav načítání a čas posledního dokončeného importu najdete v přehledu pokrytí archivu.{% else %}Nové přepisy načítáme jednou denně. Přepisy, které ještě nejsou konečné, stahujeme znovu, dokud je Sněmovna neautorizuje, a&nbsp;každou verzi si ukládáme.{% endif %}</p>
     </section>
 
     <section id="vyhledavani">
       <h2 class="h2">Jak funguje vyhledávání</h2>
-      <p>Vyhledávání porovnává význam dotazu s&nbsp;významem projevů, takže najde i&nbsp;projevy, které stejnou věc říkají jinými slovy. Výsledky řadíme podle relevance nebo podle data. Nikdy je neřadíme podle strany ani podle toho, kdo má pravdu.</p>
+      <p>{% if live %}Vyhledávání hledá slova a&nbsp;fráze bez ohledu na diakritiku a&nbsp;velikost písmen. Slovo najde i&nbsp;v&nbsp;jiných tvarech: dotaz <em>důchod</em> najde i&nbsp;<em>důchodu</em> nebo <em>důchody</em>, dotaz <em>Fiala</em> i&nbsp;<em>Fialova vláda</em>. Zápor je jiné slovo, takže <em>státní</em> nenajde <em>nestátní</em>. Uvozovky hledají přesně zadaný tvar nebo frázi, OR spojuje alternativy a&nbsp;minus vylučuje slovo ve všech tvarech. Nevyhledáváme podle významu a&nbsp;negenerujeme shrnutí. Výsledky řadíme podle shody nebo data.</p>
+      <p>Tvary slov určujeme při importu podle kontextu věty nástrojem <a href="https://ufal.mff.cuni.cz/morphodita">MorphoDiTa</a> s&nbsp;modelem <a href="https://hdl.handle.net/11234/1-5985">MorfFlex CZ 2.1 + PDT-C 2.0</a> (Ústav formální a&nbsp;aplikované lingvistiky MFF UK, licence <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.cs">CC BY-NC-SA 4.0</a>). Nástroj se občas splete, hlavně u&nbsp;vzácných jmen. Slovo, které v&nbsp;archivu nikde nezaznělo, hledáme jen v&nbsp;zadaném tvaru.{% else %}Vyhledávání porovnává význam dotazu s&nbsp;významem projevů, takže najde i&nbsp;projevy, které stejnou věc říkají jinými slovy. Výsledky řadíme podle relevance nebo podle data. Nikdy je neřadíme podle strany ani podle toho, kdo má pravdu.{% endif %}</p>
     </section>
 
-    <section id="shrnuti">
+    {% if not live %}<section id="shrnuti">
       <h2 class="h2">Jak vznikají shrnutí</h2>
       <p>Shrnutí nad výsledky píše jazykový model. Dostane jen nalezené projevy a&nbsp;každou větu musí opřít o&nbsp;konkrétní projev, na který odkazuje číslem v&nbsp;hranaté závorce. Větu bez odkazu nezobrazíme. Když se nic relevantního nenajde, shrnutí nevznikne.</p>
       <p>Shrnutí je vždy odlišené od citací: je psané bezpatkovým písmem na šedém podkladu a&nbsp;označené jako text jazykového modelu. Rozhodující je vždy znění přepisu.</p>
     </section>
 
-    <section id="neautorizovano">
+    {% endif %}<section id="neautorizovano">
       <h2 class="h2">Co znamená „neautorizováno“</h2>
       <p>Stenozáznam prochází třemi stupni. Nejdřív vyjde surový přepis, který ještě neprošel jazykovou korekturou. Pak opravená verze, kterou ještě neschválili řečníci. Nakonec konečná, autorizovaná verze, obvykle za dva až tři týdny.</p>
       <p>Sněmovna při úpravách opravuje gramatiku a&nbsp;vypouští zaváhání. Naše citace jsou proto doslovné vůči přepisu, ne vůči zvukovému záznamu. Projevy, které ještě nejsou autorizované, označujeme štítkem <span class="auth" tabindex="0" data-tip="Stenografický záznam zatím neprošel autorizací řečníkem. Znění se může drobně změnit.">Neautorizováno</span>.</p>
@@ -47,10 +48,15 @@
 
     <section id="aktivita">
       <h2 class="h2">Jak počítáme aktivitu a&nbsp;účast</h2>
-      <p><strong>Jednací den</strong> je den, kdy zasedalo plénum. V&nbsp;10. volebním období jich bylo zatím {{ term.sitting_days }}.</p>
+      {% if live %}
+      <p><strong>Projevy a slova</strong> počítáme z aktuálních uložených verzí. Projev pokračující na více stranách počítáme jednou. V aktivitě poslanců vynecháváme známé příspěvky při řízení schůze; v přepisu i hledání zůstávají označené.</p>
+      <p><strong>Účast na hlasování</strong> je podíl přihlášení u platných běžných hlasování během mandátu. Podle <a href="https://public.psp.cz/sqw/hp.sqw?k=1302">popisu otevřených dat Sněmovny</a> se kódy A/B/N/C/F/K počítají jako přihlášení, @/M jako nepřítomnost. Vynecháváme hlasování před složením slibu, zmatečná, ruční a s technickou závadou. Pokud chybí záznam nebo jeho kód neznáme, procento nezobrazíme. Neznámé hodnoty nejsou součástí mediánu.</p>
+      <p><strong>Přítomnost v jednací den</strong> dokládá alespoň jedno přihlášení k hlasování. Nepřítomnost uvádíme jen při úplných záznamech bez jediného přihlášení. Dny bez hlasování nebo s chybějícími údaji mají neznámou účast. Zaznamenaný projev zobrazujeme jako vystoupení. Účast na hlasování neznamená účast na celé schůzi.</p>
+      <p><strong>Úroveň aktivity</strong> vychází z kvartilů kladných denních počtů slov poslanců ve stejném období. Dny bez slov hranice neposouvají; každý poslanec používá stejnou škálu. Neúplné přepisy označujeme a statistiky z nich jsou průběžné. Při méně než čtyřech kladných hodnotách používáme první stupeň.</p>
+      {% else %}<p><strong>Jednací den</strong> je den, kdy zasedalo plénum. V&nbsp;10. volebním období jich bylo zatím {{ term.sitting_days }}.</p>
       <p><strong>Účast na hlasování</strong> je podíl hlasování, při kterých byl poslanec přihlášen, ze všech hlasování během jeho mandátu. Přihlášen znamená, že hlasoval pro, proti, zdržel se nebo nehlasoval, ač byl přihlášen. Omluvená nepřítomnost se počítá jako nepřítomnost; omluvy vedeme zvlášť.</p>
       <p><strong>Přítomen v&nbsp;jednací den</strong> je poslanec, který byl přihlášen alespoň u&nbsp;jednoho hlasování toho dne. <strong>Nepřítomen</strong> je, když nebyl přihlášen u&nbsp;žádného. Dny bez hlasování považujeme za dny s&nbsp;přítomností, protože nepřítomnost z&nbsp;nich nevyčteme.</p>
-      <p><strong>Úroveň aktivity</strong> ve dnech, kdy poslanec mluvil, má čtyři stupně. Hranice jsou kvartily přes všechny poslance a&nbsp;všechny jednací dny období, takže každý profil má stejnou škálu. Cílem je počítat slova; dokud nemáme načtené všechny přepisy, počítáme projevy. Hranice jsou teď {{ term.quartiles[0] }}, {{ term.quartiles[1] }} a&nbsp;{{ term.quartiles[2] }} projevy za den: do {{ term.quartiles[0] }} je první stupeň, do {{ term.quartiles[1] }} druhý, do {{ term.quartiles[2] }} třetí a&nbsp;víc je čtvrtý. Přepočítáváme je každou noc.</p>
+      <p><strong>Úroveň aktivity</strong> ve dnech, kdy poslanec mluvil, má čtyři stupně. Hranice jsou kvartily přes všechny poslance a&nbsp;všechny jednací dny období, takže každý profil má stejnou škálu. Cílem je počítat slova; dokud nemáme načtené všechny přepisy, počítáme projevy. Hranice jsou teď {{ term.quartiles[0] }}, {{ term.quartiles[1] }} a&nbsp;{{ term.quartiles[2] }} projevy za den: do {{ term.quartiles[0] }} je první stupeň, do {{ term.quartiles[1] }} druhý, do {{ term.quartiles[2] }} třetí a&nbsp;víc je čtvrtý. Přepočítáváme je každou noc.</p>{% endif %}
     </section>
 
     <section id="barvy">

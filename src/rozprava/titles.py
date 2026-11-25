@@ -1,7 +1,8 @@
 """Short titles for bills and agenda items (DESIGN.md §10.3).
 
 psp.cz titles run to 200 characters. A short title (max 60 characters) comes from,
-in order: a manual override keyed by tisk number; psp.cz's own short title of the
+in order: a manual override keyed by term and tisk number (tisk numbers restart
+every term); psp.cz's own short title of the
 tisk (tisky.nazev_tisku) with its abbreviations written out; or the full title
 with the standard legal boilerplate stripped. The reading stage is returned
 separately, for its own label.
@@ -11,9 +12,9 @@ import re
 
 MAX_LENGTH = 60
 
-# Manual overrides keyed by tisk number win over the rules (DESIGN.md §10.3, step 1).
-OVERRIDES: dict[int, str] = {
-    90: "Změny zákonů v oblasti veřejných rozpočtů",
+# Manual overrides keyed by (term, tisk) win over the rules (DESIGN.md §10.3, step 1).
+OVERRIDES: dict[tuple[int, int], str] = {
+    (10, 90): "Změny zákonů v oblasti veřejných rozpočtů",
 }
 
 # psp.cz's short titles abbreviate heavily ("Novela z. o …", "Vl.n.z.").
@@ -63,9 +64,11 @@ def expand_psp_title(text: str) -> str:
     return text
 
 
-def short_title(title: str, tisk: int | None = None, psp_short: str | None = None) -> str:
-    if tisk is not None and tisk in OVERRIDES:
-        return OVERRIDES[tisk]
+def short_title(
+    title: str, tisk: int | None = None, psp_short: str | None = None, term: int | None = None
+) -> str:
+    if term is not None and tisk is not None and (term, tisk) in OVERRIDES:
+        return OVERRIDES[(term, tisk)]
     if psp_short and psp_short.strip():
         text = expand_psp_title(psp_short)
     else:

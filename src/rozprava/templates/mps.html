@@ -5,10 +5,14 @@
 {% block content %}
 <header class="wrap page-head">
   <h1 class="h1">Poslanci</h1>
-  <p class="page-head__lede">{{ mps|length|count('poslanec', 'poslanci', 'poslanců') }} 10.&nbsp;volebního období. Řazeno podle příjmení; sloupce lze přeřadit.</p>
+  <p class="page-head__lede">{{ mps|length|count('poslanec', 'poslanci', 'poslanců') }} {{ term.number if live and term else 10 }}.&nbsp;volebního období. Řazeno podle příjmení; sloupce lze přeřadit.</p>
+{% if live %}{{ ui.term_selector(terms, term, link('mps')) }}
+  <p class="meta">Klub uvádíme k poslednímu jednacímu dni, u dříve skončeného mandátu k jeho konci.</p>
+  {% if provisional %}<p class="meta">Průběžné počty: část přepisů ještě chybí. Neznámou účast označujeme pomlčkou.</p>{% endif %}{% endif %}
 </header>
 
-<div class="wrap directory" data-directory>
+<div class="wrap directory" {% if not live %}data-directory{% endif %}>
+  {% if live %}{% include '_directory_filters.html' %}{% else %}
   <div class="directory__filters">
     <div class="chips" role="group" aria-label="Poslanecký klub (lze vybrat více)">
       {% for party, n in parties %}
@@ -27,24 +31,26 @@
     </div>
   </div>
 
+  {% endif %}
+  {% if live and not mps %}<p class="state-empty">Žádný poslanec neodpovídá vybraným filtrům.</p>{% endif %}
   <p class="state-empty search-empty" data-directory-empty hidden>Žádný poslanec neodpovídá vybraným filtrům.</p>
   <div class="table-scroll" role="region" aria-label="Seznam poslanců" tabindex="0"><table class="mp-table">
-    <caption class="visually-hidden">Poslanci 10. volebního období</caption>
+    <caption class="visually-hidden">Poslanci {{ term.number if live and term else 10 }}. volebního období</caption>
     <thead>
       <tr>
-        <th scope="col" aria-sort="ascending"><button type="button" data-sort="name">Jméno</button></th>
-        <th scope="col"><button type="button" data-sort="party">Strana</button></th>
-        <th scope="col"><button type="button" data-sort="region">Kraj</button></th>
+        <th scope="col" {% if not live or directory.sort == 'name' %}aria-sort="ascending"{% endif %}>{% if live %}<a href="{{ link('mps', **dict(directory.params, razeni='name')) }}">Jméno</a>{% else %}<button type="button" data-sort="name">Jméno</button>{% endif %}</th>
+        <th scope="col">{% if live %}<a href="{{ link('mps', **dict(directory.params, razeni='party')) }}">Strana</a>{% else %}<button type="button" data-sort="party">Strana</button>{% endif %}</th>
+        <th scope="col">{% if live %}<a href="{{ link('mps', **dict(directory.params, razeni='region')) }}">Kraj</a>{% else %}<button type="button" data-sort="region">Kraj</button>{% endif %}</th>
         <th scope="col" class="mp-table__strip">Posledních 20 jednacích dnů</th>
-        <th scope="col" class="num"><button type="button" data-sort="speeches">Projevy</button></th>
-        <th scope="col" class="num"><button type="button" data-sort="attendance">Účast</button></th>
+        <th scope="col" class="num">{% if live %}<a href="{{ link('mps', **dict(directory.params, razeni='speeches')) }}">Projevy</a>{% else %}<button type="button" data-sort="speeches">Projevy</button>{% endif %}</th>
+        <th scope="col" class="num">{% if live %}<a href="{{ link('mps', **dict(directory.params, razeni='attendance')) }}">Účast</a>{% else %}<button type="button" data-sort="attendance">Účast</button>{% endif %}</th>
       </tr>
     </thead>
     <tbody>
       {% for m in mps %}
       <tr data-name="{{ m.sort_key }}" data-search="{{ m.name }}" data-party="{{ m.party }}" data-region="{{ m.region }}" data-speeches="{{ m.speeches }}" data-attendance="{{ m.attendance or 0 }}">
-        <th scope="row"><a href="{{ link('mp', slug=m.slug) }}">{{ ui.monogram(m.initials, 32) }}<span><span class="mp-table__surname">{{ m.surname }}</span> {{ m.forename }}</span></a></th>
-        <td>{{ ui.party_pill(m.party) }}</td>
+        <th scope="row"><a href="{{ link('mp', slug=m.slug, obdobi=term.number if live and term else None) }}">{{ ui.monogram(m.initials, 32) }}<span><span class="mp-table__surname">{{ m.surname }}</span> {{ m.forename }}</span></a></th>
+        <td>{{ ui.party_pill(m.party) }}{% if live and not m.party %}<span class="meta">Klub neznámý</span>{% endif %}</td>
         <td>{{ m.region }}</td>
         <td class="mp-table__strip">{{ ui.dot_strip(m.strip, small=True, label='Aktivita v posledních 20 jednacích dnech') }}</td>
         <td class="num meta">{{ m.speeches }}</td>
