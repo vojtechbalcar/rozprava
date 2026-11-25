@@ -11,6 +11,7 @@
 - [[archive-views]] — database-backed home, directory/profiles and sittings; voting/activity rules, validation and remaining work.
 - [[functional-app-plan]] — implementation tasks, source-accuracy checks and local delivery workflow.
 - [[local-app-verification]] — completed local database phase, final browser/check results, corpus timings and operating limits.
+- [[czech-word-forms]] — search finds every form of a word via the MorphoDiTa tagger (MorfFlex 2.1, CC BY-NC-SA); stemmer, simplemma and hunspell rejected; next phases and work split.
 
 ## Research
 
@@ -18,6 +19,6 @@
 
 ## Problems solved
 
-- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink. Also the local PostgreSQL 18 cluster.
+- [[dev-environment]] — iCloud hides `.venv`, Python 3.14 skips hidden `.pth` files; the venv now lives outside iCloud behind a symlink. Also the local PostgreSQL 18 cluster, the MorphoDiTa C++ build fix and the locale needed to start PostgreSQL.
 - [[transcript-import]] — source-page structure and attribution rules, completed backfill coverage and retry recovery.
 - [[parallel-worktree-divergence]] — a stale worktree rebuilt finished work in parallel; how it was parked, the database set aside and the archive rebuilt; fetch before resuming.

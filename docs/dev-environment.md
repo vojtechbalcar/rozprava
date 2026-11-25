@@ -82,3 +82,33 @@ cluster, `cache/http/` holds downloaded response bodies and metadata, `log/`
 holds ingestion logs, and `backups/` holds private PostgreSQL custom-format
 dumps. The download cache is not a database backup. Keep the ignored `.env` and
 local credentials private; neither is needed in Git.
+
+## Czech morphology build and locale (19 Nov 2026)
+
+See [[czech-word-forms]].
+
+**`ufal.morphodita` does not build.** Symptom: `uv add ufal.morphodita` fails with
+`fatal error: 'algorithm' file not found`. Cause: the package has wheels only up to
+CPython 3.14 and the venv runs 3.15.2, so it compiles from source. This Mac's Command
+Line Tools 26.0 have no `usr/include/c++/v1`, and clang does not search the SDK's
+copy. Even `#include <algorithm>` fails. Tried first: `SDKROOT=$(xcrun --show-sdk-path)`
+and `CXXFLAGS=-isysroot …`; neither helped. Fix: `pyproject.toml` sets
+`[tool.uv.extra-build-variables]` so `ufal-morphodita` builds with
+`CPLUS_INCLUDE_PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1`.
+`uv sync --no-cache` then builds it cleanly. Reinstalling the Command Line Tools
+would fix the toolchain itself (needs sudo; not done).
+
+**PostgreSQL will not start without a locale.** Symptom: `pg_ctl` fails, and the
+server log says `postmaster became multithreaded during startup` and suggests
+setting `LC_ALL`. Seen when a shell had `LANG` empty (C locale); the running
+cluster was unaffected because it was started from a normal terminal. Run local
+database commands and tests with `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`. Launch
+agents need the same in their environment.
+
+The tagger model lives in `~/.local/share/rozprava/models/` (26 MB), installed by
+`uv run python scripts/fetch_morphology.py`.
+
+**Long jobs and sleep.** On battery the Mac goes into idle sleep while a
+terminal job runs, and the job stalls (seen 19 Nov from 13:03 to 14:02 during
+word-form tagging). Run long imports as `caffeinate -i uv run python -m
+rozprava.ingest …`; that prevents idle sleep only for the command's duration.

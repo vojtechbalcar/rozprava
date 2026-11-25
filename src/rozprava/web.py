@@ -113,6 +113,7 @@ def shared_context(session: Session) -> dict:
     return {
         "updated": common.last_import(session),
         "coverage": archive.coverage(session),
+        "forms_waiting": archive.forms_waiting(session),
         "terms": [{"value": str(t.number), "label": t.label} for t in terms.values()],
         "current_term": current_term,
         "palette": {
