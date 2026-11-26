@@ -490,7 +490,12 @@ def conditions(
 # embedding, under the same filters, add speeches that lack the query's words.
 MEANING_PASSAGES = 400  # nearest passages read, then grouped by speech
 MEANING_SPEECHES = 100  # at most this many speeches per query
-MAX_DISTANCE = 0.6  # cosine distance beyond which a passage is not related
+# Distances depend on the query: the nearest passage to "jak se změnily důchody" is at
+# 0.59, to "zvyšování věku odchodu do penze" at 0.39. So a passage counts as related
+# within MEANING_MARGIN of the query's nearest one (read on 26 Nov: on topic up to
+# about +0.10, tangents from +0.13), and never beyond MAX_DISTANCE.
+MEANING_MARGIN = 0.1
+MAX_DISTANCE = 0.75
 FUSION_DEPTH = 200  # keyword results merged with meaning results for relevance
 RRF_K = 60  # reciprocal rank fusion constant
 
@@ -530,9 +535,13 @@ def related(
     ).all()
     best: dict[int, Related] = {}
     for revision, paragraph, d in sorted(rows, key=lambda row: row.distance):
-        if d <= MAX_DISTANCE and revision not in best:
+        if revision not in best:
             best[revision] = Related(revision, d, paragraph)
-    return list(best.values())[:MEANING_SPEECHES]
+    if not best:
+        return []
+    nearest = min(r.distance for r in best.values())
+    cutoff = min(MAX_DISTANCE, nearest + MEANING_MARGIN)
+    return [r for r in best.values() if r.distance <= cutoff][:MEANING_SPEECHES]
 
 
 def fuse(*rankings: Sequence[int]) -> list[int]:

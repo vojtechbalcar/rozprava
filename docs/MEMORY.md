@@ -12,7 +12,7 @@
 - [[functional-app-plan]] — implementation tasks, source-accuracy checks and local delivery workflow.
 - [[local-app-verification]] — completed local database phase, final browser/check results, corpus timings and operating limits.
 - [[czech-word-forms]] — search finds every form of a word via the MorphoDiTa tagger (MorfFlex 2.1, CC BY-NC-SA); stemmer, simplemma and hunspell rejected; next phases and work split.
-- [[related-search]] — filler words and partial matches for longer queries; Voyage meaning search and cited Claude Haiku 5.5 summaries capped at $5/month (OpenAI, local bge-m3, keyword-only rejected); what is built and what waits for API keys.
+- [[related-search]] — filler words and partial matches for longer queries; Voyage meaning search and cited Claude Haiku 5.5 summaries capped at $5/month (OpenAI, local bge-m3, keyword-only rejected); live since 26 Nov; per-query distance cutoff; adding API keys safely.
 
 ## Research
 

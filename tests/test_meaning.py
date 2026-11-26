@@ -289,3 +289,20 @@ def test_voyage_errors_explain_without_the_key(monkeypatch):
     down = voyage(lambda request: httpx.Response(503))
     with pytest.raises(ai.AIUnavailable, match="did not answer"):
         down.embed(["a"], "query")
+
+
+def test_related_speeches_stay_near_the_query_s_closest_passage(db, embedded, monkeypatch):
+    from rozprava.queries import common
+
+    filters, _ = SearchFilters.parse({"q": ["starobní renta"]})
+    vector = embedded.vector("starobní renta")
+    terms, clubs = common.terms(db), common.Clubs(db)
+    wide = search.related(db, vector, filters, terms, clubs)
+    nearest = min(r.distance for r in wide)
+    assert all(r.distance <= nearest + search.MEANING_MARGIN for r in wide)
+    monkeypatch.setattr(search, "MEANING_MARGIN", 0.0)
+    tight = search.related(db, vector, filters, terms, clubs)
+    assert tight and {r.revision for r in tight} <= {r.revision for r in wide}
+    assert all(r.distance == pytest.approx(nearest) for r in tight)
+    monkeypatch.setattr(search, "MAX_DISTANCE", -1.0)  # nothing is close enough
+    assert search.related(db, vector, filters, terms, clubs) == []

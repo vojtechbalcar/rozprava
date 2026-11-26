@@ -1,7 +1,7 @@
 ---
 type: decision
 updated: 2026-11-26
-status: built, awaiting API keys
+status: live; calibration and model comparison pending
 ---
 
 # Related search and cited summaries
@@ -85,7 +85,7 @@ Live archive, warm, over HTTP:
 | kdo kritizoval zdanění výsluh vojáků | — | 15 (2 complete) | 90 |
 | pan předseda vláda | 3,994 | 3,994 | 184 |
 
-## Step 2: meaning search (built 26 Nov, waiting for the Voyage key)
+## Step 2: meaning search (live 26 Nov)
 
 - **Setup.** pgvector 0.8.7 in the `extensions` schema; see [[dev-environment]].
   Migration 0005: `speech_chunk` (halfvec(1024), HNSW cosine index),
@@ -113,10 +113,24 @@ Live archive, warm, over HTTP:
   Relevance order: reciprocal rank fusion (k = 60) of the top 200 keyword results
   and the meaning results, then the keyword ranking. If Voyage fails, the page
   says so and shows keyword results.
-- **Not yet calibrated.** `MAX_DISTANCE` and the fusion weights are guesses until
-  real vectors exist; check them with the evaluation set.
+- **Archive embedded** (26 Nov, runs 16–17): 38,021 speeches, 76,965 passages,
+  52,983,061 tokens (the estimate said at most 59 M) in about 27 minutes, all
+  inside Voyage's free allowance.
+- **Cutoff calibrated on real vectors.** A fixed cosine distance of 0.6 (the
+  first guess) added 1 speech to "jak se změnily důchody", because distances
+  depend on the query: its nearest passage was at 0.593, while for "zvyšování
+  věku odchodu do penze" all 400 nearest were under 0.5. Reading meaning-only
+  speeches at rising distance showed them on topic up to about +0.10 over the
+  query's nearest passage and drifting into tangents from +0.13 (Ukraine aid →
+  air-defence procurement). Now a speech is related within `MEANING_MARGIN` = 0.10
+  of the nearest passage, never beyond `MAX_DISTANCE` = 0.75. Related speeches
+  added: 46 (jak se změnily důchody), 40 (věk odchodu do penze), 65 (podpora
+  Ukrajiny zbraněmi), 22 (drahé energie pro domácnosti), 6 (důchod); 96–218 ms
+  per warm search. The first search of a new query waits about 1.5 s for Voyage.
+- **Still to check on the evaluation set:** the margin and the equal weighting of
+  keyword and meaning rankings in the fusion.
 
-To run, once the key is in `.env`:
+To run (keys in `.env`, see below):
 
 ```sh
 caffeinate -i uv run python -m rozprava.ingest embed --limit 200   # first, check
@@ -124,7 +138,7 @@ caffeinate -i uv run python -m rozprava.ingest embed               # the rest
 uv run python -m rozprava.ingest status    # speeches embedded, tokens used
 ```
 
-## Step 3: cited summaries (built 26 Nov, waiting for the Anthropic key)
+## Step 3: cited summaries (live 26 Nov)
 
 - **Model and price.** `claude-haiku-5-5` ($0.10 / $0.50 per million input /
   output tokens up to 100K-token prompts; Sonnet 5.5 is $2 / $10), adaptive
@@ -157,13 +171,33 @@ uv run python -m rozprava.ingest status    # speeches embedded, tokens used
   DESIGN.md §7.8) fetches `/api/shrnuti` with the same parameters and is
   replaced by the summary, a note (nothing relevant, limit reached, Claude
   unavailable) or nothing. Citation chips reuse the §7.7 popovers.
-- **Not yet measured.** Quality on real searches, Haiku 5.5 against Sonnet 5.5
-  on the evaluation set, and the actual cost per summary.
+- **First live summary** ("jak se změnily důchody", 26 Nov): 8 s, five sentences
+  citing four results, each attributed to a named speaker with party. Some
+  paraphrases stay close to clumsy transcript wording.
+- **Not yet measured.** Quality across many searches, Haiku 5.5 against Sonnet 5.5
+  on the evaluation set, and the actual cost per summary (`ai_usage`).
+
+## API keys
+
+Keys live only in the private, git-ignored `.env` as `VOYAGE_API_KEY` and
+`ANTHROPIC_API_KEY`; Anthropic's Console asks where a key is used: "On your own
+machine". Restart the server after adding them (settings and clients are cached).
+Tests blank both keys (`tests/conftest.py`), so no test can reach a paid service.
+
+**Problem (26 Nov): Voyage answered 401 "Provided API key is invalid".** The
+suggested `printf 'VOYAGE_API_KEY=%s\n' "$(pbpaste)" >> .env` was copied from the
+chat, which replaced the key on the clipboard, so `.env` held the command itself
+(49 characters starting "pri", where Voyage keys start "pa-"). Found by printing
+only each value's length and prefix. Fixed by deleting the lines and adding keys
+with a hidden prompt, which does not depend on the clipboard:
+
+```sh
+read -rs "key?Paste the Voyage key: " && printf 'VOYAGE_API_KEY=%s\n' "$key" >> .env; unset key; echo
+```
 
 ## Next
 
-1. Add `VOYAGE_API_KEY` and `ANTHROPIC_API_KEY` to `.env`, then run `ingest embed`
-   and restart the server.
-2. Calibrate `MAX_DISTANCE`, fusion and the summary prompt on the evaluation set
+1. Check `MEANING_MARGIN`, fusion and the summary prompt on the evaluation set
    (branch `feature/ai-evaluation-set`), and compare Haiku 5.5 with Sonnet 5.5.
-3. Automatic daily updates (owned by the other session, see [[czech-word-forms]]).
+2. Automatic daily updates (owned by the other session, see [[czech-word-forms]]);
+   imports already embed new speeches when the Voyage key is set.

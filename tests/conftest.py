@@ -20,6 +20,23 @@ from rozprava.settings import Settings
 ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.fixture(autouse=True)
+def no_paid_services(monkeypatch):
+    """Tests never see the developer's API keys, so nothing can reach Voyage or Claude;
+    tests that need AI install fakes themselves."""
+    from rozprava import main
+    from rozprava.settings import get_settings
+
+    monkeypatch.setattr(get_settings(), "voyage_api_key", None)
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", None)
+    cached = (main.query_embedder, main.summary_writer)  # tests may swap these for fakes
+    for function in cached:
+        function.cache_clear()
+    yield
+    for function in cached:
+        function.cache_clear()
+
+
 def configured_test_database_url() -> str:
     url = Settings().test_database_url
     if not url:
