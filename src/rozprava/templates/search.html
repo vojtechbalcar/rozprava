@@ -26,6 +26,8 @@
     {% if search.expansions %}<p class="meta" data-word-forms>Hledáme i&nbsp;další tvary: {% for e in search.expansions %}{{ e.word }} ({{ e.forms|join(', ') }}{% if e.more %} a&nbsp;další{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}. Přesný tvar zadejte v&nbsp;uvozovkách.</p>{% endif %}
     {% if search.dropped %}<p class="meta" data-filler>Běžná slova jsme vynechali: {{ search.dropped|join(', ') }}.</p>{% endif %}
     {% if search.partial %}<p class="meta" data-partial>{{ search.partial|nbsp }}</p>{% endif %}
+    {% if search.related %}<p class="meta" data-related>{{ search.related|nbsp }}</p>{% endif %}
+    {% if search.meaning_unavailable %}<p class="meta" data-meaning-unavailable>Hledání podle významu teď nefunguje; ukazujeme jen projevy s&nbsp;hledanými slovy.</p>{% endif %}
     {% if search.coverage_note %}<p class="meta">{{ search.coverage_note|nbsp }}</p>{% endif %}
     {% if not live %}<p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>{% endif %}
 
@@ -64,7 +66,7 @@
     <h2 class="visually-hidden">Projevy</h2>
     <ol class="results" start="{{ search.results[0].n if search.results else 1 }}">
       {% for c in search.results %}
-      <li>{{ ui.result_object(c, terms=search.highlights, number=c.n) }}</li>
+      <li>{{ ui.result_object(c, terms=search.highlights, number=c.n, eyebrow='Podobný význam' if c.related is defined and c.related else None) }}</li>
       {% endfor %}
     </ol>
     {% if live and search.pages > 1 and not search.out_of_range %}

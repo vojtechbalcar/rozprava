@@ -279,6 +279,8 @@ def render(out: Path = OUT, data_path: Path = DATA) -> dict[str, Path]:
                 "expansions": [],
                 "dropped": [],
                 "partial": None,
+                "related": None,
+                "meaning_unavailable": False,
                 "coverage_note": None,
                 "out_of_range": False,
                 "page": 1,

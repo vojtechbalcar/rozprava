@@ -8,6 +8,7 @@
     uv run python -m rozprava.ingest assemble            # re-assemble changed sittings
     uv run python -m rozprava.ingest retry [--unavailable]
     uv run python -m rozprava.ingest forms [--rebuild] [--limit N]  # Czech word forms
+    uv run python -m rozprava.ingest embed [--limit N]  # meaning search (Voyage, paid)
     uv run python -m rozprava.ingest status
 
 Downloads are polite (one request per second) and cached outside the repository.
@@ -17,7 +18,8 @@ A log is appended to <data dir>/log/ingest.log.
 Commands that can add speech revisions (backfill, update, refresh, assemble) tag
 them with the Czech morphology model afterwards, if it is installed
 (scripts/fetch_morphology.py). Without it, new speeches match only exact words
-until `forms` runs.
+until `forms` runs. With a VOYAGE_API_KEY in .env they also embed new speeches for
+meaning search; `embed` covers the rest, within ROZPRAVA_EMBEDDING_TOKEN_LIMIT.
 """
 
 import argparse
@@ -26,9 +28,9 @@ import sys
 
 from sqlalchemy import func, select
 
-from rozprava import models
+from rozprava import ai, models
 from rozprava.db import get_engine, get_session_factory
-from rozprava.ingest import forms, metadata
+from rozprava.ingest import embed, forms, metadata
 from rozprava.ingest.fetch import Cache, Fetcher, FetchError
 from rozprava.ingest.runner import (
     LOCK_KEY,
@@ -71,6 +73,17 @@ def print_status() -> None:
         print(f"speeches: {speeches}")
         untagged = forms.pending(session, MODEL)
         print(f"word forms: {(speeches or 0) - untagged} tagged, {untagged} waiting ({MODEL})")
+        model = get_settings().embedding_model
+        chunks = session.scalar(
+            select(func.count(func.distinct(models.SpeechChunk.revision_id))).where(
+                models.SpeechChunk.model == model
+            )
+        )
+        used = ai.tokens_used(session, model)
+        print(
+            f"meaning search: {chunks} speeches embedded, {embed.pending(session, model)} "
+            f"waiting ({model}, {used:,} of {get_settings().embedding_token_limit:,} tokens)"
+        )
         for run in session.scalars(
             select(models.ImportRun).order_by(models.ImportRun.id.desc()).limit(5)
         ):
@@ -97,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
     tag = commands.add_parser("forms", help="tag speeches with Czech lemmas for search")
     tag.add_argument("--rebuild", action="store_true", help="tag every current speech again")
     tag.add_argument("--limit", type=int, help="at most this many speeches")
+    vectors = commands.add_parser("embed", help="embed speeches for meaning search (Voyage)")
+    vectors.add_argument("--limit", type=int, help="at most this many speeches")
     commands.add_parser("status", help="coverage per term and recent runs")
     args = parser.parse_args(argv)
 
@@ -134,6 +149,10 @@ def main(argv: list[str] | None = None) -> int:
                 result = runner.assemble_pending(terms)
             elif args.command == "forms":
                 result = runner.forms(Lemmatizer(model), args.rebuild, args.limit)
+            elif args.command == "embed":
+                if (embedder := ai.embedder(settings)) is None:
+                    raise ai.AIUnavailable("Add VOYAGE_API_KEY to .env to embed speeches.")
+                result = runner.embed(embedder, settings.embedding_token_limit, args.limit)
             else:
                 result = {"queued again": runner.retry(terms, args.unavailable)}
             if args.command in ("backfill", "update", "refresh", "assemble"):
@@ -141,8 +160,14 @@ def main(argv: list[str] | None = None) -> int:
                     result = {**result, "forms": runner.forms(Lemmatizer(model))}
                 except MorphologyUnavailable as error:  # the import itself succeeded
                     log.warning("word forms not tagged: %s", error)
+                if (embedder := ai.embedder(settings)) is not None:
+                    try:
+                        limit = settings.embedding_token_limit
+                        result = {**result, "embedded": runner.embed(embedder, limit)}
+                    except ai.AIUnavailable as error:
+                        log.warning("new speeches not embedded for meaning search: %s", error)
             print(result)
-    except MorphologyUnavailable as error:
+    except (MorphologyUnavailable, ai.AIUnavailable) as error:
         print(error, file=sys.stderr)
         return 1
     except ImportLocked as error:

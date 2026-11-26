@@ -33,9 +33,10 @@ from sqlalchemy import (
     literal_column,
     or_,
     select,
+    text,
     true,
 )
-from sqlalchemy.dialects.postgresql import TSQUERY
+from sqlalchemy.dialects.postgresql import ARRAY, TSQUERY
 from sqlalchemy.orm import Session
 
 from rozprava import models
@@ -438,12 +439,15 @@ def conditions(
     terms: Mapping[int, common.TermInfo],
     clubs: common.Clubs,
     query: Query | None = None,
+    also: Sequence[int] = (),
 ):
+    """WHERE clauses for the filters and query; `also` adds speeches found by meaning."""
     where: list[ColumnElement[bool]] = [SR.retired_at.is_(None)]
     if filters.q:
         # A query with nothing searchable in it (only operators) matches nothing.
         tsquery = query.tsquery if query else None
-        where.append(SR.search.op("@@")(tsquery) if tsquery is not None else false())
+        match = SR.search.op("@@")(tsquery) if tsquery is not None else false()
+        where.append(or_(match, SR.id.in_(also)) if also else match)
     if filters.terms:
         where.append(SR.term_id.in_([terms[t].id for t in filters.terms if t in terms]))
     if filters.people:
@@ -482,6 +486,64 @@ def conditions(
     return where
 
 
+# Meaning search (docs/related-search.md): the passages nearest to the query's
+# embedding, under the same filters, add speeches that lack the query's words.
+MEANING_PASSAGES = 400  # nearest passages read, then grouped by speech
+MEANING_SPEECHES = 100  # at most this many speeches per query
+MAX_DISTANCE = 0.6  # cosine distance beyond which a passage is not related
+FUSION_DEPTH = 200  # keyword results merged with meaning results for relevance
+RRF_K = 60  # reciprocal rank fusion constant
+
+
+@dataclass(frozen=True)
+class Related:
+    revision: int
+    distance: float
+    paragraph: int  # where the nearest passage starts
+
+
+def meaning_query(q: str) -> bool:
+    """Meaning search answers plain questions; quotes, OR and minus ask for exact words."""
+    groups = parse_query(q)
+    return len(groups) == 1 and not any(t.phrase or t.negated for t in groups[0])
+
+
+def related(
+    session: Session,
+    vector: Sequence[float],
+    filters: SearchFilters,
+    terms: Mapping[int, common.TermInfo],
+    clubs: common.Clubs,
+) -> list[Related]:
+    """Speeches whose passages are nearest to the query vector, nearest first."""
+    # pgvector 0.8: keep scanning the HNSW index until enough rows pass the filters.
+    session.execute(text("SET LOCAL hnsw.ef_search = 200"))
+    session.execute(text("SET LOCAL hnsw.iterative_scan = relaxed_order"))
+    chunk = models.SpeechChunk
+    distance = chunk.embedding.cosine_distance(list(vector))
+    rows = session.execute(
+        select(chunk.revision_id, chunk.first_paragraph, distance.label("distance"))
+        .join(SR, SR.id == chunk.revision_id)
+        .where(*conditions(replace(filters, q=""), terms, clubs))
+        .order_by(distance)
+        .limit(MEANING_PASSAGES)
+    ).all()
+    best: dict[int, Related] = {}
+    for revision, paragraph, d in sorted(rows, key=lambda row: row.distance):
+        if d <= MAX_DISTANCE and revision not in best:
+            best[revision] = Related(revision, d, paragraph)
+    return list(best.values())[:MEANING_SPEECHES]
+
+
+def fuse(*rankings: Sequence[int]) -> list[int]:
+    """Reciprocal rank fusion: ids ordered by the sum of 1 / (RRF_K + rank) over rankings."""
+    score: dict[int, float] = {}
+    for ranking in rankings:
+        for rank, item in enumerate(ranking, start=1):
+            score[item] = score.get(item, 0.0) + 1 / (RRF_K + rank)
+    return sorted(score, key=lambda item: (-score[item], item))
+
+
 @dataclass
 class SearchPage:
     filters: SearchFilters
@@ -494,6 +556,8 @@ class SearchPage:
     dropped: list[str] = field(default_factory=list)
     partial: tuple[int, int] | None = None  # relaxed: (needed, of) words
     strict_total: int = 0  # speeches with every word, when relaxed
+    related: int = 0  # speeches found only by meaning
+    meaning: str = "off"  # "off", "used", or "unavailable" when the query could not be embedded
 
     @property
     def pages(self) -> int:
@@ -504,7 +568,14 @@ class SearchPage:
         return self.total > 0 and self.filters.page > self.pages
 
 
-def search(session: Session, filters: SearchFilters, errors: list[str]) -> SearchPage:
+def search(
+    session: Session,
+    filters: SearchFilters,
+    errors: list[str],
+    vector: Sequence[float] | None = None,
+) -> SearchPage:
+    """One page of results. With the query's embedding (`vector`), speeches close in
+    meaning join the keyword matches and both rankings are fused."""
     terms = common.terms(session)
     clubs = common.Clubs(session)
     query = Query.build(session, filters.q) if filters.q else Query()
@@ -524,12 +595,40 @@ def search(session: Session, filters: SearchFilters, errors: list[str]) -> Searc
         if total > page.total:
             page.strict_total, page.total, page.partial = page.total, total, query.relaxed.partial
             query, where = query.relaxed, relaxed
+
+    near: list[Related] = []
+    if vector is not None and filters.q and query.tsquery is not None:
+        page.meaning = "used"
+        near = related(session, vector, filters, terms, clubs)
+    found = {r.revision for r in near}
+    matched: set[int] = set()
+    if found:
+        matched = set(
+            session.scalars(
+                select(SR.id).where(SR.id.in_(found), SR.search.op("@@")(query.tsquery))
+            )
+        )
+        only = [r.revision for r in near if r.revision not in matched]
+        if only:
+            page.related = len(only)
+            page.total += len(only)
+            where = conditions(filters, terms, clubs, query, also=only)
     page.facets = _facets(session, where, clubs, filters, terms)
     if page.total == 0 or page.out_of_range:
         return page
 
-    rank = query.rank() if filters.sort == "relevance" else []
-    order = [*rank, SR.date.desc(), SR.id.desc()]
+    order = [*query.rank(), SR.date.desc(), SR.id.desc()]
+    if filters.sort != "relevance":
+        order = [SR.date.desc(), SR.id.desc()]
+    elif near:
+        keyword = session.scalars(
+            select(SR.id)
+            .where(*conditions(filters, terms, clubs, query))
+            .order_by(*order)
+            .limit(FUSION_DEPTH)
+        ).all()
+        fused = fuse(keyword, [r.revision for r in near])
+        order = [func.array_position(literal(fused, ARRAY(Integer)), SR.id), *order]
     rows = session.execute(
         select(SR, models.Speech)
         .join(models.Speech, models.Speech.id == SR.speech_id)
@@ -538,14 +637,23 @@ def search(session: Session, filters: SearchFilters, errors: list[str]) -> Searc
         .limit(PER_PAGE)
         .offset((filters.page - 1) * PER_PAGE)
     ).all()
+    by_meaning = {r.revision: r.paragraph for r in near if r.revision not in matched}
     page.results = results_view(
-        session, rows, page.highlights, offset=(filters.page - 1) * PER_PAGE
+        session, rows, page.highlights, offset=(filters.page - 1) * PER_PAGE, related=by_meaning
     )
     return page
 
 
-def results_view(session: Session, rows, highlights: Sequence[str], offset: int = 0) -> list[dict]:
-    """Result objects (DESIGN.md §7.6) for (SpeechRevision, Speech) rows."""
+def results_view(
+    session: Session,
+    rows,
+    highlights: Sequence[str],
+    offset: int = 0,
+    related: Mapping[int, int] | None = None,
+) -> list[dict]:
+    """Result objects (DESIGN.md §7.6) for (SpeechRevision, Speech) rows. Speeches in
+    `related` were found by meaning; their excerpt starts at the given paragraph."""
+    related = related or {}
     by_id = common.term_by_id(session)
     person_ids = {r.person_id for r, _ in rows if r.person_id}
     people = {
@@ -580,7 +688,9 @@ def results_view(session: Session, rows, highlights: Sequence[str], offset: int 
         term = by_id[revision.term_id]
         person = people.get(revision.person_id) if revision.person_id else None
         item = items.get(revision.agenda_item_id) if revision.agenda_item_id else None
-        paragraph, excerpt, lead, trail = _excerpt(paragraphs.get(revision.id, []), highlights)
+        paragraph, excerpt, lead, trail = _excerpt(
+            paragraphs.get(revision.id, []), highlights, related.get(revision.id)
+        )
         slug = common.catalog_slug(term.number, speech.sitting_number, speech.page, speech.anchor)
         page_number = paragraph.page if paragraph else revision.first_page
         out.append(
@@ -619,6 +729,7 @@ def results_view(session: Session, rows, highlights: Sequence[str], offset: int 
                 "agenda": common.agenda_view(
                     item, bills.get(item.bill_id) if item and item.bill_id else None, term.number
                 ),
+                "related": revision.id in related,
             }
         )
     return out
@@ -633,14 +744,21 @@ def _word_pattern(highlights: Sequence[str]) -> re.Pattern[str] | None:
     )
 
 
-def _excerpt(paragraphs: Sequence[models.SpeechParagraph], highlights: Sequence[str]):
-    """The first paragraph with a match (or the first), cut to about EXCERPT characters
-    around the match at word boundaries. Returns (paragraph, text, lead, trail)."""
+def _excerpt(
+    paragraphs: Sequence[models.SpeechParagraph],
+    highlights: Sequence[str],
+    prefer: int | None = None,
+):
+    """The first paragraph with a match (or the preferred one, or the first), cut to
+    about EXCERPT characters around the match at word boundaries. Returns
+    (paragraph, text, lead, trail)."""
     if not paragraphs:
         return None, "", False, False
     pattern = _word_pattern(highlights)
     chosen, start = paragraphs[0], 0
-    if pattern:
+    if prefer is not None:
+        chosen = next((p for p in paragraphs if p.position == prefer), chosen)
+    elif pattern:
         for p in paragraphs:
             if match := pattern.search(fold(p.text)):
                 chosen, start = p, match.start()

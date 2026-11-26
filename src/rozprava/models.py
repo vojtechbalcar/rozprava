@@ -17,6 +17,7 @@ Transcripts are stored in three layers:
 """
 
 import datetime as dt
+from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
@@ -25,18 +26,22 @@ from sqlalchemy import (
     Computed,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
     MetaData,
+    Numeric,
     SmallInteger,
     String,
     Text,
     UniqueConstraint,
+    cast,
     func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.types import UserDefinedType
 
 SEARCH_CONFIG = "rozprava"
 # Exact words (accent-insensitive) followed by lemma lexemes, which have their own prefix.
@@ -502,3 +507,93 @@ class WordForm(Base):
     # Counts change after every tagging batch; migration 0004 sets fillfactor and
     # autovacuum storage parameters so updates stay in place and dead rows go early.
     __table_args__ = (Index("ix_word_form_lemma", "lemma"),)
+
+
+DIMENSIONS = 1024  # Voyage 4 series default (docs/related-search.md)
+
+
+class HalfVector(UserDefinedType):
+    """pgvector's halfvec: 16-bit floats, half the size of vector and ample for cosine
+    distance. Lists of floats are sent as '[…]' text and cast in SQL."""
+
+    cache_ok = True
+
+    def __init__(self, dimensions: int = DIMENSIONS):
+        self.dimensions = dimensions
+
+    def get_col_spec(self, **kw) -> str:
+        return f"halfvec({self.dimensions})"
+
+    def bind_processor(self, dialect):
+        def process(value):
+            return None if value is None else "[" + ",".join(f"{v:.6g}" for v in value) + "]"
+
+        return process
+
+    def bind_expression(self, bindvalue):
+        return cast(bindvalue, self)
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            return None if value is None else [float(v) for v in value.strip("[]").split(",")]
+
+        return process
+
+    class comparator_factory(UserDefinedType.Comparator):
+        def cosine_distance(self, other):
+            return self.op("<=>", return_type=Float)(other)
+
+
+class SpeechChunk(Base):
+    """A passage of a current speech revision, embedded for meaning search (ingest/embed.py).
+
+    A chunk covers consecutive paragraphs, first to last position; a long paragraph is
+    split, so several chunks can share one. Chair remarks and speeches under 40 words
+    are not embedded.
+    """
+
+    __tablename__ = "speech_chunk"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    revision_id: Mapped[int] = mapped_column(
+        ForeignKey("speech_revision.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(SmallInteger)
+    first_paragraph: Mapped[int] = mapped_column(SmallInteger)
+    last_paragraph: Mapped[int] = mapped_column(SmallInteger)
+    digest: Mapped[str] = mapped_column(String(64), index=True)  # SHA-256 of the embedded text
+    model: Mapped[str] = mapped_column(String(64))
+    embedding: Mapped[list[float]] = mapped_column(HalfVector())
+
+    # Migration 0005 adds the HNSW index for cosine distance.
+    __table_args__ = (UniqueConstraint("revision_id", "position"),)
+
+
+class QueryEmbedding(Base):
+    """Embedded search queries, so a repeated query costs nothing and waits for no one."""
+
+    __tablename__ = "query_embedding"
+
+    model: Mapped[str] = mapped_column(String(64), primary_key=True)
+    query: Mapped[str] = mapped_column(Text, primary_key=True)
+    embedding: Mapped[list[float]] = mapped_column(HalfVector())
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class AIUsage(Base):
+    """Every paid AI request (ai.py), at list price, for the spending limits."""
+
+    __tablename__ = "ai_usage"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    provider: Mapped[str] = mapped_column(String(16))  # "voyage", "anthropic"
+    model: Mapped[str] = mapped_column(String(64))
+    purpose: Mapped[str] = mapped_column(String(16))  # "documents", "query", "summary"
+    input_tokens: Mapped[int] = mapped_column(Integer)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))

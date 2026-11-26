@@ -4,8 +4,10 @@ uv run fastapi dev src/rozprava/main.py
 """
 
 import datetime as dt
+import logging
 import re
 from collections.abc import Iterator
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
@@ -16,13 +18,16 @@ from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
+from rozprava import ai
 from rozprava.db import get_session_factory
 from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
+from rozprava.settings import get_settings
 from rozprava.templating import STATIC
 from rozprava.typography import count, cz_number
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
 app = FastAPI(title="Rozprava", docs_url=None, redoc_url=None, openapi_url=None)
+log = logging.getLogger("rozprava.web")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -327,12 +332,35 @@ def partial_note(result: search.SearchPage) -> str | None:
     )
 
 
+@lru_cache(maxsize=1)
+def query_embedder() -> ai.Embedder | None:
+    """Embeds search queries; a visitor waits at most about ten seconds before
+    results fall back to keyword search."""
+    return ai.embedder(get_settings(), timeout=4.0, attempts=2)
+
+
+def query_vector(db: Session, shared: dict, q: str) -> tuple[list[float] | None, bool]:
+    """The query's embedding for meaning search, and whether it failed."""
+    if not (q and shared.get("meaning", {}).get("embedded") and search.meaning_query(q)):
+        return None, False
+    embedder = query_embedder()
+    if embedder is None:
+        return None, False
+    try:
+        return ai.query_vector(db, embedder, q, get_settings().embedding_token_limit), False
+    except ai.AIUnavailable as error:
+        log.warning("meaning search unavailable: %s", error)
+        db.rollback()
+        return None, True
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
     known = sorted(common.terms(db))
     filters, errors = search.SearchFilters.parse(query_lists(request), known)
-    result = search.search(db, filters, errors)
+    vector, unavailable = query_vector(db, shared, filters.q)
+    result = search.search(db, filters, errors, vector)
     scope_terms = filters.terms or tuple(known)
     scope = (
         f"v {scope_terms[0]}. volebním období"
@@ -403,6 +431,13 @@ def search_page(request: Request, db: DB) -> Response:
         ],
         "dropped": result.dropped,
         "partial": partial_note(result),
+        "related": (
+            f"Podle podobného významu jsme přidali "
+            f"{count(result.related, 'projev', 'projevy', 'projevů')} bez hledaných slov."
+            if result.related
+            else None
+        ),
+        "meaning_unavailable": unavailable,
         "coverage_note": (
             f"U {cz_number(shared['forms_waiting'])} projevů zatím nemáme určené tvary slov; "
             "v nich hledáme jen zadané tvary."

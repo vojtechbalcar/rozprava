@@ -85,11 +85,47 @@ Live archive, warm, over HTTP:
 | kdo kritizoval zdanění výsluh vojáků | — | 15 (2 complete) | 90 |
 | pan předseda vláda | 3,994 | 3,994 | 184 |
 
+## Step 2: meaning search (built 26 Nov, waiting for the Voyage key)
+
+- **Setup.** pgvector 0.8.7 in the `extensions` schema; see [[dev-environment]].
+  Migration 0005: `speech_chunk` (halfvec(1024), HNSW cosine index),
+  `query_embedding` (cache) and `ai_usage` (every paid request at list price).
+  The live database was backed up before migrating
+  (`backups/rozprava-20261126T112831899002Z.dump`).
+- **One AI module** (`ai.py`): the Voyage client (retries 429/5xx, honours
+  `retry-after`), usage records, the token limit and the query cache. Keys come
+  from `.env` (`VOYAGE_API_KEY`); without one, nothing changes.
+- **Passages** (`ingest/embed.py`). Speeches of 40+ words by a speaker; chair
+  remarks are procedural (median 72 words: "Děkuji. S faktickou poznámkou…"), so
+  they are skipped. Consecutive paragraphs are packed to about 250 words (at most
+  400; a longer paragraph is cut between sentences). Each passage is embedded
+  with a header "speaker. agenda short title". Dry run on the archive:
+  38,021 speeches, 77,327 passages (median 269 words), at most 59 M tokens by a
+  deliberately high estimate (characters / 2), inside the 190 M limit.
+  A passage with the same text and model reuses its vector; retired revisions'
+  passages are deleted at the end of a run, after their successors could reuse
+  them (deleting them first, as written at first, made reuse impossible).
+- **Search** (`queries/search.py`). Only plain queries (no quotes, OR or minus)
+  use meaning. The 400 nearest passages under the same filters (HNSW with
+  pgvector's iterative scan) are grouped by speech; up to 100 speeches within
+  cosine distance 0.6 are kept. Those without the query's words join the match
+  set, so counts and facets include them; they are labelled "Podobný význam".
+  Relevance order: reciprocal rank fusion (k = 60) of the top 200 keyword results
+  and the meaning results, then the keyword ranking. If Voyage fails, the page
+  says so and shows keyword results.
+- **Not yet calibrated.** `MAX_DISTANCE` and the fusion weights are guesses until
+  real vectors exist; check them with the evaluation set.
+
+To run, once the key is in `.env`:
+
+```sh
+caffeinate -i uv run python -m rozprava.ingest embed --limit 200   # first, check
+caffeinate -i uv run python -m rozprava.ingest embed               # the rest
+uv run python -m rozprava.ingest status    # speeches embedded, tokens used
+```
+
 ## Next
 
-2. Meaning search: pgvector, a `speech_chunk` table, an `ingest embed` command
-   with Voyage, and hybrid ranking (reciprocal rank fusion) of keyword and
-   meaning results, with meaning-only results labelled.
 3. Summaries: one AI module for Voyage and Claude with caching, usage records
    and the $5 monthly cap; the summary block (DESIGN.md §7.8) loads after the
    results; uncited sentences are dropped.
