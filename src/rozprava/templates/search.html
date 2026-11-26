@@ -37,20 +37,18 @@
     <section class="state-empty search-empty" data-search-empty{% if not live or search.total %} hidden{% endif %}><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr. Hledáme slova ve všech tvarech a&nbsp;bez ohledu na diakritiku; v&nbsp;uvozovkách hledáme přesně zadaný tvar nebo frázi.</p>{% if not live %}<button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button>{% endif %}</section>
     {% endif %}
 
-    {# AI summary (§7.8): machine-made, sans, never serif. Only in the design preview for now. #}
+    {# AI summary (§7.8): machine-made, sans, never serif. The design preview renders sample
+       sentences; live pages load the block after the results (/api/shrnuti). #}
     {% if search.answer %}
-    <section class="summary" aria-labelledby="summary-title">
-      <header class="summary__head">
-        <h2 class="label" id="summary-title">Shrnutí · jazykový model</h2>
-        <p class="meta">Podle {{ search.total }}&nbsp;{{ search.total|plural('projevu', 'projevů', 'projevů') }} · každá věta cituje zdroj</p>
-      </header>
-      <p class="summary__body">
-        {%- for s in search.answer %}
-        {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}" aria-describedby="cite-{{ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
-        {%- endfor %}
-      </p>
-      <footer class="summary__foot">Rozhodující je vždy znění přepisu. <a href="{{ link('how') }}#shrnuti">Jak shrnutí vznikají</a></footer>
+    {% with answer=search.answer, sources=search.total, note=None %}{% include "_summary.html" %}{% endwith %}
+    {% elif search.summary_url is defined and search.summary_url %}
+    <section class="summary summary--loading" data-summary-src="{{ search.summary_url }}" aria-label="Načítání shrnutí" aria-busy="true">
+      <header class="summary__head"><p class="label">Shrnutí · jazykový model</p></header>
+      <div class="shimmer" aria-hidden="true">{% for _ in range(3) %}<svg width="100%" height="8">{% for i in range(60) %}<circle cx="{{ 4 + i * 12 }}" cy="4" r="3" style="--i: {{ i }}"/>{% endfor %}</svg>{% endfor %}</div>
+      <p class="label">Generuji shrnutí</p>
     </section>
+    {% endif %}
+    {% if search.answer or (search.summary_url is defined and search.summary_url) %}
     {# Citation popover contents (§7.7) #}
     <div hidden>
       {% for c in search.results %}

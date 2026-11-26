@@ -7,8 +7,9 @@ import datetime as dt
 import logging
 import re
 from collections.abc import Iterator
+from dataclasses import replace
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -20,7 +21,17 @@ from starlette.exceptions import HTTPException
 
 from rozprava import ai
 from rozprava.db import get_session_factory
-from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
+from rozprava.queries import (
+    activity,
+    archive,
+    common,
+    palette,
+    people,
+    quotes,
+    search,
+    summary,
+    transcripts,
+)
 from rozprava.settings import get_settings
 from rozprava.templating import STATIC
 from rozprava.typography import count, cz_number
@@ -354,6 +365,63 @@ def query_vector(db: Session, shared: dict, q: str) -> tuple[list[float] | None,
         return None, True
 
 
+@lru_cache(maxsize=1)
+def summary_writer() -> ai.Writer | None:
+    return ai.writer(get_settings())
+
+
+def summarizable(filters: search.SearchFilters, result: search.SearchPage) -> bool:
+    """Summaries number their sources [1]–[8], so only the first page by relevance has one."""
+    return bool(
+        filters.q
+        and filters.page == 1
+        and filters.sort == "relevance"
+        and result.results
+        and summary_writer() is not None
+    )
+
+
+def summary_url(filters: search.SearchFilters, result: search.SearchPage) -> str | None:
+    params: dict[str, Any] = filters.params()
+    return link("summary", **params) if summarizable(filters, result) else None
+
+
+@app.get("/api/shrnuti")
+def summary_fragment(request: Request, db: DB) -> Response:
+    """The AI summary block for a search, loaded after the results (DESIGN.md §7.8)."""
+    if summary_writer() is None:
+        return HTMLResponse("")
+    shared = SHARED.get(db)
+    known = sorted(common.terms(db))
+    filters, errors = search.SearchFilters.parse(query_lists(request), known)
+    filters = replace(filters, page=1, sort="relevance")
+    vector, _ = query_vector(db, shared, filters.q)
+    result = search.search(db, filters, errors, vector)
+    writer = summary_writer()
+    if writer is None or not summarizable(filters, result):  # e.g. no results
+        return HTMLResponse("")
+    found = summary.summarize(
+        db,
+        writer,
+        filters.q,
+        result.results,
+        result.highlights,
+        get_settings().ai_monthly_limit_usd,
+    )
+    notes = {
+        "none": "V nalezených projevech jsme k dotazu nic, co by šlo shrnout s citacemi, nenašli.",
+        "limit": "Měsíční limit pro shrnutí je vyčerpán; výsledky hledání fungují dál.",
+        "unavailable": "Shrnutí se teď nepodařilo vytvořit; výsledky hledání fungují dál.",
+    }
+    return render(
+        request,
+        "_summary.html",
+        "summary",
+        {"answer": found.sentences, "sources": found.sources, "note": notes.get(found.status)},
+        shared,
+    )
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
@@ -438,6 +506,7 @@ def search_page(request: Request, db: DB) -> Response:
             else None
         ),
         "meaning_unavailable": unavailable,
+        "summary_url": summary_url(filters, result),
         "coverage_note": (
             f"U {cz_number(shared['forms_waiting'])} projevů zatím nemáme určené tvary slov; "
             "v nich hledáme jen zadané tvary."

@@ -1,7 +1,7 @@
 ---
 type: decision
 updated: 2026-11-26
-status: in progress
+status: built, awaiting API keys
 ---
 
 # Related search and cited summaries
@@ -124,8 +124,46 @@ caffeinate -i uv run python -m rozprava.ingest embed               # the rest
 uv run python -m rozprava.ingest status    # speeches embedded, tokens used
 ```
 
+## Step 3: cited summaries (built 26 Nov, waiting for the Anthropic key)
+
+- **Model and price.** `claude-haiku-5-5` ($0.10 / $0.50 per million input /
+  output tokens up to 100K-token prompts; Sonnet 5.5 is $2 / $10), adaptive
+  thinking (on by default) at effort `medium`. Citations on custom-content
+  documents: one document per result, one content block per paragraph, so
+  Claude cites by block index (0-based, end exclusive). `cited_text` is not
+  billed. Citations cannot be combined with structured outputs. Facts from the
+  claude-api skill and the live citations page, 26 Nov 2026.
+- **Sources** (`queries/summary.py`). The first 8 results of page one by
+  relevance (so `[n]` matches the page). A speech under 600 words is sent whole;
+  of a longer one, the paragraph its result shows and up to 3 others with the
+  query's words. Title "[n] name (party), date"; agenda and sitting go in the
+  document `context`, which Claude cannot cite.
+- **Hard rules in code, not just the prompt.** The answer's text blocks are
+  joined and split into sentences (not after "55.", "12. 3." or abbreviations
+  such as "Sb.", "č."); a sentence without a citation is dropped, and so is one
+  whose quotation marks hold text that is not verbatim in the paragraphs it
+  cites (an ellipsis may shorten). The prompt asks for attribution, neutrality,
+  no quotation marks, no outside knowledge, and `NENALEZENO` when nothing is
+  relevant, which the page reports as such.
+- **Spending.** Before each request, `ai.write_summary` adds this calendar
+  month's recorded Claude cost to the worst case (estimated input plus the full
+  4,000-token output) and refuses past `ROZPRAVA_AI_MONTHLY_LIMIT_USD` ($5).
+  Usage is committed even for a refusal. About $0.002–0.005 per summary, so
+  roughly 1,000–2,500 new summaries a month; repeats come from the `summary`
+  table (migration 0006), keyed by model, prompt version, query, revisions and
+  paragraphs. No prompt caching: the system prompt is below the minimum
+  cacheable size and the documents differ per query.
+- **Page.** The results render at once; a loading block (dot-matrix shimmer,
+  DESIGN.md §7.8) fetches `/api/shrnuti` with the same parameters and is
+  replaced by the summary, a note (nothing relevant, limit reached, Claude
+  unavailable) or nothing. Citation chips reuse the §7.7 popovers.
+- **Not yet measured.** Quality on real searches, Haiku 5.5 against Sonnet 5.5
+  on the evaluation set, and the actual cost per summary.
+
 ## Next
 
-3. Summaries: one AI module for Voyage and Claude with caching, usage records
-   and the $5 monthly cap; the summary block (DESIGN.md §7.8) loads after the
-   results; uncited sentences are dropped.
+1. Add `VOYAGE_API_KEY` and `ANTHROPIC_API_KEY` to `.env`, then run `ingest embed`
+   and restart the server.
+2. Calibrate `MAX_DISTANCE`, fusion and the summary prompt on the evaluation set
+   (branch `feature/ai-evaluation-set`), and compare Haiku 5.5 with Sonnet 5.5.
+3. Automatic daily updates (owned by the other session, see [[czech-word-forms]]).

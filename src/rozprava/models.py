@@ -597,3 +597,22 @@ class AIUsage(Base):
     input_tokens: Mapped[int] = mapped_column(Integer)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
     cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))
+
+
+class Summary(Base):
+    """An AI summary of search results, kept so the same request is answered once.
+
+    `sentences` holds only cited sentences: text, the result numbers it cites and
+    the cited (revision, paragraph) pairs. An empty list means the sources did not
+    answer the query.
+    """
+
+    __tablename__ = "summary"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA-256 of the request
+    model: Mapped[str] = mapped_column(String(64))
+    query: Mapped[str] = mapped_column(Text)
+    sentences: Mapped[list] = mapped_column(JSONB)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
