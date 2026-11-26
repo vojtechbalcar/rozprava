@@ -12,6 +12,7 @@
 - [[functional-app-plan]] — implementation tasks, source-accuracy checks and local delivery workflow.
 - [[local-app-verification]] — completed local database phase, final browser/check results, corpus timings and operating limits.
 - [[czech-word-forms]] — search finds every form of a word via the MorphoDiTa tagger (MorfFlex 2.1, CC BY-NC-SA); stemmer, simplemma and hunspell rejected; next phases and work split.
+- [[related-search]] — filler words and partial matches for longer queries; Voyage meaning search and $5/month Claude summaries chosen (OpenAI, local bge-m3, keyword-only rejected); progress.
 
 ## Research
 

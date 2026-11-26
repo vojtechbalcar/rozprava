@@ -24,6 +24,8 @@
 
     <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> {{ search.scope|nbsp }}, seřazeno {{ 'podle data' if search.sort == 'nejnovejsi' or not search.query else 'podle relevance' }}</p>
     {% if search.expansions %}<p class="meta" data-word-forms>Hledáme i&nbsp;další tvary: {% for e in search.expansions %}{{ e.word }} ({{ e.forms|join(', ') }}{% if e.more %} a&nbsp;další{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}. Přesný tvar zadejte v&nbsp;uvozovkách.</p>{% endif %}
+    {% if search.dropped %}<p class="meta" data-filler>Běžná slova jsme vynechali: {{ search.dropped|join(', ') }}.</p>{% endif %}
+    {% if search.partial %}<p class="meta" data-partial>{{ search.partial|nbsp }}</p>{% endif %}
     {% if search.coverage_note %}<p class="meta">{{ search.coverage_note|nbsp }}</p>{% endif %}
     {% if not live %}<p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>{% endif %}
 

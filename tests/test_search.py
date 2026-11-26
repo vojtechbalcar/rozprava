@@ -1,6 +1,8 @@
 """Search against PostgreSQL over the imported fixture corpus (both terms)."""
 
 import datetime as dt
+import math
+import re
 
 import pytest
 from sqlalchemy import func, select
@@ -9,6 +11,7 @@ from sqlalchemy.orm import Session
 from rozprava import models
 from rozprava.queries import search
 from rozprava.queries.search import SearchFilters, query_terms
+from rozprava.typography import fold
 
 
 def run(db: Session, **params: str | list[str]) -> search.SearchPage:
@@ -157,3 +160,66 @@ def test_numeric_filters_reject_non_ascii_and_oversized_input(value):
 def test_highlight_terms_follow_the_query_syntax():
     assert query_terms('"penzijní spoření" OR důchod -reforma') == ["penzijní spoření", "důchod"]
     assert query_terms('-"celá fráze" slovo,') == ["slovo"]
+
+
+def test_filler_words_are_left_out_unless_the_query_has_nothing_else():
+    groups, dropped = search.without_filler(
+        search.parse_query('jak se změnily důchody OR "jak se má" -se')
+    )
+    assert [[t.text for t in group] for group in groups] == [
+        ["změnily", "důchody"],
+        ["jak se má", "se"],  # phrases and exclusions are kept as typed
+    ]
+    assert dropped == ["jak", "se"]
+    only, none = search.without_filler(search.parse_query("Co je to"))
+    assert [t.text for t in only[0]] == ["Co", "je", "to"] and none == []
+    # "byt" (a flat), "moc" (power) and "ANO" (a party) are words of their own.
+    assert search.without_filler(search.parse_query("byt moc ANO na"))[1] == ["na"]
+
+
+def test_longer_queries_may_lack_one_word_in_four():
+    assert [search.needed(n) for n in range(1, 9)] == [1, 2, 2, 3, 4, 5, 6, 6]
+    for n in range(3, 40):
+        assert 0 < n - search.needed(n) <= max(1, n // 4)
+        assert math.comb(n, search.needed(n)) <= search.MAX_COMBINATIONS
+
+
+def tokens(text: str) -> set[str]:
+    return set(re.findall(r"\w+", fold(text)))
+
+
+def test_query_with_few_complete_matches_also_finds_partial_ones(db: Session, monkeypatch):
+    monkeypatch.setattr(search, "PER_PAGE", 500)
+    words = ["penzijní", "spoření", "státní", "příspěvek"]
+    present = {
+        i: sum(fold(w) in tokens(t) for w in words)
+        for i, t in db.execute(
+            select(models.SpeechRevision.id, models.SpeechRevision.text).where(
+                models.SpeechRevision.retired_at.is_(None)
+            )
+        )
+    }
+    every = {i for i, n in present.items() if n == 4}
+    most = {i for i, n in present.items() if n >= 3}
+    assert len(every) < len(most) < search.RELAX_BELOW  # the fixture exercises relaxing
+
+    page = run(db, q="jak se " + " ".join(words))
+    assert page.dropped == ["jak", "se"]
+    assert {r["id"] for r in page.results} == most and page.total == len(most)
+    assert page.partial == (3, 4) and page.strict_total == len(every)
+    found = [present[r["id"]] for r in page.results]
+    assert found == sorted(found, reverse=True)  # speeches with every word come first
+    assert {r["id"] for r in page.results[: len(every)]} == every
+
+    monkeypatch.setattr(search, "RELAX_BELOW", len(every))  # enough complete matches
+    strict = run(db, q=" ".join(words))
+    assert {r["id"] for r in strict.results} == every and strict.partial is None
+    assert run(db, q='"penzijní spoření" státní příspěvek').partial is None  # 2 plain words
+
+
+def test_search_page_explains_left_out_and_missing_words(client):
+    response = client.get("/hledat", params={"q": "kdo penzijní spoření státní příspěvek"})
+    page = response.text.replace("\xa0", " ")
+    assert "Běžná slova jsme vynechali: kdo." in page
+    assert "a tak ukazujeme i projevy s aspoň 3 ze 4 slov. Projevy se všemi" in page
+    assert "Běžná slova jako" in client.get("/jak-to-funguje").text

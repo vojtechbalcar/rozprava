@@ -19,7 +19,7 @@ from starlette.exceptions import HTTPException
 from rozprava.db import get_session_factory
 from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
 from rozprava.templating import STATIC
-from rozprava.typography import cz_number
+from rozprava.typography import count, cz_number
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
 app = FastAPI(title="Rozprava", docs_url=None, redoc_url=None, openapi_url=None)
@@ -307,6 +307,26 @@ def shown_forms(word: str, forms: list[str]) -> list[str]:
     return [f[:1].upper() + f[1:] for f in shown] if word[:1].isupper() else shown
 
 
+# "ze" before numerals whose Czech genitive starts with a consonant cluster or sibilant:
+# ze tří, ze čtyř, ze šesti, ze sedmi, ze dvanácti, ze dvaceti…
+_ZE = {2, 3, 4, 6, 7, 12, 13, 14, 16, 17, *range(20, 50)}
+
+
+def partial_note(result: search.SearchPage) -> str | None:
+    if not result.partial:
+        return None
+    need, of = result.partial
+    every = (
+        f"jen {count(result.strict_total, 'projev', 'projevy', 'projevů')}"
+        if result.strict_total
+        else "žádný projev"
+    )
+    return (
+        f"Všechna hledaná slova obsahuje {every}, a tak ukazujeme i projevy s aspoň {need} "
+        f"{'ze' if of in _ZE else 'z'} {of} slov. Projevy se všemi slovy jsou první."
+    )
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
@@ -381,6 +401,8 @@ def search_page(request: Request, db: DB) -> Response:
             {"word": word, "forms": shown_forms(word, e.forms), "more": len(e.forms) > SHOWN_FORMS}
             for word, e in result.expansions.items()
         ],
+        "dropped": result.dropped,
+        "partial": partial_note(result),
         "coverage_note": (
             f"U {cz_number(shared['forms_waiting'])} projevů zatím nemáme určené tvary slov; "
             "v nich hledáme jen zadané tvary."

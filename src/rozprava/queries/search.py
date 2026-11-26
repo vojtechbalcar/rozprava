@@ -3,9 +3,11 @@
 Queries use websearch syntax with the accent-insensitive 'rozprava' configuration:
 words, "quoted phrases", OR and -exclusions. An unquoted word matches as typed
 and, through the lemmas the ingest job tagged (morphology.py), in its other forms:
-"důchod" finds "důchodu". Quoted text matches exactly. Everything a user types is
-a bound parameter. Facets and the date histogram count the complete filtered match
-set, not just the visible page.
+"důchod" finds "důchodu". Quoted text matches exactly. Filler words ("jak", "se")
+are left out of longer queries. When few speeches contain every word of a query of
+three or more, it also finds those lacking one, ranked after the complete matches.
+Everything a user types is a bound parameter. Facets and the date histogram count
+the complete filtered match set, not just the visible page.
 """
 
 import datetime as dt
@@ -15,15 +17,19 @@ from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import reduce
+from itertools import combinations
 
 from sqlalchemy import (
     ColumnElement,
     Date,
+    Integer,
+    Text,
     and_,
     cast,
     exists,
     false,
     func,
+    literal,
     literal_column,
     or_,
     select,
@@ -208,6 +214,64 @@ def query_terms(q: str) -> list[str]:
     return list(dict.fromkeys(t.text for group in parse_query(q) for t in group if not t.negated))
 
 
+# Czech function words, accent-free: pronouns, prepositions, conjunctions, particles
+# and forms of "být". They carry no topic, so a query leaves them out when it has
+# other words. Not here: "byt" (a flat), "moc" (power), "ano" (also the party ANO).
+FILLER = frozenset(
+    """
+    a aby ac ackoli ale ani asi avsak az bez behem bude budeme budete budes budou budu
+    by bych bychom bys byste byl byla byli bylo byly cem cemu ceho ci cim co coz do i
+    jak jaka jake jakeho jakem jakemu jaci jaky jakych jakym jakymi jakou jako je jeho
+    jej jeji jejich jemu jen jenom jeste jestli jestlize ji jich jim jimi jiz jsem jsi
+    jsme jsou jste k kam kde kdo kdy kdyz ke koho kolik kom komu kteri ktera ktere
+    ktereho kterem kteremu kterou ktery kterych kterym kterymi kvuli kym me mezi mi mne
+    mnou moje mu muj my na nad nam nami nas nase nebo nejaka nejake nejaky nem nez nich
+    nim nimi o od on ona oni ono ony ovsem pak po pod podle pokud potom pouze prave
+    prece pres pri pro proc proste protoze s se sebe sebou si sobe sve svou svuj svych
+    svym svymi ta tady tak take takze taky tam te tech ted tedy tem temi ten tento teto
+    tez tim tito to toho tohoto tom tomto tomu toto totiz tou tu tuto ty tyto u uz v
+    vam vami vas vase ve velmi vlastne vsak z za zda ze zde
+    """.split()
+)
+
+
+def without_filler(groups: list[list[Term]]) -> tuple[list[list[Term]], list[str]]:
+    """Drop filler words from each alternative that asks for something else too.
+
+    Returns the groups and the dropped words as typed. A query made only of filler
+    words ("co je to") is searched as typed.
+    """
+    kept_groups, dropped = [], []
+    for group in groups:
+
+        def filler(t: Term) -> bool:
+            return not (t.phrase or t.negated) and fold(t.text) in FILLER
+
+        if any(not t.negated and not filler(t) for t in group):
+            dropped += [t.text for t in group if filler(t)]
+            group = [t for t in group if not filler(t)]
+        kept_groups.append(group)
+    return kept_groups, list(dict.fromkeys(dropped))
+
+
+# When fewer speeches than this contain every word of a query of three or more words,
+# it also matches speeches lacking one of them (a quarter of a long one). Those with
+# every word rank first, so relaxing a query with many full matches would only make
+# it broader and slower. The relaxed query needs at most this many word combinations.
+RELAX_BELOW = 100
+MAX_COMBINATIONS = 64
+
+
+def needed(words: int) -> int:
+    """How many of a query's plain words a speech must contain."""
+    if words <= 2:
+        return words
+    need = words - max(1, words // 4)
+    while math.comb(words, need) > MAX_COMBINATIONS:
+        need += 1
+    return need
+
+
 # A query word stands for the lemmas behind at least this share of its uses in the
 # archive, and a written form is highlighted for a lemma it mostly stands for.
 LEMMA_SHARE = 0.2
@@ -281,26 +345,49 @@ class Query:
     tsquery: ColumnElement | None = None
     highlights: list[str] = field(default_factory=list)
     expansions: dict[str, Expansion] = field(default_factory=dict)
+    dropped: list[str] = field(default_factory=list)  # filler words left out
+    # A query of three or more words, relaxed to speeches that lack some of them:
+    # `partial` is (needed, of) plain words and `coverage` one tsquery per word, to
+    # rank speeches by how many they contain.
+    relaxed: "Query | None" = None
+    partial: tuple[int, int] | None = None
+    coverage: list[ColumnElement] = field(default_factory=list)
 
     @classmethod
     def build(cls, session: Session, q: str) -> "Query":
-        groups = parse_query(q)
+        groups, dropped = without_filler(parse_query(q))
         words = {t.text for group in groups for t in group if not t.phrase}
         expansions = expand(session, words)
-        alternatives = []
+
+        def term_query(term: Term) -> ColumnElement:
+            if term.phrase:
+                return func.phraseto_tsquery(_CONFIG, term.text)
+            part = func.plainto_tsquery(_CONFIG, term.text)
+            expansion = expansions.get(term.text.lower(), Expansion())
+            if expansion.lemmas:
+                part = func.tsquery_or(part, cast(lemma_query(expansion.lemmas), TSQUERY))
+            return part
+
+        strict, relaxed, partial, coverage = [], [], None, []
         for group in groups:
-            parts = []
-            for term in group:
-                expansion = expansions.get(term.text.lower(), Expansion())
-                part = (
-                    func.phraseto_tsquery(_CONFIG, term.text)
-                    if term.phrase
-                    else func.plainto_tsquery(_CONFIG, term.text)
-                )
-                if expansion.lemmas and not term.phrase:
-                    part = func.tsquery_or(part, cast(lemma_query(expansion.lemmas), TSQUERY))
-                parts.append(func.tsquery_not(part) if term.negated else part)
-            alternatives.append(reduce(func.tsquery_and, parts))
+            fixed = [
+                func.tsquery_not(term_query(t)) if t.negated else term_query(t)
+                for t in group
+                if t.phrase or t.negated
+            ]
+            words = [t for t in group if not (t.phrase or t.negated)]
+            plain = [term_query(t) for t in words]
+            strict.append(reduce(func.tsquery_and, fixed + plain))
+            # Filler words are left only in a query of nothing else; it is searched as typed.
+            filler_only = any(fold(t.text) in FILLER for t in words)
+            need = len(plain) if filler_only else needed(len(plain))
+            if need < len(plain):
+                partial = max(partial or (0, 0), (need, len(plain)), key=lambda p: p[1])
+                coverage += plain
+                either = [reduce(func.tsquery_and, c) for c in combinations(plain, need)]
+                plain = [reduce(func.tsquery_or, either)]
+            relaxed.append(reduce(func.tsquery_and, fixed + plain))
+
         highlights, shown = [], {}
         for term in (t for group in groups for t in group if not t.negated):
             highlights.append(term.text)
@@ -308,11 +395,39 @@ class Query:
             if expansion and expansion.forms and not term.phrase:
                 highlights += expansion.forms
                 shown[term.text] = expansion
-        return cls(
-            tsquery=reduce(func.tsquery_or, alternatives) if alternatives else None,
-            highlights=list(dict.fromkeys(highlights)),
-            expansions=shown,
-        )
+        query = cls(highlights=list(dict.fromkeys(highlights)), expansions=shown, dropped=dropped)
+        if strict:
+            # Build the tsquery text once, so the database does not rebuild it per row.
+            built = session.execute(
+                select(
+                    *(
+                        cast(reduce(func.tsquery_or, alternatives), Text)
+                        for alternatives in (strict, relaxed)
+                    ),
+                    *(cast(c, Text) for c in coverage),
+                )
+            ).one()
+            query.tsquery = _tsquery(built[0])
+            if partial:
+                query.relaxed = replace(
+                    query,
+                    tsquery=_tsquery(built[1]),
+                    partial=partial,
+                    coverage=[_tsquery(c) for c in built[2:]],
+                )
+        return query
+
+    def rank(self) -> list[ColumnElement]:
+        """ORDER BY terms for relevance: words present, then PostgreSQL's cover density."""
+        if self.tsquery is None:
+            return []
+        present = [cast(SR.search.op("@@")(c), Integer) for c in self.coverage]
+        order = [reduce(lambda a, b: a + b, present).desc()] if present else []
+        return [*order, func.ts_rank_cd(SR.search, self.tsquery).desc()]
+
+
+def _tsquery(value: str) -> ColumnElement:
+    return cast(literal(value, Text), TSQUERY)
 
 
 _CONFIG = literal_column(f"'{models.SEARCH_CONFIG}'::regconfig")
@@ -376,6 +491,9 @@ class SearchPage:
     facets: dict = field(default_factory=dict)
     highlights: list[str] = field(default_factory=list)
     expansions: dict[str, Expansion] = field(default_factory=dict)
+    dropped: list[str] = field(default_factory=list)
+    partial: tuple[int, int] | None = None  # relaxed: (needed, of) words
+    strict_total: int = 0  # speeches with every word, when relaxed
 
     @property
     def pages(self) -> int:
@@ -391,20 +509,27 @@ def search(session: Session, filters: SearchFilters, errors: list[str]) -> Searc
     clubs = common.Clubs(session)
     query = Query.build(session, filters.q) if filters.q else Query()
     page = SearchPage(
-        filters, list(errors), highlights=query.highlights, expansions=query.expansions
+        filters,
+        list(errors),
+        highlights=query.highlights,
+        expansions=query.expansions,
+        dropped=query.dropped,
     )
     where = conditions(filters, terms, clubs, query)
     page.total = session.scalar(select(func.count()).select_from(SR).where(*where)) or 0
+    if query.relaxed is not None and page.total < RELAX_BELOW:
+        # Few speeches have every word: also show those that lack one (or a quarter).
+        relaxed = conditions(filters, terms, clubs, query.relaxed)
+        total = session.scalar(select(func.count()).select_from(SR).where(*relaxed)) or 0
+        if total > page.total:
+            page.strict_total, page.total, page.partial = page.total, total, query.relaxed.partial
+            query, where = query.relaxed, relaxed
     page.facets = _facets(session, where, clubs, filters, terms)
     if page.total == 0 or page.out_of_range:
         return page
 
-    rank = func.ts_rank_cd(SR.search, query.tsquery) if query.tsquery is not None else None
-    order = (
-        [rank.desc(), SR.date.desc(), SR.id.desc()]
-        if rank is not None and filters.sort == "relevance"
-        else [SR.date.desc(), SR.id.desc()]
-    )
+    rank = query.rank() if filters.sort == "relevance" else []
+    order = [*rank, SR.date.desc(), SR.id.desc()]
     rows = session.execute(
         select(SR, models.Speech)
         .join(models.Speech, models.Speech.id == SR.speech_id)
