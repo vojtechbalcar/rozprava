@@ -1,6 +1,6 @@
 ---
 type: problem
-updated: 2026-11-21
+updated: 2026-11-25
 status: current
 ---
 
@@ -94,5 +94,11 @@ about one page a second; the first sitting assembled after a minute with 254
 speeches. Check progress with `uv run python -m rozprava.ingest status`.
 
 Term 10 finished at 16:56: 4 574 of 4 574 pages imported, none failed or
-unavailable, 22 063 current speeches. Term 9 (13 926 pages) started straight after
-in the same process and should take about four more hours at this rate.
+unavailable, 22 063 current speeches. Term 9 followed in the same process and
+finished at 20:52 (run 4): 13 922 of 13 926 pages, the same four sitting-901
+failures as on the first machine, and 93 738 current speeches in total. Both
+machines therefore hold the same coverage.
+
+On 25 November the four pages were queued again (`retry --term 9`, then
+`backfill --term 9`, run 5). psp.cz still answered HTTP 200 with no transcript
+body, so they remain retryable failures.

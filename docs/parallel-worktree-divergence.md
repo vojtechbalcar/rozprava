@@ -1,7 +1,7 @@
 ---
 type: problem
-updated: 2026-11-21
-status: current
+updated: 2026-11-25
+status: resolved
 ---
 
 # Parallel work in a stale worktree
@@ -33,7 +33,12 @@ rebuilt parts of the plan from scratch under the same Alembic revision numbers
 two implementations of the same plan would only have added conflicts.
 
 **How to apply.** Before resuming work in any checkout, run `git fetch` and compare
-with `origin`, and read [[dev-environment]] for where work last continued. Drop the
-superseded database and the WIP branch once nobody needs them:
-`DROP DATABASE rozprava_superseded_20261121` (as the cluster owner over the private
-socket) and `git branch -D wip/parallel-schema-run10`.
+with `origin`, and read [[dev-environment]] for where work last continued.
+
+**Cleanup (25 Nov).** Before dropping it, the superseded database was checked: 29 MB,
+holding only open-data metadata (people, sittings, agendas, speech index rows) and
+no transcript text or speeches, all re-downloadable from psp.cz. It was dropped as
+the cluster owner over the private socket, and the local branch
+`wip/parallel-schema-run10` (835c57f) was deleted. The same day the fetch rule
+paid off again: `origin` had five commits this worktree lacked, the just-merged
+PR #2.

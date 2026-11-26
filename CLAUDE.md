@@ -51,9 +51,10 @@ Why this stack: see [[stack-decision]] in `docs/`.
   `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
   Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
-Checkouts of `feature/functional-local-app` live outside iCloud: on this Mac in
-the worktree `~/.local/share/rozprava-worktrees/functional-app`; the 18–19 Nov work
-ran on another machine and was pushed from there. Before resuming in any checkout,
+The functional app and word forms were merged into `main` on 25 Nov. Working
+checkouts live outside iCloud: on this Mac, new branches from `main` in the worktree
+`~/.local/share/rozprava-worktrees/functional-app`, which also runs the dev server;
+the 18–19 Nov work ran on another machine and was pushed from there. Before resuming in any checkout,
 `git fetch` and compare with `origin` (see [[parallel-worktree-divergence]]). The
 iCloud Desktop checkout needs the `.venv` symlink workaround in [[dev-environment]].
 

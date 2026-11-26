@@ -1,6 +1,6 @@
 ---
 type: problem
-updated: 2026-11-19
+updated: 2026-11-25
 status: current
 ---
 
@@ -26,18 +26,22 @@ Also on this machine: `uv` came from Homebrew (`brew install uv`) on 17 Nov 2026
 
 ## Functional application checkout and PostgreSQL
 
-The functional build is on `feature/functional-local-app`. It started on 17 Nov in the
-worktree `~/.local/share/rozprava-worktrees/functional-app` on this Mac. The 18–19 Nov
-implementation and its verified archive were built on another machine (checkout
+The functional build (PR #1) and Czech word forms (PR #2) were merged into `main` on
+25 Nov. New work branches from `main` in the worktree
+`~/.local/share/rozprava-worktrees/functional-app` on this Mac, which started on
+17 Nov. The 18–19 Nov implementation and its verified archive were built on another machine (checkout
 `~/WebstormProjects/rozprava` there) and pushed; that database never existed here.
 On 21 Nov this Mac's worktree was realigned with `origin` and its archive rebuilt
-from scratch; see [[parallel-worktree-divergence]] and [[transcript-import]].
+from scratch; see [[parallel-worktree-divergence]] and [[transcript-import]]. On
+25 Nov its database was migrated to word forms and fully tagged; see
+[[czech-word-forms]].
 
-On this Mac the dev server and backfill run detached so they outlive a terminal or
-agent session. Their PIDs are in `~/.local/share/rozprava/server.pid` and
-`backfill.pid`, their output in `~/.local/share/rozprava/log/`. Stop them with
-`kill "$(cat ~/.local/share/rozprava/server.pid)"` (likewise `backfill.pid`; the
-backfill resumes safely). Start the server detached with:
+On this Mac the dev server and long imports run detached so they outlive a terminal
+or agent session. Their PIDs are in `~/.local/share/rozprava/server.pid`,
+`backfill.pid` and `forms.pid`, their output in `~/.local/share/rozprava/log/`. Stop
+them with `kill "$(cat ~/.local/share/rozprava/server.pid)"` (for imports, use
+`kill -INT`, which marks the run as interrupted; they resume safely). Start the
+server detached with:
 
 ```sh
 nohup uv run uvicorn rozprava.main:app --host 127.0.0.1 --port 8000 \
