@@ -107,8 +107,8 @@ Live archive, warm, over HTTP:
   them (deleting them first, as written at first, made reuse impossible).
 - **Search** (`queries/search.py`). Only plain queries (no quotes, OR or minus)
   use meaning. The 400 nearest passages under the same filters (HNSW with
-  pgvector's iterative scan) are grouped by speech; up to 100 speeches within
-  cosine distance 0.6 are kept. Those without the query's words join the match
+  pgvector's iterative scan) are grouped by speech; up to 100 speeches close to
+  the query's nearest passage are kept (cutoff calibrated below). Those without the query's words join the match
   set, so counts and facets include them; they are labelled "Podobný význam".
   Relevance order: reciprocal rank fusion (k = 60) of the top 200 keyword results
   and the meaning results, then the keyword ranking. If Voyage fails, the page
@@ -171,6 +171,8 @@ uv run python -m rozprava.ingest status    # speeches embedded, tokens used
   DESIGN.md §7.8) fetches `/api/shrnuti` with the same parameters and is
   replaced by the summary, a note (nothing relevant, limit reached, Claude
   unavailable) or nothing. Citation chips reuse the §7.7 popovers.
+- **Real cost:** the first two summaries averaged 13,000 input and 1,800 output
+  tokens (thinking included), $0.0022 each, so $5 covers about 2,200 new summaries.
 - **First live summary** ("jak se změnily důchody", 26 Nov): 8 s, five sentences
   citing four results, each attributed to a named speaker with party. Some
   paraphrases stay close to clumsy transcript wording.
