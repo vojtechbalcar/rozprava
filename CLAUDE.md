@@ -30,15 +30,19 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Design tokens: `uv run python scripts/build_tokens.py` after editing the
   `DESIGN.md` specification tables or §14.1 CSS block; a test fails if `tokens.css` is stale.
 - Fonts: `uv run python scripts/fetch_fonts.py`
-- Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db`.
+- Local database: `uv run python scripts/local_db.py init|start|stop|status|backup|test-db|vectors`.
   Rozprava's own PostgreSQL 18 cluster in `~/.local/share/rozprava/postgres` on
   `127.0.0.1:55432`; `init` writes the private `.env`. See [[dev-environment]].
 - Migrate: `uv run alembic upgrade head`. Database tests rebuild the schema in
   `rozprava_test` from the migrations; they refuse any database not named `*_test`.
 
-- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|forms|status`
+- Ingest: `uv run python -m rozprava.ingest metadata|votes|backfill|update|refresh|assemble|retry|forms|embed|status`
   (see the module docstring). Only this job contacts psp.cz; it caches downloads in
   `~/.local/share/rozprava/cache` and logs to `~/.local/share/rozprava/log/ingest.log`.
+- Meaning search: `brew install pgvector`, then `scripts/local_db.py vectors` installs it
+  in both databases (pgvector is untrusted, so the admin creates it in the `extensions`
+  schema). With `VOYAGE_API_KEY` in `.env`, `ingest embed` embeds speeches (paid API,
+  stops at `ROZPRAVA_EMBEDDING_TOKEN_LIMIT`) and imports embed new ones. See [[related-search]].
 - Word forms: `uv run python scripts/fetch_morphology.py` once installs the MorphoDiTa
   Czech model in `~/.local/share/rozprava/models`; import commands then tag new
   speeches, `ingest forms [--rebuild]` tags the rest. See [[czech-word-forms]].
@@ -48,7 +52,7 @@ Why this stack: see [[stack-decision]] in `docs/`.
 - Dev: `uv run fastapi dev src/rozprava/main.py` (or `uv run uvicorn rozprava.main:app
   --host 127.0.0.1 --port 8000 --reload`). Routes so far: `/`, `/hledat`, `/poslanci`, `/poslanec/{id-or-slug}`, `/schuze`,
   `/schuze/{term}/{sitting}`, `/prepis/{term}/{sitting}/{page}`, `/projev/{catalog}`,
-  `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
+  `/jak-to-funguje`, `/karta`, `/api/palette`, `/api/quote`, `/api/shrnuti`, `/health`. Directory/profiles/sittings accept `?obdobi=9|10`.
   Quote links pin a speech version and paragraph selection; PNG export uses local fonts.
 
 The functional app and word forms were merged into `main` on 25 Nov. Working

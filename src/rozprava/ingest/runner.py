@@ -18,7 +18,8 @@ from sqlalchemy import Connection, func, select, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from rozprava import models
-from rozprava.ingest import forms, metadata, store
+from rozprava.ai import Embedder
+from rozprava.ingest import embed, forms, metadata, store
 from rozprava.ingest.fetch import Fetched, FetchError, Forbidden, NotFound
 from rozprava.ingest.parser import ParseError, parse_page
 from rozprava.morphology import Analyzer
@@ -178,6 +179,19 @@ class Runner:
 
         with self.run("forms", model=analyzer.name, rebuild=rebuild, limit=limit) as counts:
             counts.update(forms.index_forms(self.sessions, analyzer, rebuild, limit, progress))
+        return counts
+
+    def embed(self, embedder: Embedder, token_limit: int, limit: int | None = None) -> dict:
+        """Embed current speeches for meaning search that this model has not covered."""
+
+        def progress(done: int, total: int) -> None:
+            if done % 2000 < embed.BATCH or done == total:
+                log.info("meaning search: %s of %s revisions embedded", done, total)
+
+        with self.run("embed", model=embedder.model, limit=limit) as counts:
+            counts.update(
+                embed.embed_speeches(self.sessions, embedder, token_limit, limit, progress)
+            )
         return counts
 
     def assemble_pending(self, terms: Iterable[int] = TERM_NUMBERS) -> dict:

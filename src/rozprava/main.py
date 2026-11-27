@@ -4,9 +4,12 @@ uv run fastapi dev src/rozprava/main.py
 """
 
 import datetime as dt
+import logging
 import re
 from collections.abc import Iterator
-from typing import Annotated
+from dataclasses import replace
+from functools import lru_cache
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -16,13 +19,26 @@ from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
+from rozprava import ai
 from rozprava.db import get_session_factory
-from rozprava.queries import activity, archive, common, palette, people, quotes, search, transcripts
+from rozprava.queries import (
+    activity,
+    archive,
+    common,
+    palette,
+    people,
+    quotes,
+    search,
+    summary,
+    transcripts,
+)
+from rozprava.settings import get_settings
 from rozprava.templating import STATIC
-from rozprava.typography import cz_number
+from rozprava.typography import count, cz_number
 from rozprava.web import SHARED, activity_views, link, render, safe_back
 
 app = FastAPI(title="Rozprava", docs_url=None, redoc_url=None, openapi_url=None)
+log = logging.getLogger("rozprava.web")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -307,12 +323,112 @@ def shown_forms(word: str, forms: list[str]) -> list[str]:
     return [f[:1].upper() + f[1:] for f in shown] if word[:1].isupper() else shown
 
 
+# "ze" before numerals whose Czech genitive starts with a consonant cluster or sibilant:
+# ze tří, ze čtyř, ze šesti, ze sedmi, ze dvanácti, ze dvaceti…
+_ZE = {2, 3, 4, 6, 7, 12, 13, 14, 16, 17, *range(20, 50)}
+
+
+def partial_note(result: search.SearchPage) -> str | None:
+    if not result.partial:
+        return None
+    need, of = result.partial
+    every = (
+        f"jen {count(result.strict_total, 'projev', 'projevy', 'projevů')}"
+        if result.strict_total
+        else "žádný projev"
+    )
+    return (
+        f"Všechna hledaná slova obsahuje {every}, a tak ukazujeme i projevy s aspoň {need} "
+        f"{'ze' if of in _ZE else 'z'} {of} slov. Projevy se všemi slovy jsou první."
+    )
+
+
+@lru_cache(maxsize=1)
+def query_embedder() -> ai.Embedder | None:
+    """Embeds search queries; a visitor waits at most about ten seconds before
+    results fall back to keyword search."""
+    return ai.embedder(get_settings(), timeout=4.0, attempts=2)
+
+
+def query_vector(db: Session, shared: dict, q: str) -> tuple[list[float] | None, bool]:
+    """The query's embedding for meaning search, and whether it failed."""
+    if not (q and shared.get("meaning", {}).get("embedded") and search.meaning_query(q)):
+        return None, False
+    embedder = query_embedder()
+    if embedder is None:
+        return None, False
+    try:
+        return ai.query_vector(db, embedder, q, get_settings().embedding_token_limit), False
+    except ai.AIUnavailable as error:
+        log.warning("meaning search unavailable: %s", error)
+        db.rollback()
+        return None, True
+
+
+@lru_cache(maxsize=1)
+def summary_writer() -> ai.Writer | None:
+    return ai.writer(get_settings())
+
+
+def summarizable(filters: search.SearchFilters, result: search.SearchPage) -> bool:
+    """Summaries number their sources [1]–[8], so only the first page by relevance has one."""
+    return bool(
+        filters.q
+        and filters.page == 1
+        and filters.sort == "relevance"
+        and result.results
+        and summary_writer() is not None
+    )
+
+
+def summary_url(filters: search.SearchFilters, result: search.SearchPage) -> str | None:
+    params: dict[str, Any] = filters.params()
+    return link("summary", **params) if summarizable(filters, result) else None
+
+
+@app.get("/api/shrnuti")
+def summary_fragment(request: Request, db: DB) -> Response:
+    """The AI summary block for a search, loaded after the results (DESIGN.md §7.8)."""
+    if summary_writer() is None:
+        return HTMLResponse("")
+    shared = SHARED.get(db)
+    known = sorted(common.terms(db))
+    filters, errors = search.SearchFilters.parse(query_lists(request), known)
+    filters = replace(filters, page=1, sort="relevance")
+    vector, _ = query_vector(db, shared, filters.q)
+    result = search.search(db, filters, errors, vector)
+    writer = summary_writer()
+    if writer is None or not summarizable(filters, result):  # e.g. no results
+        return HTMLResponse("")
+    found = summary.summarize(
+        db,
+        writer,
+        filters.q,
+        result.results,
+        result.highlights,
+        get_settings().ai_monthly_limit_usd,
+    )
+    notes = {
+        "none": "V nalezených projevech jsme k dotazu nic, co by šlo shrnout s citacemi, nenašli.",
+        "limit": "Měsíční limit pro shrnutí je vyčerpán; výsledky hledání fungují dál.",
+        "unavailable": "Shrnutí se teď nepodařilo vytvořit; výsledky hledání fungují dál.",
+    }
+    return render(
+        request,
+        "_summary.html",
+        "summary",
+        {"answer": found.sentences, "sources": found.sources, "note": notes.get(found.status)},
+        shared,
+    )
+
+
 @app.get("/hledat")
 def search_page(request: Request, db: DB) -> Response:
     shared = SHARED.get(db)
     known = sorted(common.terms(db))
     filters, errors = search.SearchFilters.parse(query_lists(request), known)
-    result = search.search(db, filters, errors)
+    vector, unavailable = query_vector(db, shared, filters.q)
+    result = search.search(db, filters, errors, vector)
     scope_terms = filters.terms or tuple(known)
     scope = (
         f"v {scope_terms[0]}. volebním období"
@@ -381,6 +497,16 @@ def search_page(request: Request, db: DB) -> Response:
             {"word": word, "forms": shown_forms(word, e.forms), "more": len(e.forms) > SHOWN_FORMS}
             for word, e in result.expansions.items()
         ],
+        "dropped": result.dropped,
+        "partial": partial_note(result),
+        "related": (
+            f"Podle podobného významu jsme přidali "
+            f"{count(result.related, 'projev', 'projevy', 'projevů')} bez hledaných slov."
+            if result.related
+            else None
+        ),
+        "meaning_unavailable": unavailable,
+        "summary_url": summary_url(filters, result),
         "coverage_note": (
             f"U {cz_number(shared['forms_waiting'])} projevů zatím nemáme určené tvary slov; "
             "v nich hledáme jen zadané tvary."

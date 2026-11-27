@@ -29,6 +29,11 @@ ROLE = "rozprava"
 DATABASE = "rozprava"
 TEST_DATABASE = "rozprava_test"
 DEFAULT_PORT = 55432
+VECTOR_SCHEMA = "extensions"  # pgvector (meaning search); see docs/related-search.md
+
+
+class MissingExtension(Exception):
+    """pgvector is not installed for this PostgreSQL."""
 
 
 def validate_test_database_url(value: str) -> str:
@@ -140,11 +145,11 @@ class LocalDatabase:
         if self.running():
             self.run("pg_ctl", "-D", str(self.cluster), "-m", "fast", "-w", "stop")
 
-    def admin_connection(self):
+    def admin_connection(self, database: str = "postgres"):
         return psycopg.connect(
             host=str(self.socket),
             port=self.port,
-            dbname="postgres",
+            dbname=database,
             user=getpass.getuser(),
             autocommit=True,
         )
@@ -160,6 +165,37 @@ class LocalDatabase:
                         sql.Identifier(name), sql.Identifier(ROLE)
                     )
                 )
+        self.enable_vectors(name)
+
+    def enable_vectors(self, name: str) -> None:
+        """Install pgvector, which only a superuser may do, in its own schema.
+
+        The schema survives the test suite's reset of `public`, and the database's
+        search path lets the application role use its types and operators.
+        """
+        with self.admin_connection(name) as connection:
+            if not connection.execute(
+                "SELECT 1 FROM pg_available_extensions WHERE name='vector'"
+            ).fetchone():
+                raise MissingExtension
+            connection.execute(
+                sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(VECTOR_SCHEMA))
+            )
+            connection.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                    sql.Identifier(VECTOR_SCHEMA), sql.Identifier(ROLE)
+                )
+            )
+            connection.execute(
+                sql.SQL("CREATE EXTENSION IF NOT EXISTS vector SCHEMA {}").format(
+                    sql.Identifier(VECTOR_SCHEMA)
+                )
+            )
+            connection.execute(
+                sql.SQL('ALTER DATABASE {} SET search_path = "$user", public, {}').format(
+                    sql.Identifier(name), sql.Identifier(VECTOR_SCHEMA)
+                )
+            )
 
     def init(self) -> None:
         existing_cluster = (self.cluster / "PG_VERSION").exists()
@@ -247,7 +283,9 @@ class LocalDatabase:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["init", "start", "stop", "status", "backup", "test-db"])
+    parser.add_argument(
+        "command", choices=["init", "start", "stop", "status", "backup", "test-db", "vectors"]
+    )
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--env-file", type=Path, default=Path(".env"))
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -277,8 +315,20 @@ def main() -> int:
             case "test-db":
                 manager.test_db()
                 print("Separate test database is ready; no existing data was reset.")
+            case "vectors":
+                manager.start()
+                for name in (DATABASE, TEST_DATABASE):
+                    manager.enable_vectors(name)
+                print("pgvector is installed in both databases.")
             case "backup":
                 print(f"Backup saved: {manager.backup()}")
+    except MissingExtension:
+        print(
+            "pgvector is not installed for this PostgreSQL. Run `brew install pgvector`, "
+            "then repeat this command.",
+            file=sys.stderr,
+        )
+        return 1
     except (ValueError, OSError, psycopg.Error):
         # Exception strings from drivers/validation can contain URLs/passwords.
         print(

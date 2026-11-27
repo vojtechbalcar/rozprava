@@ -105,31 +105,50 @@
     pop.addEventListener("pointerleave", () => (popOut = setTimeout(hideCite, 100)));
   }
   function hideCite(now) { if (pop && (now || !pop.matches(":hover, :focus-within"))) { if (overlay === pop) closeOverlay(); pop.remove(); pop = null; } }
-  $$(".cite[data-cite]").forEach((chip) => {
-    chip.addEventListener("pointerenter", () => { if (innerWidth < 768) return; clearTimeout(popOut); popIn = setTimeout(() => showCite(chip), 150); });
-    chip.addEventListener("pointerleave", () => { clearTimeout(popIn); popOut = setTimeout(hideCite, 100); });
-    chip.addEventListener("focus", () => { if (innerWidth >= 768) showCite(chip); });
-    chip.addEventListener("blur", () => (popOut = setTimeout(hideCite, 100)));
-    chip.addEventListener("click", (e) => {
-      const target = document.getElementById(`v${chip.dataset.cite}`);
-      if (!target) return;
-      e.preventDefault();
-      if (innerWidth < 768) {
-        showCite(chip);
-        const close = document.createElement("button");
-        close.className = "btn btn--secondary"; close.textContent = "Zavřít citaci";
-        pop.append(close); close.addEventListener("click", () => hideCite(true));
-        pop.setAttribute("aria-label", "Citovaný projev");
-        openOverlay(pop, chip);
-        return;
-      }
-      hideCite(true);
-      target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-      history.replaceState(null, "", `#v${chip.dataset.cite}`);
-      target.classList.remove("is-flash");
-      void target.offsetWidth;
-      target.classList.add("is-flash");
+  function bindCites(root) {
+    $$(".cite[data-cite]", root).forEach((chip) => {
+      chip.addEventListener("pointerenter", () => { if (innerWidth < 768) return; clearTimeout(popOut); popIn = setTimeout(() => showCite(chip), 150); });
+      chip.addEventListener("pointerleave", () => { clearTimeout(popIn); popOut = setTimeout(hideCite, 100); });
+      chip.addEventListener("focus", () => { if (innerWidth >= 768) showCite(chip); });
+      chip.addEventListener("blur", () => (popOut = setTimeout(hideCite, 100)));
+      chip.addEventListener("click", (e) => {
+        const target = document.getElementById(`v${chip.dataset.cite}`);
+        if (!target) return;
+        e.preventDefault();
+        if (innerWidth < 768) {
+          showCite(chip);
+          const close = document.createElement("button");
+          close.className = "btn btn--secondary"; close.textContent = "Zavřít citaci";
+          pop.append(close); close.addEventListener("click", () => hideCite(true));
+          pop.setAttribute("aria-label", "Citovaný projev");
+          openOverlay(pop, chip);
+          return;
+        }
+        hideCite(true);
+        target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+        history.replaceState(null, "", `#v${chip.dataset.cite}`);
+        target.classList.remove("is-flash");
+        void target.offsetWidth;
+        target.classList.add("is-flash");
+      });
     });
+  }
+  bindCites(document);
+
+  /* ---------- AI summary (§7.8): loaded after the results, which never wait for it ---------- */
+  $$("[data-summary-src]").forEach(async (slot) => {
+    try {
+      const response = await fetch(slot.dataset.summarySrc, { headers: { Accept: "text/html" } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const box = document.createElement("div");
+      box.innerHTML = await response.text();  // server-rendered and escaped by Jinja
+      const section = box.querySelector("[data-summary]");
+      if (!section) { slot.remove(); return; }
+      slot.replaceWith(section);
+      bindCites(section);
+    } catch {
+      slot.remove();
+    }
   });
 
   /* Modal focus, inert backgrounds and return-to-trigger behavior. */

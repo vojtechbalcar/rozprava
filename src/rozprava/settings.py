@@ -1,10 +1,11 @@
 """Local configuration. Importing this module performs no I/O."""
 
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field, ValidationInfo, field_validator, model_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -24,6 +25,15 @@ class Settings(BaseSettings):
     )
     data_dir: Path = Field(default_factory=lambda: Path.home() / ".local/share/rozprava")
     cache_dir: Path = Field(default=None, validate_default=True)
+
+    # Paid AI services, used only through ai.py; see docs/related-search.md.
+    voyage_api_key: SecretStr | None = Field(default=None, validation_alias="VOYAGE_API_KEY")
+    anthropic_api_key: SecretStr | None = Field(default=None, validation_alias="ANTHROPIC_API_KEY")
+    embedding_model: str = "voyage-4-large"
+    # Voyage's first 200 M tokens per model are free; stop embedding well before.
+    embedding_token_limit: int = 190_000_000
+    summary_model: str = "claude-haiku-5-5"
+    ai_monthly_limit_usd: Decimal = Decimal("5")
 
     def __init__(self, _env_file: Path | str | None = ".env", **values: Any):
         super().__init__(_env_file=_env_file, **values)

@@ -58,6 +58,19 @@ def forms_waiting(session: Session) -> int:
     )
 
 
+def meaning_coverage(session: Session, model: str) -> dict[str, int | str]:
+    """Speeches embedded for meaning search with this model, and those still waiting."""
+    from rozprava.ingest import embed  # the eligibility rule lives with the embedding job
+
+    chunk = models.SpeechChunk
+    embedded = session.scalar(
+        select(func.count(func.distinct(chunk.revision_id)))
+        .join(SR, SR.id == chunk.revision_id)
+        .where(chunk.model == model, SR.retired_at.is_(None))
+    )
+    return {"embedded": embedded or 0, "waiting": embed.pending(session, model), "model": model}
+
+
 def home(session: Session, now: dt.datetime) -> dict:
     terms = common.terms(session)
     current = terms[max(terms)] if terms else None

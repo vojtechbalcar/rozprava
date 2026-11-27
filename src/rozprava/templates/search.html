@@ -24,6 +24,10 @@
 
     <p class="count-line" data-result-count aria-live="polite"><strong>{{ search.total|count('projev', 'projevy', 'projevů') }}</strong> {{ search.scope|nbsp }}, seřazeno {{ 'podle data' if search.sort == 'nejnovejsi' or not search.query else 'podle relevance' }}</p>
     {% if search.expansions %}<p class="meta" data-word-forms>Hledáme i&nbsp;další tvary: {% for e in search.expansions %}{{ e.word }} ({{ e.forms|join(', ') }}{% if e.more %} a&nbsp;další{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}. Přesný tvar zadejte v&nbsp;uvozovkách.</p>{% endif %}
+    {% if search.dropped %}<p class="meta" data-filler>Běžná slova jsme vynechali: {{ search.dropped|join(', ') }}.</p>{% endif %}
+    {% if search.partial %}<p class="meta" data-partial>{{ search.partial|nbsp }}</p>{% endif %}
+    {% if search.related %}<p class="meta" data-related>{{ search.related|nbsp }}</p>{% endif %}
+    {% if search.meaning_unavailable %}<p class="meta" data-meaning-unavailable>Hledání podle významu teď nefunguje; ukazujeme jen projevy s&nbsp;hledanými slovy.</p>{% endif %}
     {% if search.coverage_note %}<p class="meta">{{ search.coverage_note|nbsp }}</p>{% endif %}
     {% if not live %}<p class="meta sample-note">V&nbsp;náhledu prohledáváte šest ukázkových projevů.</p>{% endif %}
 
@@ -33,20 +37,18 @@
     <section class="state-empty search-empty" data-search-empty{% if not live or search.total %} hidden{% endif %}><h2 class="h2">Nic jsme nenašli.</h2><p>Zkuste obecnější dotaz nebo odeberte filtr. Hledáme slova ve všech tvarech a&nbsp;bez ohledu na diakritiku; v&nbsp;uvozovkách hledáme přesně zadaný tvar nebo frázi.</p>{% if not live %}<button type="button" class="btn btn--secondary" data-search-reset>Zobrazit ukázkové projevy</button>{% endif %}</section>
     {% endif %}
 
-    {# AI summary (§7.8): machine-made, sans, never serif. Only in the design preview for now. #}
+    {# AI summary (§7.8): machine-made, sans, never serif. The design preview renders sample
+       sentences; live pages load the block after the results (/api/shrnuti). #}
     {% if search.answer %}
-    <section class="summary" aria-labelledby="summary-title">
-      <header class="summary__head">
-        <h2 class="label" id="summary-title">Shrnutí · jazykový model</h2>
-        <p class="meta">Podle {{ search.total }}&nbsp;{{ search.total|plural('projevu', 'projevů', 'projevů') }} · každá věta cituje zdroj</p>
-      </header>
-      <p class="summary__body">
-        {%- for s in search.answer %}
-        {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}" aria-describedby="cite-{{ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
-        {%- endfor %}
-      </p>
-      <footer class="summary__foot">Rozhodující je vždy znění přepisu. <a href="{{ link('how') }}#shrnuti">Jak shrnutí vznikají</a></footer>
+    {% with answer=search.answer, sources=search.total, note=None %}{% include "_summary.html" %}{% endwith %}
+    {% elif search.summary_url is defined and search.summary_url %}
+    <section class="summary summary--loading" data-summary-src="{{ search.summary_url }}" aria-label="Načítání shrnutí" aria-busy="true">
+      <header class="summary__head"><p class="label">Shrnutí · jazykový model</p></header>
+      <div class="shimmer" aria-hidden="true">{% for _ in range(3) %}<svg width="100%" height="8">{% for i in range(60) %}<circle cx="{{ 4 + i * 12 }}" cy="4" r="3" style="--i: {{ i }}"/>{% endfor %}</svg>{% endfor %}</div>
+      <p class="label">Generuji shrnutí</p>
     </section>
+    {% endif %}
+    {% if search.answer or (search.summary_url is defined and search.summary_url) %}
     {# Citation popover contents (§7.7) #}
     <div hidden>
       {% for c in search.results %}
@@ -62,7 +64,7 @@
     <h2 class="visually-hidden">Projevy</h2>
     <ol class="results" start="{{ search.results[0].n if search.results else 1 }}">
       {% for c in search.results %}
-      <li>{{ ui.result_object(c, terms=search.highlights, number=c.n) }}</li>
+      <li>{{ ui.result_object(c, terms=search.highlights, number=c.n, eyebrow='Podobný význam' if c.related is defined and c.related else None) }}</li>
       {% endfor %}
     </ol>
     {% if live and search.pages > 1 and not search.out_of_range %}

@@ -1,0 +1,21 @@
+{# AI summary (§7.8): machine-made, sans, never serif. Every sentence carries the
+   results [n] it cites; uncited sentences never reach this template. #}
+{% if answer %}
+<section class="summary" aria-labelledby="summary-title" data-summary>
+  <header class="summary__head">
+    <h2 class="label" id="summary-title">Shrnutí · jazykový model</h2>
+    <p class="meta">Podle {{ sources }}&nbsp;{{ sources|plural('projevu', 'projevů', 'projevů') }} · každá věta cituje zdroj</p>
+  </header>
+  <p class="summary__body">
+    {%- for s in answer %}
+    {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}" aria-describedby="cite-{{ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
+    {%- endfor %}
+  </p>
+  <footer class="summary__foot">Rozhodující je vždy znění přepisu. <a href="{{ link('how') }}#shrnuti">Jak shrnutí vznikají</a></footer>
+</section>
+{% elif note %}
+<section class="summary" aria-labelledby="summary-title" data-summary data-summary-note>
+  <header class="summary__head"><h2 class="label" id="summary-title">Shrnutí · jazykový model</h2></header>
+  <p class="summary__body">{{ note|nbsp }}</p>
+</section>
+{% endif %}

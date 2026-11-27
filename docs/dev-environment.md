@@ -87,6 +87,19 @@ holds ingestion logs, and `backups/` holds private PostgreSQL custom-format
 dumps. The download cache is not a database backup. Keep the ignored `.env` and
 local credentials private; neither is needed in Git.
 
+## pgvector for meaning search (26 Nov 2026)
+
+`brew install pgvector` (0.8.7, bottled for PostgreSQL 18 and 19; postgres is only a
+build dependency) puts the extension in `/opt/homebrew/{lib,share}/postgresql@18`,
+which survives PostgreSQL patch upgrades. pgvector is not a *trusted* extension, so
+the application role, which is not a superuser, cannot create it, and the test
+fixture's `DROP SCHEMA public CASCADE` would drop it from `public`.
+`scripts/local_db.py vectors` (also run by `init` and `test-db`) therefore connects as
+the cluster administrator and, in both databases, creates the `extensions` schema,
+installs `vector` there, grants the app role usage and sets the database search path
+to `"$user", public, extensions`. Migration 0005 stops with these instructions when
+the extension is missing. On another Mac: install pgvector, run `vectors`, then migrate.
+
 ## Czech morphology build and locale (19 Nov 2026)
 
 See [[czech-word-forms]].

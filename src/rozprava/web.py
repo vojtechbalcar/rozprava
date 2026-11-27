@@ -16,6 +16,7 @@ from rozprava import models
 from rozprava.activity import calendar
 from rozprava.parties import PARTIES
 from rozprava.queries import archive, common
+from rozprava.settings import get_settings
 from rozprava.templating import make_env
 from rozprava.typography import MONTHS_GENITIVE, czech_sort_key
 
@@ -32,6 +33,7 @@ ROUTES = {
     "how": "/jak-to-funguje",
     "methodology": "/jak-to-funguje",
     "palette": "/api/palette",
+    "summary": "/api/shrnuti",
 }
 DROPPED = {"result"}  # preview-only parameters
 
@@ -114,6 +116,9 @@ def shared_context(session: Session) -> dict:
         "updated": common.last_import(session),
         "coverage": archive.coverage(session),
         "forms_waiting": archive.forms_waiting(session),
+        "meaning": archive.meaning_coverage(session, get_settings().embedding_model),
+        # The Claude model writing summaries, or None when they are switched off.
+        "summaries": get_settings().summary_model if get_settings().anthropic_api_key else None,
         "terms": [{"value": str(t.number), "label": t.label} for t in terms.values()],
         "current_term": current_term,
         "palette": {
