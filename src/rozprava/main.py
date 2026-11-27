@@ -417,7 +417,11 @@ def summary_fragment(request: Request, db: DB) -> Response:
         request,
         "_summary.html",
         "summary",
-        {"answer": found.sentences, "sources": found.sources, "note": notes.get(found.status)},
+        {
+            "answer": summary.view(db, found.sentences, result.results),
+            "sources": found.sources,
+            "note": notes.get(found.status),
+        },
         shared,
     )
 

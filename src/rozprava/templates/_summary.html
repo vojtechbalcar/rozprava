@@ -1,5 +1,8 @@
 {# AI summary (§7.8): machine-made, sans, never serif. Every sentence carries the
-   results [n] it cites; uncited sentences never reach this template. #}
+   results [n] it cites; uncited sentences never reach this template. A citation's
+   popover (§7.7) shows the exact sentences it cites, when the summary recorded them;
+   otherwise the result's own popover. #}
+{% import "_macros.html" as ui %}
 {% if answer %}
 <section class="summary" aria-labelledby="summary-title" data-summary>
   <header class="summary__head">
@@ -8,10 +11,19 @@
   </header>
   <p class="summary__body">
     {%- for s in answer %}
-    {{ s.text|nbsp }}{% for n in s.cites %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}" aria-describedby="cite-{{ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
+    {{ s.text|nbsp }}{% for c in s.cites %}{% set n = c.n if c is mapping else c %}{% set popover = c.popover if c is mapping else none %}<a class="cite" href="#v{{ n }}" data-cite="{{ n }}"{% if popover %} data-pop="{{ popover }}"{% endif %} aria-describedby="{{ popover or 'cite-' ~ n }}">[{{ n }}]</a>{% endfor %}{{ ' ' }}
     {%- endfor %}
   </p>
   <footer class="summary__foot">Rozhodující je vždy znění přepisu. <a href="{{ link('how') }}#shrnuti">Jak shrnutí vznikají</a></footer>
+  <div hidden>
+    {% for s in answer %}{% for c in s.cites if c is mapping and c.popover %}
+    <div class="cite-pop" id="{{ c.popover }}" role="tooltip">
+      <p class="cite-pop__who">{{ ui.party_pill(c.result.speaker.party) }}<span>{{ c.result.speaker.name }}</span></p>
+      <p class="cite-pop__quote">„{{ c.quote|nbsp }}{% if c.cut %}&nbsp;…{% endif %}“</p>
+      <p class="cite-pop__foot"><span class="meta">{{ c.result.catalog|catalog }}</span><a href="{{ link('transcript', term=c.result.term, sitting=c.result.sitting, page=c.page, anchor=c.anchor) }}">Otevřít v&nbsp;přepisu <span aria-hidden="true">→</span></a></p>
+    </div>
+    {% endfor %}{% endfor %}
+  </div>
 </section>
 {% elif note %}
 <section class="summary" aria-labelledby="summary-title" data-summary data-summary-note>

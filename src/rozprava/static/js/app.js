@@ -94,7 +94,8 @@
   /* ---------- citation popovers (§7.7) ---------- */
   let pop, popIn, popOut;
   function showCite(chip) {
-    const source = document.getElementById(`cite-${chip.dataset.cite}`);
+    // A summary citation shows the sentences it cites; otherwise the cited result.
+    const source = document.getElementById(chip.dataset.pop || `cite-${chip.dataset.cite}`);
     if (!source) return;
     hideCite(true);
     pop = source.cloneNode(true);

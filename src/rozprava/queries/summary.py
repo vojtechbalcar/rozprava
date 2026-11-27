@@ -1,10 +1,11 @@
 """AI summaries of search results (DESIGN.md §7.8): what the top speeches say about a query.
 
-The first SOURCES results of page one, in relevance order, go to Claude as
-custom-content documents with citations enabled, one block per paragraph. A
+The first SOURCES results of page one, in relevance order, go to Claude as plain-
+text documents with citations enabled, which the API splits into sentences. A
 document holds a short speech whole; of a longer one, the paragraph the result
-shows and the others that match the query. Claude cites paragraphs by block index,
-so every kept sentence links to the results [n] it rests on.
+shows and the others that match the query. Each citation names a character range
+of one document, so every kept sentence links to the results [n] it rests on, and
+the citation popover shows exactly the sentences cited, taken from the stored text.
 
 CLAUDE.md's hard rules are enforced here, not left to the prompt: a sentence
 without a citation is dropped, and so is a sentence whose quotation marks hold
@@ -19,19 +20,20 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from rozprava import ai, models
 from rozprava.queries.search import _word_pattern
-from rozprava.typography import NBSP, fold
+from rozprava.typography import NBSP, clip, fold
 
 SOURCES = 8  # results sent to Claude
 WHOLE_SPEECH = 600  # words: a shorter speech is sent whole
 MAX_PARAGRAPHS = 4  # of a longer speech
 MAX_TOKENS = 4000  # the answer, adaptive thinking included
-PROMPT_VERSION = "2026-11-26"  # change with SYSTEM so cached summaries are rewritten
+PROMPT_VERSION = "2026-11-27"  # change with SYSTEM or documents to rewrite cached summaries
+QUOTE_LIMIT = 400  # characters of cited text shown in a citation popover
 NOT_FOUND = "NENALEZENO"
 
 SYSTEM = f"""You summarise what members of the Czech Chamber of Deputies said, for a \
@@ -66,6 +68,20 @@ class Source:
     paragraphs: list[tuple[int, str]]  # (position, verbatim text)
     title: str
     context: str
+
+    @property
+    def text(self) -> str:
+        """The document Claude reads: the paragraphs, separated by blank lines."""
+        return "\n\n".join(text for _, text in self.paragraphs)
+
+    def positions(self, start: int, end: int) -> list[int]:
+        """Paragraphs overlapping the character range [start, end) of `text`."""
+        out, offset = [], 0
+        for position, paragraph in self.paragraphs:
+            if offset < end and start < offset + len(paragraph):
+                out.append(position)
+            offset += len(paragraph) + 2
+        return out
 
 
 def sources(session: Session, results: Sequence[dict], highlights: Sequence[str]) -> list[Source]:
@@ -132,14 +148,11 @@ def _context(result: dict) -> str:
 
 
 def documents(found: Sequence[Source], q: str) -> list[dict]:
-    """The user message: one custom-content document per source, then the request."""
+    """The user message: one plain-text document per source, then the request."""
     content: list[dict] = [
         {
             "type": "document",
-            "source": {
-                "type": "content",
-                "content": [{"type": "text", "text": text} for _, text in s.paragraphs],
-            },
+            "source": {"type": "text", "media_type": "text/plain", "data": s.text},
             "title": s.title,
             "context": s.context,
             "citations": {"enabled": True},
@@ -157,6 +170,7 @@ class Sentence:
     text: str
     cites: list[int] = field(default_factory=list)  # result numbers
     passages: list[tuple[int, int]] = field(default_factory=list)  # (revision, position)
+    quotes: list[dict] = field(default_factory=list)  # the cited words, see _quote
 
 
 # A sentence ends at . ! ? or … before a capital letter; "55. schůze" and "12. 3." do not,
@@ -177,12 +191,11 @@ def sentences(blocks: Sequence, found: Sequence[Source]) -> list[Sentence]:
             continue
         cited = []
         for c in getattr(block, "citations", None) or []:
-            if c.type != "content_block_location" or not 0 <= c.document_index < len(found):
+            if c.type != "char_location" or not 0 <= c.document_index < len(found):
                 continue
             source = found[c.document_index]
-            for index in range(c.start_block_index, c.end_block_index):
-                if 0 <= index < len(source.paragraphs):
-                    cited.append((source, source.paragraphs[index]))
+            if quote := _quote(source, c.start_char_index, c.end_char_index):
+                cited.append((source, quote))
         spans.append((len(text), len(text) + len(block.text), cited))
         text += block.text
 
@@ -194,17 +207,43 @@ def sentences(blocks: Sequence, found: Sequence[Source]) -> list[Sentence]:
         sentence = text[start:end].strip()
         if not sentence or not cited:
             continue
-        quoted_in = " ".join(" ".join(paragraph.split()) for _, (_, paragraph) in cited)
+        paragraphs = dict.fromkeys(
+            (source.revision, position)
+            for source, quote in cited
+            for position in quote["positions"]
+        )
+        texts = {(source.revision, p): t for source, _ in cited for p, t in source.paragraphs}
+        quoted_in = " ".join(" ".join(texts[key].split()) for key in paragraphs)
         if not all(_verbatim(q, quoted_in) for q in _QUOTED.findall(sentence)):
             continue
         out.append(
             Sentence(
                 sentence,
                 sorted({source.number for source, _ in cited}),
-                list(dict.fromkeys((source.revision, p[0]) for source, p in cited)),
+                list(paragraphs),
+                list({(q["n"], q["start"]): q for _, q in cited}.values()),
             )
         )
     return out
+
+
+def _quote(source: Source, start: int, end: int) -> dict | None:
+    """A cited character range as stored text: the words, where they are and from which
+    result. The words come from our own copy of the transcript, never from the model."""
+    text = source.text
+    start, end = max(0, start), min(len(text), end)
+    positions = source.positions(start, end)
+    words = " ".join(text[start:end].split())
+    if not words or not positions:
+        return None
+    return {
+        "n": source.number,
+        "revision": source.revision,
+        "positions": positions,
+        "start": start,
+        "end": end,
+        "text": words,
+    }
 
 
 def _verbatim(quoted: str, source: str) -> bool:
@@ -257,7 +296,13 @@ def summarize(
     if answer.stop_reason == "max_tokens" and kept:
         kept = kept[:-1]  # the last sentence may be cut off
     rows = [
-        {"text": s.text, "cites": s.cites, "passages": [list(p) for p in s.passages]} for s in kept
+        {
+            "text": s.text,
+            "cites": s.cites,
+            "passages": [list(p) for p in s.passages],
+            "quotes": s.quotes,
+        }
+        for s in kept
     ]
     session.execute(
         insert(models.Summary)
@@ -266,3 +311,53 @@ def summarize(
     )
     session.commit()
     return Summary("ok" if rows else "none", rows)
+
+
+def view(session: Session, rows: Sequence[dict], results: Sequence[dict]) -> list[dict]:
+    """Sentences for the template. Each citation carries its result and the exact words
+    it cites, for the popover (DESIGN.md §7.7), and links to the first cited paragraph."""
+    by_number = {r["n"]: r for r in results}
+    pairs = {(q["revision"], q["positions"][0]) for s in rows for q in s.get("quotes", [])}
+    paragraph = models.SpeechParagraph
+    pages = (
+        {
+            (revision, position): page
+            for revision, position, page in session.execute(
+                select(paragraph.revision_id, paragraph.position, paragraph.page).where(
+                    tuple_(paragraph.revision_id, paragraph.position).in_(pairs)
+                )
+            )
+        }
+        if pairs
+        else {}
+    )
+    out = []
+    for i, sentence in enumerate(rows, start=1):
+        cites = []
+        for n in sentence["cites"]:
+            result = by_number.get(n)
+            quotes = sorted(
+                (q for q in sentence.get("quotes", []) if q["n"] == n), key=lambda q: q["start"]
+            )
+            if result is None or not quotes:
+                cites.append({"n": n, "popover": None})
+                continue
+            words = quotes[0]["text"]
+            for previous, quote in zip(quotes, quotes[1:], strict=False):
+                # Adjacent sentences join with a space; a gap is marked as a cut.
+                words += (" " if quote["start"] - previous["end"] <= 2 else " … ") + quote["text"]
+            shown = clip(words, QUOTE_LIMIT)
+            first = quotes[0]
+            cites.append(
+                {
+                    "n": n,
+                    "popover": f"cite-{i}-{n}",
+                    "result": result,
+                    "quote": shown,
+                    "cut": len(shown) < len(words),
+                    "page": pages.get((first["revision"], first["positions"][0]), result["page"]),
+                    "anchor": f"p-{result['catalog_slug']}-{first['positions'][0] + 1}",
+                }
+            )
+        out.append({"text": sentence["text"], "cites": cites})
+    return out

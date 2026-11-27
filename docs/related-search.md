@@ -1,6 +1,6 @@
 ---
 type: decision
-updated: 2026-11-26
+updated: 2026-11-27
 status: live; calibration and model comparison pending
 ---
 
@@ -142,11 +142,26 @@ uv run python -m rozprava.ingest status    # speeches embedded, tokens used
 
 - **Model and price.** `claude-haiku-5-5` ($0.10 / $0.50 per million input /
   output tokens up to 100K-token prompts; Sonnet 5.5 is $2 / $10), adaptive
-  thinking (on by default) at effort `medium`. Citations on custom-content
-  documents: one document per result, one content block per paragraph, so
-  Claude cites by block index (0-based, end exclusive). `cited_text` is not
-  billed. Citations cannot be combined with structured outputs. Facts from the
-  claude-api skill and the live citations page, 26 Nov 2026.
+  thinking (on by default) at effort `medium`. Citations on plain-text documents,
+  one per result: the API splits them into sentences and cites character ranges
+  (0-based, end exclusive). `cited_text` is not billed. Citations cannot be
+  combined with structured outputs. Facts from the claude-api skill and the live
+  citations page, 26 Nov 2026.
+- **Sentence-level citations (27 Nov).** At first each paragraph was one
+  custom-content block, and a citation popover showed the result's excerpt. The
+  user found popovers "sometimes a bit unrelated": the excerpt is the paragraph
+  matching the search words, while Claude had cited another paragraph of the same
+  speech. Now documents are plain text, each summary sentence stores the cited
+  character ranges, and its popover shows exactly those sentences, taken from the
+  stored text (never the model's `cited_text`), joined by a space when adjacent and
+  by " … " when words are left out, with a link to the first cited paragraph.
+  `PROMPT_VERSION` 2026-11-27 rewrites older cached summaries. A live check
+  ("jak se změnily důchody") matched every sentence with its cited words; it took
+  15 s against 8 s before. Jinja found a trap: `c.pop` on a dict is the built-in
+  `dict.pop`, so the key is `popover`.
+- **Invisible characters in sources.** 1,500 of 316,741 stored paragraphs carry
+  runs of U+2060 word joiners from psp.cz (e.g. after a dash). They are invisible
+  in the browser and part of the verbatim text, so they stay.
 - **Sources** (`queries/summary.py`). The first 8 results of page one by
   relevance (so `[n]` matches the page). A speech under 600 words is sent whole;
   of a longer one, the paragraph its result shows and up to 3 others with the
