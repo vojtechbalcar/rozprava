@@ -1,7 +1,7 @@
 ---
 type: decision
 updated: 2026-11-28
-status: in progress
+status: deployed 28 Nov; daily import being verified
 ---
 
 # Production deployment: Cloudflare and Neon
@@ -172,3 +172,25 @@ migration, then `npx wrangler deploy`.
   Containers. Deploying containers requires the Workers Paid plan." for the
   account Wrangler is logged into (vojtech.balcar@sbid.cz), although the token has
   `containers (write)`.
+
+## Deployed (28 Nov 2026)
+
+- **Neon** after the upgrade to a paid plan (`neon.max_cluster_size` 16 TB instead
+  of 1 GB) and a password reset. `restore` failed once more at once: pg_restore 18
+  requires `--dbname`, and the URL had been moved to environment variables; it now
+  gets only the database name, which holds no secret. The process list showed no
+  credentials during the run. The restore then loaded the 610 MB dump with four
+  jobs; `compare` matched every table (96,731 speech revisions, 316,741
+  paragraphs, 78,239 passages, 212,965 word forms, 2,376,200 vote records,
+  migration 0006). 1,912 MB on Neon (2.3 GB locally, where indexes are older).
+- **Cloudflare:** Wrangler was logged in to the account with Workers Paid;
+  `wrangler deploy` built the image under Colima, pushed it (about 2.5 minutes) and
+  created both Durable Objects, the two rate limits and the cron.
+  Address: https://rozprava.vojtech-balcar.workers.dev. The four secrets were set
+  before the first request.
+- **First requests:** `/health` 200 after a 15-second cold start; home 1.0 s,
+  "důchod" 1.6 s, "jak se změnily důchody" 0.7 s with 604 speeches and 48 related
+  by meaning; a cached summary 0.7 s; `/poslanci` 3.1 s on first load. `/hledat/`
+  now redirects to the public origin.
+- **Manual import:** `POST /_admin/update` answered "Import started." and a wrong
+  token 404; run 23 (metadata) appeared in Neon, running as PID 1 in the container.

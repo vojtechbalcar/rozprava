@@ -139,6 +139,9 @@ def restore(url: str, dump: Path) -> None:
             "--exit-on-error",
             "--jobs=4",
             f"--use-list={listing}",
+            # pg_restore 18 requires a target; the name alone holds no secret, and libpq
+            # takes host, user and password from the environment above.
+            f"--dbname={make_url(url).database}",
             str(dump),
         ],
         env=environment,
