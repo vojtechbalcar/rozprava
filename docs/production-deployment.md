@@ -108,7 +108,10 @@ First setup, in order:
 2. `uv run python scripts/remote_db.py check`: vector and unaccent available.
 3. `uv run python scripts/local_db.py backup`, then
    `uv run python scripts/remote_db.py restore <dump>`, `compare`, `migrate`.
-4. **Cloudflare:** Workers Paid plan; `cd deploy/cloudflare && npm ci && npx wrangler login`.
+4. **Cloudflare:** Workers Paid plan on the account Wrangler logs into;
+   `cd deploy/cloudflare && npm ci && npx wrangler login`. Wrangler builds with
+   `docker buildx` (`--load`): `brew install docker-buildx` and link it into
+   `~/.docker/cli-plugins/`.
 5. `uv run python scripts/cloudflare_secrets.py`.
 6. `colima start`, then `cd deploy/cloudflare && npx wrangler deploy` (builds
    the linux/amd64 image with the local Docker).
@@ -120,3 +123,21 @@ First setup, in order:
 
 Releasing a change: tests, then `remote_db.py migrate` when there is a new
 migration, then `npx wrangler deploy`.
+
+## First attempt (28 Nov): two plans missing
+
+- **Neon free plan.** The restore stopped at `word_form` with "could not extend
+  file because project size limit (1024 MB) has been exceeded". The free plan
+  allows 1 GB per project and counts the change history too, so it filled at
+  183 MB of restored data. The archive needs a paid plan. The partial copy was
+  emptied with `remote_db.py reset --confirm neondb`, added for this; `restore`
+  refuses a database that already holds tables and points to it.
+- **Workers Paid not active.** The image built (buildx installed for it), then
+  the push failed with 401 on `/containers/me`; `wrangler containers list` gave
+  the reason: "You do not have access to Cloudflare Containers. Deploying
+  containers requires the Workers Paid plan." Wrangler was logged in as
+  vojtech.balcar@sbid.cz, whose account does not have the plan.
+- Also: Colima failed to start on a missing `user-v2` network socket after the
+  previous session ended abruptly; `colima stop --force` then `colima start` fixed
+  it. The dump now skips comments (`--no-comments`): commenting on an extension
+  needs its owner, which on Neon is not our role.

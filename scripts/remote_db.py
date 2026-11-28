@@ -10,8 +10,10 @@ docs/production-deployment.md.
     uv run python scripts/remote_db.py migrate          # alembic upgrade head
     uv run python scripts/remote_db.py compare          # row counts: local vs production
     uv run python scripts/remote_db.py status           # `ingest status` for production
+    uv run python scripts/remote_db.py reset --confirm NAME   # empty it after a failed restore
 
-`restore` refuses a database that already holds an archive.
+`restore` refuses a database that already holds an archive; `reset` deletes the
+archive's schemas and runs only when given the database's name.
 """
 
 import argparse
@@ -50,6 +52,23 @@ def libpq(url: str) -> str:
     return make_url(url).set(drivername="postgresql").render_as_string(hide_password=False)
 
 
+def libpq_environment(url: str) -> dict[str, str]:
+    """Connection settings as libpq environment variables, so the password never
+    appears on a command line, where any local process could read it."""
+    parsed = make_url(url)
+    values = {
+        "PGHOST": parsed.host,
+        "PGPORT": str(parsed.port) if parsed.port else None,
+        "PGUSER": parsed.username,
+        "PGPASSWORD": parsed.password,
+        "PGDATABASE": parsed.database,
+        "PGSSLMODE": parsed.query.get("sslmode"),
+        "PGCHANNELBINDING": parsed.query.get("channel_binding"),
+        "PGCONNECT_TIMEOUT": "20",
+    }
+    return {k: str(v) for k, v in values.items() if v}
+
+
 def connect(url: str) -> psycopg.Connection:
     return psycopg.connect(libpq(url), autocommit=True, connect_timeout=20)
 
@@ -77,11 +96,17 @@ def restore(url: str, dump: Path) -> None:
         raise SystemExit(f"No such dump: {dump}")
     with connect(url) as db:
         if db.execute("SELECT to_regclass('public.speech_revision')").fetchone() != (None,):
-            raise SystemExit("This database already holds an archive; nothing was restored.")
+            raise SystemExit(
+                "This database already holds an archive (perhaps a partial restore); nothing was "
+                "restored. To start over: reset --confirm <database name>."
+            )
         name = db.execute("SELECT current_database()").fetchone()
         assert name is not None
         # pgvector's types and operators live in the extensions schema, as locally
         # (scripts/local_db.py); new sessions must find them without qualification.
+        # The schema is created here, not by the dump: parallel restore workers
+        # raced on it ("schema extensions already exists", 28 Nov).
+        db.execute("CREATE SCHEMA IF NOT EXISTS extensions")
         db.execute(
             sql.SQL("ALTER DATABASE {} SET search_path = " + SEARCH_PATH).format(
                 sql.Identifier(name[0])
@@ -90,27 +115,55 @@ def restore(url: str, dump: Path) -> None:
     tool = PG_BIN / "pg_restore" if (PG_BIN / "pg_restore").exists() else shutil.which("pg_restore")
     if not tool:
         raise SystemExit("pg_restore (PostgreSQL 18) is not installed.")
+    contents = subprocess.run(
+        [str(tool), "--list", str(dump)], capture_output=True, text=True, check=True
+    ).stdout
+    listing = dump.with_suffix(".list")
+    listing.write_text(
+        "".join(
+            f";{line}"
+            if " SCHEMA - extensions " in line or " ACL - SCHEMA extensions " in line
+            else line
+            for line in contents.splitlines(keepends=True)
+        )
+    )
     print(f"Restoring {dump.name} ({dump.stat().st_size / 1e6:.0f} MB); this takes a while.")
-    environment = os.environ | {"PGCONNECT_TIMEOUT": "20"}
+    environment = os.environ | libpq_environment(url)
     result = subprocess.run(
         [
             str(tool),
             "--no-owner",
             "--no-privileges",
+            # Comments on extensions need their owner; on Neon that is not our role.
+            "--no-comments",
             "--exit-on-error",
             "--jobs=4",
-            f"--dbname={libpq(url)}",
+            f"--use-list={listing}",
             str(dump),
         ],
         env=environment,
         capture_output=True,
         text=True,
     )
+    listing.unlink()
     if result.returncode != 0:
-        # Error text from pg_restore names objects, not the connection string.
+        # Error text from pg_restore names objects, not the connection string. Parallel
+        # workers may already have loaded part of the archive before stopping.
         print(result.stderr[-3000:], file=sys.stderr)
-        raise SystemExit("pg_restore failed; see the messages above.")
+        raise SystemExit("pg_restore failed and may have left a partial archive; see above.")
     print("Restored. Next: compare, then migrate.")
+
+
+def reset(url: str, confirm: str | None) -> None:
+    with connect(url) as db:
+        row = db.execute("SELECT current_database()").fetchone()
+        assert row is not None
+        if confirm != row[0]:
+            raise SystemExit(f"Deletes every table; repeat with --confirm {row[0]} to proceed.")
+        db.execute("DROP SCHEMA IF EXISTS extensions CASCADE")
+        db.execute("DROP SCHEMA public CASCADE")
+        db.execute("CREATE SCHEMA public")
+    print(f"Emptied {row[0]}; restore can run again.")
 
 
 def migrate(url: str) -> None:
@@ -155,8 +208,11 @@ def status(url: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
-    parser.add_argument("command", choices=["check", "restore", "migrate", "compare", "status"])
+    parser.add_argument(
+        "command", choices=["check", "restore", "migrate", "compare", "status", "reset"]
+    )
     parser.add_argument("dump", nargs="?", type=Path, help="custom-format dump for restore")
+    parser.add_argument("--confirm", help="the database name, required by reset")
     args = parser.parse_args()
     url = production_url()
     try:
@@ -170,6 +226,8 @@ def main() -> int:
             migrate(url)
         elif args.command == "status":
             status(url)
+        elif args.command == "reset":
+            reset(url, args.confirm)
         else:
             compare(url)
     except psycopg.Error as error:
