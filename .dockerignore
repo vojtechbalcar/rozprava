@@ -1,0 +1,10 @@
+# Only what the image needs: pyproject.toml, uv.lock, alembic, src and one script.
+*
+!pyproject.toml
+!uv.lock
+!alembic.ini
+!alembic/
+!src/
+!scripts/fetch_morphology.py
+**/__pycache__
+**/*.pyc

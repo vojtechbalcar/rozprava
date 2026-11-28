@@ -13,6 +13,7 @@
 - [[local-app-verification]] — completed local database phase, final browser/check results, corpus timings and operating limits.
 - [[czech-word-forms]] — search finds every form of a word via the MorphoDiTa tagger (MorfFlex 2.1, CC BY-NC-SA); stemmer, simplemma and hunspell rejected; next phases and work split; rollout on the second Mac.
 - [[related-search]] — filler words and partial matches for longer queries; Voyage meaning search and cited Claude Haiku 5.5 summaries capped at $5/month (OpenAI, local bge-m3, keyword-only rejected); live since 26 Nov; per-query distance cutoff; adding API keys safely.
+- [[production-deployment]] — Cloudflare Containers + Neon + daily cron import chosen (Supabase, PlanetScale, Python Workers, GitHub Actions rejected); image, Worker and runbook.
 
 ## Research
 

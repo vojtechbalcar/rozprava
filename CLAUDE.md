@@ -43,6 +43,11 @@ Why this stack: see [[stack-decision]] in `docs/`.
   in both databases (pgvector is untrusted, so the admin creates it in the `extensions`
   schema). With `VOYAGE_API_KEY` in `.env`, `ingest embed` embeds speeches (paid API,
   stops at `ROZPRAVA_EMBEDDING_TOKEN_LIMIT`) and imports embed new ones. See [[related-search]].
+- Production (Cloudflare Containers + Neon; runbook in [[production-deployment]]):
+  `uv run python scripts/remote_db.py check|restore|migrate|compare|status` against the
+  Neon URL in the private `.env.production`; `uv run python scripts/cloudflare_secrets.py`;
+  `cd deploy/cloudflare && npx wrangler deploy` (needs Docker: `colima start`). A cron
+  starts the daily `ingest update` container at 04:30 UTC.
 - Word forms: `uv run python scripts/fetch_morphology.py` once installs the MorphoDiTa
   Czech model in `~/.local/share/rozprava/models`; import commands then tag new
   speeches, `ingest forms [--rebuild]` tags the rest. See [[czech-word-forms]].
@@ -92,6 +97,11 @@ Confirmed by the user on 17 November 2026:
 - Build database-backed search first; add AI afterward. No paid APIs, embeddings
   or generated summaries in the first functional version.
 - Run locally on this Mac, with PostgreSQL set up here.
+
+On 28 November 2026 the user decided to move to public production: Cloudflare
+Containers behind a Worker (workers.dev first), Neon Postgres in Frankfurt, a daily
+Cloudflare cron import, and per-visitor rate limits on paid AI calls with the $5
+monthly cap kept. See [[production-deployment]]; it supersedes "run locally" above.
 
 Keep the existing Czech interface. The detailed implementation proposal is in
 [[functional-app-design]] and is approved; track execution in [[functional-app-plan]]. The stack above describes the

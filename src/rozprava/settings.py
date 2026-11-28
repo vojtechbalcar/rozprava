@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     @classmethod
     def postgresql_only(cls, value: str | None) -> str | None:
         if value is not None:
+            # Hosted PostgreSQL (Neon) hands out postgresql:// or postgres:// URLs.
+            scheme, sep, rest = value.partition("://")
+            if sep and scheme in ("postgres", "postgresql"):
+                value = f"postgresql+psycopg://{rest}"
             try:
                 url = make_url(value)
             except Exception:
