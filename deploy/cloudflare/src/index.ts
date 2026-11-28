@@ -13,6 +13,10 @@ const PORT = 8080;
 const WEB_IDLE_MS = 15 * 60 * 1000;
 // The import exits by itself; one still running after this long is stopped.
 const UPDATE_LIMIT_MS = 3 * 60 * 60 * 1000;
+// How long a stopping container may finish its work before it is destroyed.
+const DRAIN_MS = 30 * 1000;
+const SIGINT = 2; // the importer records an interrupted run (KeyboardInterrupt)
+const SIGTERM = 15; // uvicorn finishes in-flight requests, then exits
 
 // Values the app reads from its environment (settings.py). Secrets come from
 // `wrangler secret put`; empty ones are left out so the app sees them as unset.
@@ -28,21 +32,56 @@ function appEnv(env: Env): Record<string, string> {
 	);
 }
 
+/** Ask a container to stop; destroy it if it has not exited after DRAIN_MS. */
+async function stop(container: Container, signal: number, reason: string): Promise<void> {
+	container.signal(signal);
+	const exited = await Promise.race([
+		container.monitor().then(
+			() => true,
+			() => true,
+		),
+		scheduler.wait(DRAIN_MS).then(() => false),
+	]);
+	if (!exited && container.running) {
+		await container.destroy(reason);
+	}
+}
+
+/** The app's own redirects name the container's host ("http://container/…"). */
+function publicLocation(response: Response, origin: string): Response {
+	const location = response.headers.get("location");
+	if (!location) {
+		return response;
+	}
+	const target = new URL(location, "http://container");
+	if (target.host !== "container") {
+		return response;
+	}
+	const fixed = new Response(response.body, response);
+	fixed.headers.set("location", `${origin}${target.pathname}${target.search}${target.hash}`);
+	return fixed;
+}
+
 export class Web extends DurableObject<Env> {
 	private starting: Promise<void> | undefined;
 	private ready = false;
+	private image: string | undefined; // the image the running container started from
 
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env);
 		const container = ctx.container!;
-		if (container.running) {
-			// After a deploy or restart the Durable Object forgets its timeout.
-			void ctx.blockConcurrencyWhile(() => container.setInactivityTimeout(WEB_IDLE_MS));
-		}
+		void ctx.blockConcurrencyWhile(async () => {
+			this.image = await ctx.storage.get<string>("image");
+			if (container.running) {
+				// After a deploy or restart the Durable Object forgets its timeout.
+				await container.setInactivityTimeout(WEB_IDLE_MS);
+			}
+		});
 	}
 
 	async fetch(request: Request): Promise<Response> {
-		if (!this.ready || !this.ctx.container!.running) {
+		const container = this.ctx.container!;
+		if (!this.ready || !container.running || this.image !== container.images.base) {
 			// Concurrent requests share one start and readiness check.
 			this.starting ??= this.start().finally(() => {
 				this.starting = undefined;
@@ -54,19 +93,24 @@ export class Web extends DurableObject<Env> {
 		url.host = "container";
 		const forwarded = new Request(url, request);
 		forwarded.headers.delete("host");
-		return this.ctx.container!.getTcpPort(PORT).fetch(forwarded);
+		const response = await container.getTcpPort(PORT).fetch(forwarded);
+		return publicLocation(response, new URL(request.url).origin);
 	}
 
 	private async start(): Promise<void> {
 		const container = this.ctx.container!;
+		if (container.running && this.image !== container.images.base) {
+			// A deploy brought a new image; a busy container would otherwise never be
+			// replaced. Requests already inside it finish; new ones wait for the start.
+			this.ready = false;
+			await stop(container, SIGTERM, "Replaced by a newly deployed image");
+		}
 		if (!container.running) {
 			this.ready = false;
-			container.start({
-				image: container.images.base,
-				instance: "basic",
-				enableInternet: true,
-				env: appEnv(this.env),
-			});
+			const image = container.images.base;
+			container.start({ image, instance: "basic", enableInternet: true, env: appEnv(this.env) });
+			this.image = image;
+			await this.ctx.storage.put("image", image);
 			container.monitor().finally(() => {
 				this.ready = false;
 			});
@@ -93,6 +137,16 @@ export class Web extends DurableObject<Env> {
 }
 
 export class Update extends DurableObject<Env> {
+	constructor(ctx: DurableObjectState, env: Env) {
+		super(ctx, env);
+		const container = ctx.container!;
+		if (container.running) {
+			// After a deploy the Durable Object forgets its timeout, which would stop
+			// the import soon; the alarm still enforces the absolute limit.
+			void ctx.blockConcurrencyWhile(() => container.setInactivityTimeout(UPDATE_LIMIT_MS));
+		}
+	}
+
 	/** Start today's import unless one is still running; returns at once. */
 	async run(reason: string): Promise<string> {
 		const container = this.ctx.container!;
@@ -107,8 +161,19 @@ export class Update extends DurableObject<Env> {
 			entrypoint: ["python", "-m", "rozprava.ingest", "update"],
 		});
 		await container.setInactivityTimeout(UPDATE_LIMIT_MS);
+		// Each cron or manual call wakes the object and restarts the inactivity
+		// clock, so a hung import could live forever; the alarm is an absolute limit.
+		await this.ctx.storage.setAlarm(Date.now() + UPDATE_LIMIT_MS);
 		console.log(`Import started (${reason}).`);
 		return "Import started.";
+	}
+
+	async alarm(): Promise<void> {
+		const container = this.ctx.container!;
+		if (container.running) {
+			console.log("Import still running after its time limit; stopping it.");
+			await stop(container, SIGINT, "Import exceeded its time limit");
+		}
 	}
 }
 
@@ -158,14 +223,22 @@ function tooMany(summary: boolean): Response {
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
-		if (url.pathname === "/_admin/update") {
+		// The app routes on the decoded path ("/api%2Fshrnuti" is "/api/shrnuti"), so
+		// rate limits must too, or an encoded path would escape them.
+		let path: string;
+		try {
+			path = decodeURIComponent(url.pathname);
+		} catch {
+			return new Response("Bad request", { status: 400 });
+		}
+		if (path === "/_admin/update") {
 			return adminUpdate(request, env);
 		}
 		const visitor = request.headers.get("cf-connecting-ip") ?? "unknown";
-		const summary = url.pathname === "/api/shrnuti";
+		const summary = path === "/api/shrnuti";
 		const limiter = summary
 			? env.SUMMARY_LIMITER
-			: url.pathname === "/hledat" || url.pathname.startsWith("/api/")
+			: path === "/hledat" || path.startsWith("/api/")
 				? env.SEARCH_LIMITER
 				: undefined;
 		if (limiter && !(await limiter.limit({ key: visitor })).success) {

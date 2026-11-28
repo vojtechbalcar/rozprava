@@ -103,17 +103,21 @@ First setup, in order:
 1. **Neon:** create project `rozprava` in AWS Europe Central 1 (Frankfurt) with
    Postgres 18. The archive (2.3 GB) needs a paid plan. Copy the *direct*
    connection string (connection pooling off: the importer holds an advisory
-   lock for the whole run, which a transaction pooler would break), then:
-   `read -rs "key?Neon URL: " && printf 'DATABASE_URL=%s\n' "$key" >> .env.production; unset key; echo`
+   lock for the whole run, which a transaction pooler would break), then save it
+   at a hidden prompt (works in zsh and bash):
+   `printf 'Neon URL: '; read -rs key; echo; printf 'DATABASE_URL=%s\n' "$key" >> .env.production; unset key`
 2. `uv run python scripts/remote_db.py check`: vector and unaccent available.
 3. `uv run python scripts/local_db.py backup`, then
    `uv run python scripts/remote_db.py restore <dump>`, `compare`, `migrate`.
+   The restore runs four parallel jobs for speed, so a failure can leave part of
+   the archive behind; empty the database with
+   `uv run python scripts/remote_db.py reset --confirm <database name>` and restore again.
 4. **Cloudflare:** Workers Paid plan on the account Wrangler logs into;
-   `cd deploy/cloudflare && npm ci && npx wrangler login`. Wrangler builds with
+   `(cd deploy/cloudflare && npm ci && npx wrangler login)`. Wrangler builds with
    `docker buildx` (`--load`): `brew install docker-buildx` and link it into
    `~/.docker/cli-plugins/`.
 5. `uv run python scripts/cloudflare_secrets.py`.
-6. `colima start`, then `cd deploy/cloudflare && npx wrangler deploy` (builds
+6. `colima start`, then `(cd deploy/cloudflare && npx wrangler deploy)` (builds
    the linux/amd64 image with the local Docker).
 7. Open `https://rozprava.<subdomain>.workers.dev`; the first request starts the
    container. Start one import by hand to check it:

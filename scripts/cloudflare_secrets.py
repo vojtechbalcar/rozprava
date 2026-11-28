@@ -26,7 +26,10 @@ def main() -> int:
     local = dotenv_values(LOCAL) if LOCAL.exists() else {}
     production = dotenv_values(PRODUCTION) if PRODUCTION.exists() else {}
     if not production.get("ADMIN_TOKEN"):
+        existing = PRODUCTION.read_bytes() if PRODUCTION.exists() else b""
         with PRODUCTION.open("a", encoding="utf-8") as handle:
+            if existing and not existing.endswith(b"\n"):
+                handle.write("\n")  # never append to the last line, e.g. DATABASE_URL
             handle.write(f"ADMIN_TOKEN={secrets.token_urlsafe(32)}\n")
         PRODUCTION.chmod(0o600)
         production = dotenv_values(PRODUCTION)

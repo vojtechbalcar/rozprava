@@ -150,7 +150,10 @@ def restore(url: str, dump: Path) -> None:
         # Error text from pg_restore names objects, not the connection string. Parallel
         # workers may already have loaded part of the archive before stopping.
         print(result.stderr[-3000:], file=sys.stderr)
-        raise SystemExit("pg_restore failed and may have left a partial archive; see above.")
+        raise SystemExit(
+            "pg_restore failed and may have left a partial archive (see above). Empty the "
+            "database with reset --confirm <database name>, then restore again."
+        )
     print("Restored. Next: compare, then migrate.")
 
 
