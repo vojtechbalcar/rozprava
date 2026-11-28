@@ -141,3 +141,30 @@ migration, then `npx wrangler deploy`.
   previous session ended abruptly; `colima stop --force` then `colima start` fixed
   it. The dump now skips comments (`--no-comments`): commenting on an extension
   needs its owner, which on Neon is not our role.
+
+## First deployment attempt (28 Nov)
+
+- **Neon restore, try 1:** pg_restore with four parallel jobs failed on
+  `CREATE SCHEMA extensions` ("already exists"), although the dump creates it once,
+  and the workers kept loading for a while after the error, leaving a partial copy.
+  Now `remote_db.py restore` creates the schema itself and leaves the dump's entry
+  out with a filtered table of contents (`--use-list`). `--no-comments` (added
+  alongside) skips comments on extensions, which need the extension's owner.
+- **Credentials on a command line.** The first version passed the Neon URL to
+  `pg_restore --dbname=…`, so the password was visible in the process list, and a
+  `pgrep -fl` printed it into the session. The script now passes libpq settings
+  through environment variables (`PGPASSWORD` and the rest). The Neon password
+  must be reset after this.
+- **Neon restore, try 2:** stopped at "project size limit (1024 MB) has been
+  exceeded": the project was on Neon's Free plan, capped at 1 GB, and the archive
+  is 2.3 GB. Needs a paid Neon plan. The partial copy was removed both times
+  (only after checking that `alembic_version` was empty, i.e. the restore never
+  completed).
+- **Image build for Wrangler:** `wrangler deploy` runs `docker build --load`,
+  which needs BuildKit's buildx plugin. It was installed by Homebrew but not
+  registered; `~/.docker/config.json` now lists `/opt/homebrew/lib/docker/cli-plugins`
+  in `cliPluginsExtraDirs`. The image then built under Colima.
+- **Cloudflare:** the push failed with "You do not have access to Cloudflare
+  Containers. Deploying containers requires the Workers Paid plan." for the
+  account Wrangler is logged into (vojtech.balcar@sbid.cz), although the token has
+  `containers (write)`.
