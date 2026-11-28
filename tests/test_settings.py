@@ -14,6 +14,16 @@ def test_configuration_is_postgresql_only():
         Settings(database_url="sqlite:///example.db", _env_file=None)
 
 
+def test_hosted_postgresql_urls_use_psycopg():
+    from rozprava.settings import Settings
+
+    neon = "postgresql://owner:secret@ep-1.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+    url = Settings(database_url=neon, _env_file=None).database_url
+    assert url == neon.replace("postgresql://", "postgresql+psycopg://", 1)
+    short = Settings(database_url="postgres://u:p@host/db", _env_file=None).database_url
+    assert short == "postgresql+psycopg://u:p@host/db"
+
+
 def test_settings_reads_dotenv_without_requiring_a_database(tmp_path, monkeypatch):
     from rozprava.settings import Settings
 

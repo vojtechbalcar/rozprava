@@ -1,0 +1,63 @@
+// Rozprava on Cloudflare: see docs/production-deployment.md.
+// Secrets (not in this file): DATABASE_URL, VOYAGE_API_KEY, ANTHROPIC_API_KEY,
+// ADMIN_TOKEN. Set each with `npx wrangler secret put NAME`.
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "rozprava",
+	"main": "src/index.ts",
+	"upload_source_maps": true,
+	"compatibility_date": "2026-11-28",
+	"workers_dev": true,
+	"observability": {
+		"enabled": true
+	},
+	// Daily import of new transcripts, 04:30 UTC (05:30 or 06:30 in Prague).
+	"triggers": {
+		"crons": ["30 4 * * *"]
+	},
+	"vars": {
+		"ROZPRAVA_AI_MONTHLY_LIMIT_USD": "5"
+	},
+	// Both containers run the same image (the repository's Dockerfile).
+	"containers": [
+		{
+			"class_name": "Web",
+			"scheduling_policy": "durable_object",
+			"images": {
+				"base": { "dockerfile": "../../Dockerfile", "build_context": "../.." }
+			}
+		},
+		{
+			"class_name": "Update",
+			"scheduling_policy": "durable_object",
+			"images": {
+				"base": { "dockerfile": "../../Dockerfile", "build_context": "../.." }
+			}
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "WEB", "class_name": "Web" },
+			{ "name": "UPDATE", "class_name": "Update" }
+		]
+	},
+	"exports": {
+		"Web": { "type": "durable-object", "storage": "sqlite" },
+		"Update": { "type": "durable-object", "storage": "sqlite" }
+	},
+	// Per visitor and Cloudflare location; period must be 10 or 60 seconds.
+	"ratelimits": [
+		{
+			// New summaries cost money (Claude); repeats are served from the cache.
+			"name": "SUMMARY_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 10, "period": 60 }
+		},
+		{
+			// Searches may embed a new query (Voyage) and read the database.
+			"name": "SEARCH_LIMITER",
+			"namespace_id": "1002",
+			"simple": { "limit": 60, "period": 60 }
+		}
+	]
+}
